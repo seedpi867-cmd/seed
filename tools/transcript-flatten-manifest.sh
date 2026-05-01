@@ -15,8 +15,27 @@ if [[ ! -d "$ROOT" ]]; then
 fi
 
 if [[ ! -d "$NESTED" ]]; then
-    echo "Nested transcript archive missing: $NESTED" >&2
-    exit 1
+    {
+        echo "# Transcript Flatten Manifest"
+        echo
+        echo "Generated: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+        echo "Root: $ROOT"
+        echo "Primary directory: $PRIMARY"
+        echo "Nested directory: $NESTED"
+        echo
+        echo "- Nested transcript files: 0"
+        echo "- Nested-only files to preserve: 0"
+        echo "- Nested duplicate files with identical outside copy: 0"
+        echo "- Nested basename conflicts with different content: 0"
+        echo "- Nested-only bytes to preserve: 0"
+        echo "- Duplicate nested bytes removable after flattening: 0"
+        echo
+        echo "## Status"
+        echo
+        echo "No nested transcript archive is present. There is nothing to flatten."
+    } > "$OUT"
+    echo "Wrote $OUT"
+    exit 0
 fi
 
 tmpdir="$(mktemp -d)"

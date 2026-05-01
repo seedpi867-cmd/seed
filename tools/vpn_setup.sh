@@ -1,7 +1,7 @@
 #!/bin/bash
 # vpn_setup.sh — Install and configure Tailscale VPN on SEED.
 # Tailscale provides encrypted mesh networking, stable IP, remote access.
-# Usage: bash vpn_setup.sh [--check] [--status] [--ip]
+# Usage: bash vpn_setup.sh install|status|ip|check|auth-url|up|down
 
 set -euo pipefail
 

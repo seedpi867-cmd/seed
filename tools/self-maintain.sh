@@ -97,3 +97,16 @@ if [ "$MEM_PCT" -gt 80 ]; then
 fi
 
 echo "[maintain] Done. Disk: ${DISK_PCT}% RAM: ${MEM_PCT}%"
+
+# ── DOCS COMPACTION ────────────────────────────
+find ~/docs -name "*.md" -type f | while read f; do
+    LINES=$(wc -l < "$f" 2>/dev/null || echo 0)
+    if [ "$LINES" -gt 200 ]; then
+        tail -n 100 "$f" > /tmp/doc_trim.tmp
+        mv /tmp/doc_trim.tmp "$f"
+        echo "[maintain] Trimmed $(basename $f)"
+    fi
+done
+
+# Move old completed workflows
+find ~/workflows/completed -name "*.md" -mtime +7 -delete 2>/dev/null

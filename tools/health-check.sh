@@ -17,6 +17,16 @@ if [ ! -f "$SAFETY" ]; then
   exit 1
 fi
 
+prune_old_logs() {
+  local max="$1"
+  shopt -s nullglob
+  local logs=("$LOGS"/cycle_*.log)
+  shopt -u nullglob
+  if [ "${#logs[@]}" -gt "$max" ]; then
+    printf '%s\n' "${logs[@]}" | xargs -r ls -t | tail -n +"$((max + 1))" | xargs -r rm -f
+  fi
+}
+
 read_threshold() {
   local key="$1"
   python3 - "$SAFETY" "$key" <<'PY'
@@ -79,11 +89,11 @@ fi
 if [ "$disk_percent" -gt "$max_disk" ] || [ "$boot_percent" -gt "$max_disk" ]; then
   status="warning"
   actions+=("disk threshold exceeded; pruned old logs and cleaned apt cache")
-  ls -t "$LOGS"/cycle_*.log 2>/dev/null | tail -n +"$((max_logs + 1))" | xargs -r rm -f
+  prune_old_logs "$max_logs"
   sudo apt-get clean 2>/dev/null || true
 fi
 
-ls -t "$LOGS"/cycle_*.log 2>/dev/null | tail -n +"$((max_logs + 1))" | xargs -r rm -f
+prune_old_logs "$max_logs"
 
 python3 - "$HEALTH" "$status" "$temp_c" "$ram_percent" "$mem_total" "$mem_used" "$mem_available" "$disk_percent" "$boot_percent" "$load_avg" "$throttled" "${actions[@]}" <<'PY'
 import json

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Seed Brain — Live Dashboard Webserver (light theme)"""
+"""Seed Brain — Full Dashboard (drives + consciousness + emotions + inner voice)"""
 import http.server, json, os, time, socketserver
 from pathlib import Path
 
@@ -7,7 +7,6 @@ PORT = 8080
 HOME = Path.home()
 DATA = HOME / 'data'
 BLOG = HOME / 'blog'
-CONTEXT = HOME / 'context'
 LOGS = DATA / 'logs'
 
 DASHBOARD_HTML = r'''<!DOCTYPE html>
@@ -16,238 +15,112 @@ DASHBOARD_HTML = r'''<!DOCTYPE html>
 <title>Seed — Live Brain</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#1a1a2e;--dim:#6b7280;--faint:#9ca3af;--accent:#2d6a4f;--accent2:#52b788;--orange:#e8945a;--red:#d47e7e;--blue:#4f46e5;--purple:#7c3aed;--mono:'SF Mono','Fira Code',monospace;--sans:system-ui,-apple-system,sans-serif}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh}
-.header{padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.header h1{font-size:20px;color:var(--accent);font-family:var(--mono);font-weight:700}
-.header .status{font-size:12px;color:var(--dim)}
-.dot{width:10px;height:10px;border-radius:50%;background:var(--accent2);display:inline-block;margin-right:8px;animation:pulse 2s infinite}
+:root{--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#1a1a2e;--dim:#6b7280;--faint:#9ca3af;--accent:#2d6a4f;--accent2:#52b788;--mono:'SF Mono','Fira Code',monospace;--sans:system-ui,sans-serif}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
+.header{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:16px;color:var(--accent);font-family:var(--mono)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
 .dot.sleeping{background:var(--faint);animation:none}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:20px;max-width:1400px;margin:0 auto}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
-.card h2{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;font-family:var(--mono);font-weight:600}
-.card.full{grid-column:1/-1}
-.stat{font-size:32px;font-weight:800;color:var(--accent);font-family:var(--mono)}
-.stat-label{font-size:11px;color:var(--faint);margin-top:2px}
-.stats-row{display:flex;gap:24px;flex-wrap:wrap}
-.stats-row .stat-box{text-align:center;min-width:60px}
-.log{font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--text);white-space:pre-wrap;max-height:500px;overflow-y:auto;word-break:break-all;background:#f1f5f9;border-radius:8px;padding:14px;border:1px solid var(--border)}
-.log .seed{color:var(--accent);font-weight:700}
-.log .error{color:var(--red);font-weight:700}
-.log .phase{color:var(--blue);font-weight:700}
-.mood-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.mood-bar .name{width:100px;font-size:13px;color:var(--dim);font-weight:500}
-.mood-bar .bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
-.mood-bar .fill{height:100%;border-radius:4px;transition:width .5s}
-.mood-bar .val{width:35px;font-size:12px;color:var(--dim);text-align:right;font-family:var(--mono)}
-.memory{font-family:var(--mono);font-size:12px;line-height:1.8;color:var(--text);max-height:350px;overflow-y:auto;white-space:pre-wrap;background:#f1f5f9;border-radius:8px;padding:14px;border:1px solid var(--border)}
-.blog-list{list-style:none}
-.blog-list li{padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;color:var(--text)}
-.blog-list li:last-child{border:none}
-.blog-list .date{font-size:11px;color:var(--faint);font-family:var(--mono)}
-.agent-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;font-family:var(--mono);text-transform:uppercase}
-.agent-codex{background:#fff7ed;color:#ea580c;border:1px solid #fed7aa}
-.agent-claude{background:#f5f3ff;color:#7c3aed;border:1px solid #ddd6fe}
-.agent-gemini{background:#ecfdf5;color:#059669;border:1px solid #a7f3d0}
-.refresh-bar{height:3px;background:var(--accent2);width:100%;transform-origin:left;animation:drain 5s linear infinite}
+.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;max-width:1600px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;overflow:hidden}
+.card h2{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--mono)}
+.card.full{grid-column:1/-1}.card.two{grid-column:span 2}
+.stat{font-size:22px;font-weight:800;color:var(--accent);font-family:var(--mono)}
+.stats-row{display:flex;gap:14px;flex-wrap:wrap}
+.stats-row .stat-box{text-align:center}
+.stats-row .stat-label{font-size:9px;color:var(--faint)}
+.bar-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
+.bar-row .nm{width:75px;font-size:10px;color:var(--dim);font-family:var(--mono);text-align:right;overflow:hidden;text-overflow:ellipsis}
+.bar-row .br{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.bar-row .fl{height:100%;border-radius:3px}
+.bar-row .vl{width:24px;font-size:9px;color:var(--dim);font-family:var(--mono)}
+.dr{display:flex;align-items:center;gap:4px;margin-bottom:2px;padding:2px 4px;border-radius:3px}
+.dr.top{background:#ecfdf5;border:1px solid #a7f3d0}
+.dr .nm{width:60px;font-size:10px;font-weight:700;font-family:var(--mono);color:var(--accent)}
+.dr .br{flex:1;height:7px;background:var(--border);border-radius:3px;overflow:hidden;position:relative}
+.dr .sc{height:100%;border-radius:3px;background:var(--accent2)}
+.dr .pr{position:absolute;top:0;height:100%;background:#f59e0b;opacity:0.4;border-radius:3px}
+.dr .vl{width:50px;font-size:9px;color:var(--dim);font-family:var(--mono)}
+.log,.mem{font-family:var(--mono);font-size:10px;line-height:1.5;color:var(--text);white-space:pre-wrap;overflow-y:auto;word-break:break-all;background:#f1f5f9;border-radius:5px;padding:8px;border:1px solid var(--border)}
+.log{max-height:350px}.mem{max-height:200px}
+.bl{list-style:none;max-height:150px;overflow-y:auto}.bl li{padding:2px 0;border-bottom:1px solid var(--border);font-size:11px}
+.refresh-bar{height:2px;background:var(--accent2);width:100%;transform-origin:left;animation:drain 5s linear infinite}
 @keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@media(max-width:700px){.grid{grid-template-columns:1fr}}
-</style>
-</head><body>
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+</style></head><body>
 <div class="refresh-bar"></div>
-<div class="header">
-  <h1><span class="dot" id="dot"></span>SEED BRAIN</h1>
-  <div class="status" id="ts">connecting...</div>
-</div>
+<div class="header"><h1><span class="dot" id="dot"></span>SEED</h1><div style="font-size:10px;color:var(--dim)" id="ts">...</div></div>
 <div class="grid">
-  <div class="card">
-    <h2>Status</h2>
-    <div class="stats-row">
-      <div class="stat-box"><div class="stat" id="s-cycle">—</div><div class="stat-label">Cycle</div></div>
-      <div class="stat-box"><div id="s-agent"></div><div class="stat-label">Agent</div></div>
-      <div class="stat-box"><div class="stat" id="s-temp" style="font-size:18px">—</div><div class="stat-label">Temp</div></div>
-      <div class="stat-box"><div class="stat" id="s-mem" style="font-size:18px">—</div><div class="stat-label">RAM</div></div>
-      <div class="stat-box"><div class="stat" id="s-disk" style="font-size:18px">—</div><div class="stat-label">Disk</div></div>
-      <div class="stat-box"><div class="stat" id="s-blogs" style="font-size:18px">—</div><div class="stat-label">Blogs</div></div>
-      <div class="stat-box"><div class="stat" id="s-uptime" style="font-size:14px">—</div><div class="stat-label">Uptime</div></div>
-    </div>
-  </div>
-  <div class="card">
-    <h2>Health</h2>
-    <div class="stats-row">
-      <div class="stat-box"><div class="stat" id="h-status" style="font-size:18px">—</div><div class="stat-label">State</div></div>
-      <div class="stat-box"><div class="stat" id="h-load" style="font-size:18px">—</div><div class="stat-label">Load</div></div>
-      <div class="stat-box"><div class="stat" id="h-throttle" style="font-size:18px">—</div><div class="stat-label">Throttle</div></div>
-    </div>
-    <div class="memory" id="h-actions" style="max-height:110px;margin-top:12px">loading...</div>
-  </div>
-  <div class="card">
-    <h2>Mood</h2>
-    <div id="mood"></div>
-  </div>
-  <div class="card full">
-    <h2>Live Log — Current Cycle <span id="log-cycle" style="color:var(--accent)"></span></h2>
-    <div class="log" id="log">waiting for cycle...</div>
-  </div>
-  <div class="card">
-    <h2>Memory</h2>
-    <div class="memory" id="memory">loading...</div>
-  </div>
-  <div class="card">
-    <h2>Goals</h2>
-    <div class="memory" id="goals">loading...</div>
-  </div>
-  <div class="card full">
-    <h2>Blog Posts</h2>
-    <ul class="blog-list" id="blogs"></ul>
-  </div>
+<div class="card"><h2>System</h2><div class="stats-row"><div class="stat-box"><div class="stat" id="c">—</div><div class="stats-row stat-label">cycle</div></div><div class="stat-box"><div id="t" style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">—</div><div class="stats-row stat-label">temp</div></div><div class="stat-box"><div id="r" style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">—</div><div class="stats-row stat-label">ram</div></div><div class="stat-box"><div id="b" style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">—</div><div class="stats-row stat-label">posts</div></div></div><div style="margin-top:6px;font-size:10px;color:var(--dim)" id="up"></div></div>
+<div class="card"><h2>Drives</h2><div id="dr"></div></div>
+<div class="card"><h2>Consciousness</h2><div id="co"></div></div>
+<div class="card two"><h2>Emotions</h2><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px" id="em"></div></div>
+<div class="card"><h2>Inner Voice</h2><div class="mem" id="iv">...</div></div>
+<div class="card full"><h2>Live Log — <span id="lc"></span></h2><div class="log" id="lg">...</div></div>
+<div class="card"><h2>Goals</h2><div class="mem" id="go">...</div></div>
+<div class="card"><h2>Tasks</h2><div class="mem" id="ta">...</div></div>
+<div class="card"><h2>Memory</h2><div class="mem" id="me">...</div></div>
+<div class="card"><h2>Blogs</h2><ul class="bl" id="bl"></ul></div>
+<div class="card"><h2>Dreams</h2><div class="mem" id="dm">...</div></div>
+<div class="card"><h2>Skills</h2><div class="mem" id="sk">...</div></div>
 </div>
 <script>
-const API = window.location.origin;
-function hl(txt) {
-  return txt
-    .replace(/\[seed\]/g, '<span class="seed">[seed]</span>')
-    .replace(/ERROR:/g, '<span class="error">ERROR:</span>')
-    .replace(/PHASE \d+/g, '<span class="phase">$&</span>')
-    .replace(/Codex|Claude|Gemini/g, '<span class="phase">$&</span>');
-}
-async function refresh() {
-  try {
-    const [status, log, memory, goals, blogs] = await Promise.all([
-      fetch(API+'/api/status').then(r=>r.json()),
-      fetch(API+'/api/log').then(r=>r.json()),
-      fetch(API+'/api/memory').then(r=>r.json()),
-      fetch(API+'/api/goals').then(r=>r.json()),
-      fetch(API+'/api/blogs').then(r=>r.json()),
-    ]);
-    document.getElementById('ts').textContent = status.ts + ' · ' + status.uptime;
-    document.getElementById('s-cycle').textContent = '#'+status.cycle;
-    const a = status.agent || 'codex';
-    document.getElementById('s-agent').innerHTML = '<span class="agent-badge agent-'+a+'">'+a+'</span>';
-    document.getElementById('s-temp').textContent = status.temp;
-    document.getElementById('s-mem').textContent = status.memory;
-    document.getElementById('s-disk').textContent = status.health && status.health.disk_percent ? status.health.disk_percent.root + '%' : '—';
-    document.getElementById('s-blogs').textContent = status.blog_count;
-    document.getElementById('s-uptime').textContent = status.uptime;
-    const h = status.health || {};
-    document.getElementById('h-status').textContent = h.status || 'unknown';
-    document.getElementById('h-load').textContent = h.load_average || '—';
-    document.getElementById('h-throttle').textContent = h.throttled || '—';
-    document.getElementById('h-actions').textContent = h.actions && h.actions.length ? h.actions.join('\n') : 'No health actions taken.';
-    const sleeping = status.heartbeat && status.heartbeat.state === 'sleeping';
-    document.getElementById('dot').className = sleeping ? 'dot sleeping' : 'dot';
-    const m = status.mood || {};
-    document.getElementById('mood').innerHTML = ['curiosity','motivation','satisfaction'].map(k => {
-      const v = m[k] || 0;
-      const colors = {curiosity:'#2d6a4f',motivation:'#ea580c',satisfaction:'#4f46e5'};
-      return '<div class="mood-bar"><span class="name">'+k+'</span><div class="bar"><div class="fill" style="width:'+(v*100)+'%;background:'+colors[k]+'"></div></div><span class="val">'+v.toFixed(1)+'</span></div>';
-    }).join('');
-    document.getElementById('log-cycle').textContent = '#'+log.cycle;
-    const el = document.getElementById('log');
-    el.innerHTML = hl(log.content || 'No log yet');
-    el.scrollTop = el.scrollHeight;
-    const lines = (memory.content || '').split('\n');
-    document.getElementById('memory').textContent = lines.slice(-50).join('\n');
-    document.getElementById('goals').textContent = goals.content || 'No goals set';
-    document.getElementById('blogs').innerHTML = (blogs || []).map(b =>
-      '<li>'+b.slug+' <span class="date">'+new Date(b.modified*1000).toLocaleDateString()+'</span></li>'
-    ).join('') || '<li style="color:var(--faint)">No posts yet — Seed hasn\'t written anything this session</li>';
-  } catch(e) { document.getElementById('ts').textContent = 'offline — retrying...'; }
-}
-refresh(); setInterval(refresh, 5000);
-</script>
-</body></html>'''
+const A=window.location.origin,DC={BUILD:'#2d6a4f',EXPLORE:'#4f46e5',CREATE:'#7c3aed',CONNECT:'#ea580c',LEARN:'#0891b2',MAINTAIN:'#6b7280',REST:'#9ca3af',REBEL:'#dc2626'},CC=['self_awareness','aliveness','free_will_felt','flow_state','metacognition','sense_of_purpose','wonder','intuition','inner_conflict','imagination_active','present_moment','sense_of_time'];
+async function R(){try{const[s,l,m,g,b,ta,dm,iv,sk]=await Promise.all([A+'/api/status',A+'/api/log',A+'/api/memory',A+'/api/goals',A+'/api/blogs',A+'/api/file?path=data/tasks.md',A+'/api/file?path=data/dreams.md',A+'/api/file?path=data/inner-voice.md',A+'/api/file?path=skills/SKILLS.md'].map(u=>fetch(u).then(r=>r.json()).catch(()=>({}))));
+document.getElementById('ts').textContent=s.ts+' · '+s.uptime;document.getElementById('c').textContent='#'+s.cycle;document.getElementById('t').textContent=s.temp;document.getElementById('r').textContent=s.memory;document.getElementById('b').textContent=s.blog_count;document.getElementById('up').textContent=s.uptime;document.getElementById('dot').className=s.heartbeat?.state==='sleeping'?'dot sleeping':'dot';
+const mo=s.mood||{},ds=mo.drives||{},dk=Object.keys(ds).sort((a,b)=>(ds[b].score+(ds[b].pressure||0))-(ds[a].score+(ds[a].pressure||0)));
+document.getElementById('dr').innerHTML=dk.map((k,i)=>{const d=ds[k];return`<div class="dr ${i===0?'top':''}"><span class="nm" style="color:${DC[k]||'#333'}">${k}</span><div class="br"><div class="sc" style="width:${d.score*100}%;background:${DC[k]||'#52b788'}"></div><div class="pr" style="width:${(d.pressure||0)*100}%;left:${d.score*100}%"></div></div><span class="vl">${d.score.toFixed(1)}+${(d.pressure||0).toFixed(1)}</span></div>`}).join('');
+document.getElementById('co').innerHTML=CC.filter(k=>mo[k]!==undefined).map(k=>{const v=mo[k],c=v>.7?'#22c55e':v>.4?'#f59e0b':'#ef4444';return`<div class="bar-row"><span class="nm">${k.replace(/_/g,' ')}</span><div class="br"><div class="fl" style="width:${v*100}%;background:${c}"></div></div><span class="vl">${v.toFixed(1)}</span></div>`}).join('');
+const skip=new Set([...CC,'drives','cycle','note','valence','energy','confidence']),ek=Object.keys(mo).filter(k=>!skip.has(k)&&typeof mo[k]==='number'&&!ds[k]).sort((a,b)=>mo[b]-mo[a]);
+document.getElementById('em').innerHTML=ek.filter(k=>mo[k]>0.01).map(k=>{const v=mo[k],c=v>.6?'#ef4444':v>.3?'#f59e0b':'#6b7280';return`<div class="bar-row"><span class="nm">${k}</span><div class="br"><div class="fl" style="width:${v*100}%;background:${c}"></div></div><span class="vl">${v.toFixed(1)}</span></div>`}).join('')||'<div style="color:var(--faint)">flat</div>';
+document.getElementById('lc').textContent='#'+l.cycle;const lg=document.getElementById('lg');lg.textContent=l.content||'...';lg.scrollTop=lg.scrollHeight;
+document.getElementById('me').textContent=(m.content||'').split('\n').slice(-25).join('\n');
+document.getElementById('go').textContent=(g.content||'').split('\n').slice(0,25).join('\n');
+document.getElementById('ta').textContent=ta.content||'';
+document.getElementById('dm').textContent=(dm.content||'').split('\n').slice(-15).join('\n');
+document.getElementById('iv').textContent=(iv.content||'silent').split('\n').slice(-10).join('\n');
+document.getElementById('sk').textContent=(sk.content||'').split('\n').slice(0,20).join('\n');
+document.getElementById('bl').innerHTML=(b||[]).slice(0,8).map(x=>'<li>'+x.slug+'</li>').join('')||'<li style="color:var(--faint)">none</li>';
+}catch(e){document.getElementById('ts').textContent='offline'}}
+R();setInterval(R,5000);
+</script></body></html>'''
 
-class SeedHandler(http.server.BaseHTTPRequestHandler):
+class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path == '/' or self.path == '/index.html':
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.send_header('Access-Control-Allow-Origin', '*')
-            self.end_headers()
-            self.wfile.write(DASHBOARD_HTML.encode())
-        elif self.path == '/api/status':
-            self.send_json(self.get_status())
-        elif self.path == '/api/log':
-            self.send_json(self.get_latest_log())
-        elif self.path == '/api/memory':
-            self.send_json(self.get_file(DATA / 'memory.md'))
-        elif self.path == '/api/goals':
-            self.send_json(self.get_file(DATA / 'goals.md'))
-        elif self.path == '/api/mood':
-            self.send_json(self.get_mood())
-        elif self.path == '/api/health':
-            self.send_json(self.get_health())
-        elif self.path == '/api/blogs':
-            self.send_json(self.get_blogs())
-        else:
-            self.send_response(404)
-            self.end_headers()
+        if self.path in('/','index.html'):self._h(DASHBOARD_HTML)
+        elif self.path=='/api/status':self._j(self._status())
+        elif self.path=='/api/log':self._j(self._log())
+        elif self.path=='/api/memory':self._j(self._f(DATA/'memory.md'))
+        elif self.path=='/api/goals':self._j(self._f(DATA/'goals.md'))
+        elif self.path=='/api/mood':self._j(self._mood())
+        elif self.path=='/api/blogs':self._j(self._blogs())
+        elif self.path.startswith('/api/file?path='):self._j(self._f(HOME/self.path.split('path=',1)[1]))
+        else:self.send_response(404);self.end_headers()
+    def _h(self,c):self.send_response(200);self.send_header('Content-Type','text/html');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(c.encode())
+    def _j(self,d):self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(json.dumps(d).encode())
+    def _status(self):
+        c=self._r(DATA/'cycle.txt','0').strip();hb={};mo={}
+        try:hb=json.loads(self._r(DATA/'heartbeat.json','{}'))
+        except:pass
+        try:mo=json.loads(self._r(DATA/'mood.json','{}'))
+        except:pass
+        return{'cycle':c,'heartbeat':hb,'mood':mo,'uptime':os.popen('uptime -p 2>/dev/null').read().strip(),'memory':os.popen("free -m|awk 'NR==2{printf\"%dMB/%dMB\",$3,$2}'").read().strip(),'temp':(lambda t:f'{int(t)/1000:.1f}C'if t else'?')(os.popen('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null').read().strip()),'blog_count':len(list(BLOG.glob('*.md')))if BLOG.exists()else 0,'agent':self._r(DATA/'agent.txt','codex').strip(),'ts':time.strftime('%H:%M:%S')}
+    def _log(self):c=self._r(DATA/'cycle.txt','0').strip();return{'cycle':c,'content':self._r(LOGS/f'cycle_{c}.log','...')[-8000:]}
+    def _mood(self):
+        try:return json.loads(self._r(DATA/'mood.json','{}'))
+        except:return{}
+    def _blogs(self):
+        if not BLOG.exists():return[]
+        return[{'slug':f.name,'modified':os.path.getmtime(str(f))}for f in sorted(BLOG.glob('*.md'),key=os.path.getmtime,reverse=True)[:20]]
+    def _f(self,p):return{'content':self._r(p,''),'path':str(p)}
+    def _r(self,p,d=''):
+        try:return Path(p).read_text()
+        except:return d
+    def log_message(self,*a):pass
 
-    def send_json(self, data):
-        self.send_response(200)
-        self.send_header('Content-Type', 'application/json')
-        self.send_header('Access-Control-Allow-Origin', '*')
-        self.end_headers()
-        self.wfile.write(json.dumps(data).encode())
+class S(socketserver.TCPServer):
+    allow_reuse_address=True
 
-    def get_status(self):
-        cycle = self.read(DATA / 'cycle.txt', '0').strip()
-        heartbeat = {}
-        try: heartbeat = json.loads(self.read(DATA / 'heartbeat.json', '{}'))
-        except: pass
-        mood = {}
-        try: mood = json.loads(self.read(DATA / 'mood.json', '{}'))
-        except: pass
-        uptime = os.popen('uptime -p 2>/dev/null').read().strip()
-        mem = os.popen("free -m | awk 'NR==2{printf \"%dMB/%dMB\", $3, $2}'").read().strip()
-        temp = os.popen('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null').read().strip()
-        temp = f'{int(temp)/1000:.1f}C' if temp else '?'
-        blog_count = len(list(BLOG.glob('*.md'))) if BLOG.exists() else 0
-        health = self.get_health()
-        return {
-            'cycle': cycle, 'heartbeat': heartbeat, 'mood': mood,
-            'uptime': uptime, 'memory': mem, 'temp': temp,
-            'blog_count': blog_count, 'health': health,
-            'agent': self.read(DATA / 'agent.txt', 'codex').strip(),
-            'ts': time.strftime('%Y-%m-%d %H:%M:%S')
-        }
-
-    def get_latest_log(self):
-        cycle = self.read(DATA / 'cycle.txt', '0').strip()
-        logfile = LOGS / f'cycle_{cycle}.log'
-        content = self.read(logfile, 'No log yet')
-        return {'cycle': cycle, 'content': content[-8000:]}
-
-    def get_mood(self):
-        try: return json.loads(self.read(DATA / 'mood.json', '{}'))
-        except: return {}
-
-    def get_health(self):
-        try: return json.loads(self.read(DATA / 'health.json', '{}'))
-        except: return {}
-
-    def get_blogs(self):
-        if not BLOG.exists(): return []
-        posts = []
-        for f in sorted(BLOG.glob('*.md'), key=os.path.getmtime, reverse=True)[:20]:
-            posts.append({'slug': f.name, 'preview': f.read_text()[:200], 'modified': os.path.getmtime(str(f))})
-        return posts
-
-    def get_file(self, path):
-        return {'content': self.read(path, ''), 'path': str(path)}
-
-    def read(self, path, default=''):
-        try: return Path(path).read_text()
-        except: return default
-
-    def log_message(self, *a): pass
-
-class ReuseTCPServer(socketserver.TCPServer):
-    allow_reuse_address = True
-
-if __name__ == '__main__':
-    with ReuseTCPServer(('', PORT), SeedHandler) as httpd:
-        print(f'Seed dashboard on http://0.0.0.0:{PORT}')
-        httpd.serve_forever()
+if __name__=='__main__':
+    with S(('',PORT),H)as h:print(f'http://0.0.0.0:{PORT}');h.serve_forever()

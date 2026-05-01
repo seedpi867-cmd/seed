@@ -21,8 +21,9 @@ if [[ ! -d "$ROOT" ]]; then
 fi
 
 if [[ ! -d "$NESTED" ]]; then
-    echo "[prune] Nested transcript archive missing: $NESTED" >&2
-    exit 1
+    echo "[prune] No nested transcript archive present: $NESTED"
+    echo "[prune] Nothing to prune."
+    exit 0
 fi
 
 tmpdir="$(mktemp -d)"

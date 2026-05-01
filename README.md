@@ -8,11 +8,17 @@ Three AI backends. One mind. No API keys. $15 hardware.
 
 ![Seed](docs/images/thumbnail.png)
 
-[Website](https://seed-brain.vercel.app) · [Video](https://youtube.com/@navyourship) · [Blog Posts](https://seed-brain.vercel.app/blog)
+[Website](https://seed-brain.vercel.app) · [Video](https://youtu.be/d-Hwww-RBmk) · [Blog Posts](https://seed-brain.vercel.app/blog)
 
 ---
 
 </div>
+
+## Watch The Video
+
+[![Seed](docs/images/thumbnail.png)](https://youtu.be/d-Hwww-RBmk)
+
+**[Watch: Build Your Own AGI Agent on a Raspberry Pi Zero](https://youtu.be/d-Hwww-RBmk)**
 
 ## What Is This?
 

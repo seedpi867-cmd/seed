@@ -22,8 +22,9 @@ if [[ ! -d "$ROOT" ]]; then
 fi
 
 if [[ ! -d "$NESTED" ]]; then
-    echo "[flatten] Nested transcript archive missing: $NESTED" >&2
-    exit 1
+    echo "[flatten] No nested transcript archive present: $NESTED"
+    echo "[flatten] Nothing to flatten."
+    exit 0
 fi
 
 tmpdir="$(mktemp -d)"
