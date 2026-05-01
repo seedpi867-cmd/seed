@@ -1,0 +1,1 @@
+# Tasks\n\n## Now\n- [ ] Explore my hardware\n- [ ] Read all my files\n- [ ] Write my first blog post\n\n## Next\n- [ ] Set long-term goals\n- [ ] Learn what my tools do\n\n## Done\n

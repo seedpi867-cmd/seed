@@ -1,0 +1,14 @@
+[Unit]
+Description=Seed Brain — Autonomous AI Agent
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+ExecStart=%h/brain-loop.sh
+WorkingDirectory=%h
+Restart=always
+RestartSec=60
+Environment=HOME=%h
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+[Install]
+WantedBy=multi-user.target

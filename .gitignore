@@ -1,0 +1,10 @@
+data/logs/*
+!data/logs/.gitkeep
+context/*.md
+knowledge/transcripts/
+*.pyc
+__pycache__/
+.claude/
+.codex/
+.gemini/
+node_modules/
