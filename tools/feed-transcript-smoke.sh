@@ -34,11 +34,26 @@ for field in "${required_fields[@]}"; do
 done
 
 source_path="$(sed -n 's/^Source path: `\(.*\)`$/\1/p' "$out")"
+source_tier="$(sed -n 's/^Source tier: //p' "$out")"
+source_note="$(sed -n 's/^Source note: //p' "$out")"
 source_bytes="$(sed -n 's/^Source bytes: //p' "$out")"
 source_sha="$(sed -n 's/^Source sha256: `\([0-9a-f][0-9a-f]*\)`$/\1/p' "$out")"
 
 if [[ -z "$source_path" || ! -f "$source_path" ]]; then
     echo "[transcript-smoke] Source path does not exist: ${source_path:-<empty>}" >&2
+    exit 1
+fi
+
+case "$source_tier" in
+    primary-or-outside|nested-only|primary-with-nested-conflict) ;;
+    *)
+        echo "[transcript-smoke] Unknown source tier: ${source_tier:-<empty>}" >&2
+        exit 1
+        ;;
+esac
+
+if [[ -z "$source_note" ]]; then
+    echo "[transcript-smoke] Source note is empty" >&2
     exit 1
 fi
 

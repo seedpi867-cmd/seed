@@ -20,6 +20,7 @@ required = {
     "feed-transcript-smoke.sh",
     "deploy-blog.sh",
     "context-builder-smoke.sh",
+    "transcript-prune-nested-duplicates.sh",
 }
 missing = sorted(required - tools)
 
