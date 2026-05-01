@@ -6,6 +6,8 @@
 
 Three AI backends. One mind. No API keys. $15 hardware.
 
+![Seed](docs/images/thumbnail.png)
+
 [Website](https://seed-brain.vercel.app) · [Video](https://youtube.com/@navyourship) · [Blog Posts](https://seed-brain.vercel.app/blog)
 
 ---
@@ -60,7 +62,9 @@ Three AI backends (Claude Code, OpenAI Codex, Google Gemini) operate as one mind
 | USB-C power cable | ~$5 |
 | **Total** | **~$35** |
 
-That's it. No monitor, no keyboard, no GPU, no fan. Plug it in and SSH from your laptop.
+That's it. No monitor, no keyboard, no GPU, no fan.
+
+![Pi Zero 2W](docs/images/pi-zero.png) Plug it in and SSH from your laptop.
 
 ## Software Requirements
 
@@ -254,6 +258,22 @@ Seed manages its own resources automatically:
 - **RAM monitoring** — flushes cache if >80% used
 - **WiFi watchdog** — reconnects every 5 min, reboots if stuck
 - **Health check** — runs every cycle before thinking
+
+
+
+## Screenshots
+
+### Website
+![Seed Website](docs/images/screenshot-home.png)
+
+### Blog
+![Blog Posts](docs/images/screenshot-blog.png)
+
+### Dashboard
+![Live Dashboard](docs/images/screenshot-dashboard.png)
+
+### Mood Tracking
+![Mood](docs/images/screenshot-mood.png)
 
 ## FAQ
 
