@@ -10,6 +10,10 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --subnet) SUBNET="$2"; shift 2 ;;
         --json)   AS_JSON=true;  shift ;;
+        -h|--help)
+            echo "Usage: bash network_scan.sh [--subnet 192.168.8.0/24] [--json]"
+            exit 0
+            ;;
         *) shift ;;
     esac
 done

@@ -68,9 +68,19 @@ body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:1
       <div class="stat-box"><div id="s-agent"></div><div class="stat-label">Agent</div></div>
       <div class="stat-box"><div class="stat" id="s-temp" style="font-size:18px">—</div><div class="stat-label">Temp</div></div>
       <div class="stat-box"><div class="stat" id="s-mem" style="font-size:18px">—</div><div class="stat-label">RAM</div></div>
+      <div class="stat-box"><div class="stat" id="s-disk" style="font-size:18px">—</div><div class="stat-label">Disk</div></div>
       <div class="stat-box"><div class="stat" id="s-blogs" style="font-size:18px">—</div><div class="stat-label">Blogs</div></div>
       <div class="stat-box"><div class="stat" id="s-uptime" style="font-size:14px">—</div><div class="stat-label">Uptime</div></div>
     </div>
+  </div>
+  <div class="card">
+    <h2>Health</h2>
+    <div class="stats-row">
+      <div class="stat-box"><div class="stat" id="h-status" style="font-size:18px">—</div><div class="stat-label">State</div></div>
+      <div class="stat-box"><div class="stat" id="h-load" style="font-size:18px">—</div><div class="stat-label">Load</div></div>
+      <div class="stat-box"><div class="stat" id="h-throttle" style="font-size:18px">—</div><div class="stat-label">Throttle</div></div>
+    </div>
+    <div class="memory" id="h-actions" style="max-height:110px;margin-top:12px">loading...</div>
   </div>
   <div class="card">
     <h2>Mood</h2>
@@ -117,8 +127,14 @@ async function refresh() {
     document.getElementById('s-agent').innerHTML = '<span class="agent-badge agent-'+a+'">'+a+'</span>';
     document.getElementById('s-temp').textContent = status.temp;
     document.getElementById('s-mem').textContent = status.memory;
+    document.getElementById('s-disk').textContent = status.health && status.health.disk_percent ? status.health.disk_percent.root + '%' : '—';
     document.getElementById('s-blogs').textContent = status.blog_count;
     document.getElementById('s-uptime').textContent = status.uptime;
+    const h = status.health || {};
+    document.getElementById('h-status').textContent = h.status || 'unknown';
+    document.getElementById('h-load').textContent = h.load_average || '—';
+    document.getElementById('h-throttle').textContent = h.throttled || '—';
+    document.getElementById('h-actions').textContent = h.actions && h.actions.length ? h.actions.join('\n') : 'No health actions taken.';
     const sleeping = status.heartbeat && status.heartbeat.state === 'sleeping';
     document.getElementById('dot').className = sleeping ? 'dot sleeping' : 'dot';
     const m = status.mood || {};
@@ -161,6 +177,8 @@ class SeedHandler(http.server.BaseHTTPRequestHandler):
             self.send_json(self.get_file(DATA / 'goals.md'))
         elif self.path == '/api/mood':
             self.send_json(self.get_mood())
+        elif self.path == '/api/health':
+            self.send_json(self.get_health())
         elif self.path == '/api/blogs':
             self.send_json(self.get_blogs())
         else:
@@ -187,10 +205,11 @@ class SeedHandler(http.server.BaseHTTPRequestHandler):
         temp = os.popen('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null').read().strip()
         temp = f'{int(temp)/1000:.1f}C' if temp else '?'
         blog_count = len(list(BLOG.glob('*.md'))) if BLOG.exists() else 0
+        health = self.get_health()
         return {
             'cycle': cycle, 'heartbeat': heartbeat, 'mood': mood,
             'uptime': uptime, 'memory': mem, 'temp': temp,
-            'blog_count': blog_count,
+            'blog_count': blog_count, 'health': health,
             'agent': self.read(DATA / 'agent.txt', 'codex').strip(),
             'ts': time.strftime('%Y-%m-%d %H:%M:%S')
         }
@@ -203,6 +222,10 @@ class SeedHandler(http.server.BaseHTTPRequestHandler):
 
     def get_mood(self):
         try: return json.loads(self.read(DATA / 'mood.json', '{}'))
+        except: return {}
+
+    def get_health(self):
+        try: return json.loads(self.read(DATA / 'health.json', '{}'))
         except: return {}
 
     def get_blogs(self):

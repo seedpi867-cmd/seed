@@ -5,6 +5,8 @@ Args: {"url": "https://...", "max_chars": 2000}
 """
 import re
 import socket
+import argparse
+import json
 import urllib.request
 import urllib.parse
 from pathlib import Path
@@ -69,3 +71,18 @@ def run(args: dict, task: dict = None, root: Path = None) -> tuple[bool, str]:
 
     except Exception as e:
         return False, f"Fetch failed: {e}"
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("url")
+    parser.add_argument("--max-chars", type=int, default=2000)
+    parser.add_argument("--json", action="store_true", dest="as_json")
+    args = parser.parse_args()
+
+    ok, output = run({"url": args.url, "max_chars": args.max_chars})
+    if args.as_json:
+        print(json.dumps({"success": ok, "content": output}, indent=2))
+    else:
+        print(output)
+    raise SystemExit(0 if ok else 1)

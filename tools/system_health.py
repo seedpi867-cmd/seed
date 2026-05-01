@@ -30,3 +30,9 @@ def run(args: dict, task: dict = None, root: Path = None) -> tuple[bool, str]:
     ]
 
     return True, "\n".join(lines)
+
+
+if __name__ == "__main__":
+    ok, output = run({})
+    print(output)
+    raise SystemExit(0 if ok else 1)

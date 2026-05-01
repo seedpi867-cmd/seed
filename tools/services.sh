@@ -1,6 +1,6 @@
 #!/bin/bash
 # Service management helper
-# Usage: bash tools/services.sh [list|create NAME COMMAND|start NAME|stop NAME|logs NAME]
+# Usage: bash tools/services.sh [list|status [NAME]|create NAME COMMAND|start NAME|stop NAME|logs NAME]
 
 ACTION="${1:-list}"
 NAME="${2:-}"
@@ -10,6 +10,14 @@ case "$ACTION" in
   list)
     echo "═══ Running Services ═══"
     systemctl list-units --type=service --state=running --no-pager | grep -v "^$"
+    ;;
+  status)
+    if [[ -n "$NAME" ]]; then
+      systemctl status "$NAME" --no-pager
+    else
+      echo "═══ Running Services ═══"
+      systemctl list-units --type=service --state=running --no-pager | grep -v "^$"
+    fi
     ;;
   create)
     [ -z "$NAME" ] || [ -z "$COMMAND" ] && echo "Usage: services.sh create <name> <command>" && exit 1
@@ -52,6 +60,6 @@ EOF
     journalctl -u "$NAME" -n 50 --no-pager
     ;;
   *)
-    echo "Usage: services.sh [list|create|start|stop|restart|logs] [name] [command]"
+    echo "Usage: services.sh [list|status|create|start|stop|restart|logs] [name] [command]"
     ;;
 esac

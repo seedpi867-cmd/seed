@@ -11,5 +11,10 @@
 DB="${1:-$HOME/data/brain.db}"
 SQL="${2:-.tables}"
 
+if ! command -v sqlite3 >/dev/null 2>&1; then
+    echo "sqlite3 is not installed; install it before using db.sh" >&2
+    exit 127
+fi
+
 mkdir -p "$(dirname "$DB")"
 sqlite3 -header -column "$DB" "$SQL"
