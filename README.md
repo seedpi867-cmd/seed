@@ -212,9 +212,9 @@ sudo npm install -g @openai/codex
 # or: sudo npm install -g @anthropic-ai/claude-code
 # or: export GEMINI_API_KEY="..."
 
-# Clone the public repo.
+# Clone upstream Seed, or replace the URL with your fork after you create one.
 cd ~
-git clone https://github.com/your-github-username/seed.git seed
+git clone https://github.com/seedpi867-cmd/seed.git seed
 cd seed
 
 # Authenticate the backend used by the phase you want to run first.
