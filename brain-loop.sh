@@ -158,7 +158,7 @@ from intentions import predeclare
 from common import load_json, STATE
 drives = load_json(STATE / 'drives.json', {})
 i = predeclare($CYCLE, '$PHASE', drives)
-print(f'[intention] Declared: {i["intention"]}')
+print('[intention] Declared: {}'.format(i.get('intention', 'unknown')))
 " 2>&1 | tee -a "$LOG_FILE"
 
     # ── 7. LLM CALL ─────────────────────────────────────────
