@@ -5,6 +5,29 @@ sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
 
+RUNTIME_ERROR_RE = re.compile(
+    r'^(Traceback \(most recent call last\):|'
+    r'\s*File ".+", line \d+, in .+|'
+    r'[A-Za-z_][A-Za-z0-9_]*(Error|Exception): .+|'
+    r'(ERROR|FATAL): .+|'
+    r'\[seed\] (ERROR|FATAL): .+)'
+)
+
+
+def fresh_runtime_error_lines(log):
+    """Runtime exceptions only; archived markdown, diffs, and prose are not failures."""
+    lines = []
+    for line in log.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(('-', '+', '@@', 'diff ', 'index ')):
+            continue
+        if RUNTIME_ERROR_RE.search(line):
+            lines.append(stripped)
+    return lines
+
+
 def log_to_ledger(action, success, phase, cycle, error_hash=None):
     """Append to feedback ledger — track what works per action type"""
     entry = {
@@ -54,7 +77,6 @@ def detect_outcomes(log_path, cycle):
         (r'deploy.*blog|blog.*deploy|Pushed to Vercel', 'published_blog'),
         (r'Research|Researching', 'completed_research'),
         (r'git commit|committed', 'git_committed'),
-        (r'[Ee]rror|ERROR|[Ff]ailed|FATAL', 'error_occurred'),
         (r'[Dd]ream|reflecting on', 'dream_completed'),
         (r'inner.voice|inner-voice', 'inner_voice_written'),
         (r'health.*ok|health.*safe|health.*passed', 'health_ok'),
@@ -63,6 +85,9 @@ def detect_outcomes(log_path, cycle):
     for pattern, action in patterns:
         if re.search(pattern, log):
             events.append({'action': action, 'source': 'log'})
+
+    if fresh_runtime_error_lines(log):
+        events.append({'action': 'error_occurred', 'source': 'runtime_log'})
 
     # Check file modifications (last 10 minutes)
     cutoff = now() - 600
@@ -146,7 +171,7 @@ def detect_lessons(events, log_path):
     # If there was an error, log it as a lesson
     for event in events:
         if event['action'] == 'error_occurred':
-            error_lines = [l for l in log.split('\n') if 'error' in l.lower() or 'Error' in l][:3]
+            error_lines = fresh_runtime_error_lines(log)[:3]
             if error_lines:
                 lesson = f"Error in this cycle: {error_lines[0][:100]}"
                 save_json(MEMORY / 'lessons' / f'{int(now())}_error.json', {

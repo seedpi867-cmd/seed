@@ -3,7 +3,7 @@
 Event bus — detects what happened this cycle and fires skill chains.
 Replaces cron-driven automation with event-driven reactivity.
 """
-import os, json, time, glob, subprocess
+import os, json, time, glob, subprocess, re
 from pathlib import Path
 
 HOME = Path.home()
@@ -12,6 +12,29 @@ STATE = HOME / 'state'
 CONTEXT = HOME / 'context'
 SKILLS = HOME / 'cognitive' / 'skills_lib'
 GITHUB_REPO = os.environ.get('SEED_GITHUB_REPO', 'seedpi867-cmd/seed')
+
+
+RUNTIME_ERROR_RE = re.compile(
+    r'^(Traceback \(most recent call last\):|'
+    r'\s*File ".+", line \d+, in .+|'
+    r'[A-Za-z_][A-Za-z0-9_]*(Error|Exception): .+|'
+    r'(ERROR|FATAL): .+|'
+    r'\[seed\] (ERROR|FATAL): .+)'
+)
+
+
+def _fresh_runtime_errors(log: str) -> list[str]:
+    """Return current runtime errors, ignoring quoted markdown, diffs, and old context."""
+    errors = []
+    for line in log.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(('-', '+', '@@', 'diff ', 'index ')):
+            continue
+        if RUNTIME_ERROR_RE.search(line):
+            errors.append(stripped)
+    return errors[:3]
 
 # Track what files changed this cycle
 def detect_events(cycle, log_path):
@@ -41,9 +64,8 @@ def detect_events(cycle, log_path):
     # ── ERROR IN LOG ──────────────────────────
     if log_path and os.path.exists(log_path):
         log = open(log_path).read()
-        if 'Error' in log or 'error' in log or 'Traceback' in log:
-            # Extract the error
-            error_lines = [l for l in log.split('\n') if 'Error' in l or 'Traceback' in l][:3]
+        error_lines = _fresh_runtime_errors(log)
+        if error_lines:
             events.append({'type': 'bug_found', 'errors': error_lines, 'log': log_path})
 
     # ── MEMORY BLOATED ────────────────────────
@@ -228,7 +250,13 @@ def run_skill_chain(event):
                 f.write(f'- {e}\n')
         # Add to tasks as priority
         tasks = open(DATA / 'tasks.md').read()
-        error_desc = errors[0][:80] if errors else 'unknown error'
+        useful = [
+            e for e in errors
+            if not e.startswith('Traceback')
+            and not e.startswith('File ')
+            and set(e) != {'^'}
+        ]
+        error_desc = (useful[0] if useful else errors[0])[:80] if errors else 'unknown error'
         if error_desc not in tasks:
             tasks = tasks.replace('## Now', f'## Now\n- [ ] FIX BUG: {error_desc}\n')
             open(DATA / 'tasks.md', 'w').write(tasks)
