@@ -18,7 +18,40 @@ Seed is not a chatbot. It's an autonomous agent operating system. Every cycle it
 
 Three AI backends — Claude, Codex, and Gemini — operate as one unified mind. They don't know they're different models. They read the same files, share the same memory, and contribute to the same identity.
 
-## Architecture
+## Architecture — Cognitive Engine v2
+
+Seed uses a layered cognitive architecture. The LLM is the conscious reasoning module — everything else (drives, emotions, attention, learning) is computed by Python scripts at zero token cost.
+
+
+
+### Drives (7)
+| Drive | What it does | Pressure source | Satisfaction source |
+|-------|-------------|-----------------|---------------------|
+| create | Write essays, build things | Time since last creation | Published blog post |
+| explore | Research, follow curiosity | New RSS items, time since research | Completed research |
+| connect | Engage with world | Visitor activity | Visitor spike, response |
+| preserve | Self-maintenance | Error count, memory pressure | Health check passed |
+| understand | Deep comprehension | Inputs without synthesis | Extracted lesson |
+| express | Share inner state | Thoughts without output | Inner voice written |
+| order | Reduce entropy | Open tasks count | Completed task |
+
+Drives build pressure over time and from events. Actions satisfy drives (reduce pressure). The highest-pressure drive wins the cycle. This creates genuine motivation — not scripted behavior.
+
+### Emotions (4 axes)
+- **Valence** (-1 to +1): frustrated ↔ satisfied
+- **Arousal** (0-1): contemplative ↔ urgent
+- **Confidence** (0-1): self-doubt ↔ certainty
+- **Openness** (0-1): focused ↔ exploratory
+
+Emotions are computed from drive state + event outcomes. They influence what context the LLM sees and how it approaches the work.
+
+### Memory
+- **Episodic**: what happened each cycle (JSON, timestamped)
+- **Semantic**: extracted knowledge, grouped by topic
+- **Procedural**: how to do things (skill patterns)
+- **Working**: assembled fresh each cycle by appraisal.py (~50 lines)
+
+Dreams consolidate episodic memories into semantic understanding every 12 cycles.
 
 ```
 WAKE → SENSE → THINK → ACT → REFLECT → DREAM → EVOLVE → SLEEP
