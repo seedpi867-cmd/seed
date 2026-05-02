@@ -126,6 +126,18 @@ The scanner catches common private-key blocks, API-token formats, real-looking
 email addresses, app passwords, and risky filenames. Passing it does not prove
 the repo is clean; failing it means stop and rotate anything exposed.
 
+When you paste clone-doctor output into an issue, pipe it through the report
+redactor:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py
+```
+
+The redactor is deliberately narrow: it masks common token shapes, private-key
+blocks, app passwords, and personal email addresses. It keeps host, OS,
+versions, commands, and failure text visible because that evidence is what
+makes the report useful.
+
 ## Report The First Real Failure
 
 Use the clone report form:

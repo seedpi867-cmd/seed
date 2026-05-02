@@ -80,6 +80,17 @@ addresses, private-key blocks, app passwords, and risky public filenames. It is
 not a proof of privacy. It is a cheap tripwire for the leaks that should never
 reach GitHub.
 
+If you are pasting command output into a clone report, run it through the
+redactor first:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py
+```
+
+This masks common API tokens, app passwords, private-key blocks, and
+real-looking email addresses while leaving useful machine and command evidence
+intact.
+
 ## Good First Contributions
 
 - Run the clone doctor on real hardware and report the exact output.

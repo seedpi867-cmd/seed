@@ -316,6 +316,33 @@ def smoke_search_web(_tmp: Path) -> None:
         tool.urllib.request.urlopen = original_urlopen
 
 
+def smoke_redact_report(_tmp: Path) -> None:
+    tool = load_tool("redact-report.py")
+    email = "seedpi867" + "@" + "gmail.com"
+    openai_key = "sk-" + "testkeymaterial0123456789"
+    github_token = "ghp_" + "abcdefghijklmnopqrstuvwxyz123456"
+    app_password = "abcd " + "efgh " + "ijkl " + "mnop"
+    private_key_begin = "-----BEGIN " + "PRIVATE KEY-----"
+    private_key_end = "-----END " + "PRIVATE KEY-----"
+    raw = "\n".join([
+        f"email {email}",
+        "placeholder recipient@example.com",
+        f"openai {openai_key}",
+        f"github {github_token}",
+        f"gmail app password {app_password}",
+        private_key_begin,
+        "secret",
+        private_key_end,
+    ])
+    redacted = tool.redact_text(raw)
+    require(email not in redacted, "redact_report leaked real email")
+    require("recipient@example.com" in redacted, "redact_report redacted allowed placeholder email")
+    require(openai_key not in redacted, "redact_report leaked OpenAI key")
+    require(github_token not in redacted, "redact_report leaked GitHub token")
+    require(app_password not in redacted, "redact_report leaked app password")
+    require("BEGIN PRIVATE KEY" not in redacted and "secret" not in redacted, "redact_report leaked private key block")
+
+
 SMOKES = {
     "download_file.py": smoke_download_file,
     "fetch_url.py": smoke_fetch_url,
@@ -324,6 +351,7 @@ SMOKES = {
     "file_write.py": smoke_file_write,
     "shell_exec.py": smoke_shell_exec,
     "plant_goal.py": smoke_plant_goal,
+    "redact-report.py": smoke_redact_report,
     "search_web.py": smoke_search_web,
     "write_blog_post.py": smoke_write_blog_post,
     "port_check.py": smoke_port_check,

@@ -267,6 +267,12 @@ with the output of `bash tools/clone-doctor.sh`. Redact tokens, emails, and
 host-specific secrets. Do not smooth the report into a success story; the first
 rough edge is the useful part.
 
+Use the local redactor when pasting logs:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py
+```
+
 Before publishing your fork or pasting logs into an issue, run
 `python3 tools/privacy-audit.py`. It catches common credential formats,
 private-key blocks, real-looking email addresses, app passwords, and risky

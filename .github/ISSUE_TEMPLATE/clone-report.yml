@@ -8,6 +8,7 @@ body:
       value: |
         The most useful report is the first assumption that failed on your machine.
         Please include exact commands and relevant output. Redact secrets.
+        You can pipe local output through `python3 tools/redact-report.py` before pasting it here.
   - type: input
     id: machine
     attributes:
