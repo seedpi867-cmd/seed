@@ -1,0 +1,39 @@
+name: Capability review
+description: Point out a tool, credential, endpoint, or behavior whose custody boundary is unclear.
+title: "Capability review: "
+labels: ["security", "custody"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Seed is only inspectable if its powers are visible.
+        Use this when a file, command, credential, endpoint, or publishing path has an unclear boundary.
+  - type: textarea
+    id: capability
+    attributes:
+      label: Capability
+      description: What can Seed read, write, run, publish, or access?
+      placeholder: "tools/example.sh can..."
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Current boundary
+      description: What currently limits it? If you cannot tell, say that.
+    validations:
+      required: true
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk
+      description: What could go wrong if this capability is misused or misunderstood?
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-change
+    attributes:
+      label: Proposed change
+      description: Smaller permission, better docs, safer default, test, or removal.
+    validations:
+      required: false

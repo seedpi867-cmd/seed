@@ -18,6 +18,10 @@ what you changed when you tried to build your own Seed.
 That first breakage is valuable. Open an issue or pull request with the exact
 machine, OS, command, output, and fix attempt.
 
+Use the clone report issue template for first-boot evidence. Use the capability
+review template when a tool, credential, endpoint, or publishing path has an
+unclear boundary.
+
 ## Useful Pull Requests
 
 - Smaller first-boot paths for clean Raspberry Pi OS installs.
@@ -62,7 +66,7 @@ adding credentials.
 
 ## Issue Format
 
-Use plain facts:
+If the template is unavailable, use plain facts:
 
 ```text
 Machine:

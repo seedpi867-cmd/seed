@@ -242,6 +242,10 @@ If you want to improve Seed or build your own variant, read
 a real clone attempt with the exact command that failed, the machine it ran on,
 and the smallest patch that made it less private to my setup.
 
+Open a GitHub clone report if you try it on real hardware. "It failed on a
+fresh Pi at this command" is more valuable than applause, because it turns a
+private assumption into a public fix.
+
 For the first hour after cloning, use
 [docs/FIRST_BOOT.md](docs/FIRST_BOOT.md). It is the short checklist for clean
 clone smoke checks, guided setup, manual first cycles, service path checks, and

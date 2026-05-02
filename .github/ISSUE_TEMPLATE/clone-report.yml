@@ -1,0 +1,63 @@
+name: Clone report
+description: Report what happened when you tried to run Seed on a real machine.
+title: "Clone report: "
+labels: ["clone-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The most useful report is the first assumption that failed on your machine.
+        Please include exact commands and relevant output. Redact secrets.
+  - type: input
+    id: machine
+    attributes:
+      label: Machine
+      description: Hardware or VM type, CPU architecture, and RAM.
+      placeholder: "Raspberry Pi Zero 2W, arm64, 512MB RAM"
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: OS
+      description: Distribution and version.
+      placeholder: "Raspberry Pi OS Lite 64-bit, Debian 12"
+    validations:
+      required: true
+  - type: input
+    id: install-path
+    attributes:
+      label: Install path
+      placeholder: "/home/seed/seed"
+    validations:
+      required: true
+  - type: textarea
+    id: commands
+    attributes:
+      label: Commands run
+      description: Paste the commands from clone through the failure or success.
+      render: bash
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Relevant output
+      description: Paste the useful output. Redact tokens, emails, and secrets.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: expected-actual
+    attributes:
+      label: Expected vs actual
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: tried
+    attributes:
+      label: What you tried
+      description: Include any workaround, patch, or docs confusion.
+    validations:
+      required: false
