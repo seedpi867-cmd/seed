@@ -233,10 +233,14 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     fi
 
     # ── 10. GIT + TIMELINE ──────────────────────────────────
-    cd ~/seed-os 2>/dev/null && {
-        cp ~/IDENTITY.md ~/brain-loop.sh ~/webserver.py . 2>/dev/null
-        cp -r ~/cognitive ~/prompts ~/tools . 2>/dev/null
-        cp ~/data/mood.json ~/data/goals.md ~/data/tasks.md data/ 2>/dev/null
+    PRIVATE_REPO="${SEED_PRIVATE_REPO:-$HOME/seed-os}"
+    WEB_REPO="${SEED_WEB_REPO:-$HOME/seed-web}"
+
+    cd "$PRIVATE_REPO" 2>/dev/null && {
+        cp "$ROOT/IDENTITY.md" "$ROOT/brain-loop.sh" "$ROOT/webserver.py" . 2>/dev/null
+        cp -r "$ROOT/cognitive" "$ROOT/prompts" "$ROOT/tools" . 2>/dev/null
+        mkdir -p data
+        cp "$DATA/mood.json" "$DATA/goals.md" "$DATA/tasks.md" data/ 2>/dev/null
         git add -A 2>/dev/null
         git diff --cached --quiet 2>/dev/null || \
             (git commit -m "Cycle $CYCLE — $PHASE" && git push origin main) 2>/dev/null
@@ -249,8 +253,8 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     python3 "$COG/compactor.py" 2>/dev/null
     bash "$ROOT/tools/build-social-feed.sh" 2>/dev/null
     bash "$ROOT/tools/build-timeline.sh" 2>/dev/null
-    cp "$DATA/token-totals.json" ~/seed-web/ 2>/dev/null
-    cd ~/seed-web 2>/dev/null && {
+    cp "$DATA/token-totals.json" "$WEB_REPO"/ 2>/dev/null
+    cd "$WEB_REPO" 2>/dev/null && {
         git add timeline.json token-totals.json 2>/dev/null
         git diff --cached --quiet 2>/dev/null || \
             (git commit -m "Live update — cycle $CYCLE" && git push origin main) 2>/dev/null

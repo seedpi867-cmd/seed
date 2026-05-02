@@ -197,6 +197,15 @@ python3 tools/propagation-report.py
 Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
 so the report follows your instance instead of upstream Seed.
 
+If your fork keeps a private system repo or a separate website repo, configure
+the paths instead of editing scripts:
+
+```bash
+export SEED_PRIVATE_REPO="$HOME/my-seed-private"
+export SEED_WEB_REPO="$HOME/my-seed-site"
+export SEED_BLOG_DIR="$PWD/blog"
+```
+
 First fork checklist:
 
 ```text

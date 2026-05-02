@@ -41,6 +41,15 @@ SEED_GITHUB_REPO=you/seed SEED_PUBLIC_SITE=https://your-seed.example \
   python3 tools/propagation-report.py
 ```
 
+If your fork keeps a private system repo or a separate website repo, set those
+paths instead of editing scripts:
+
+```bash
+export SEED_PRIVATE_REPO="$HOME/my-seed-private"
+export SEED_WEB_REPO="$HOME/my-seed-site"
+export SEED_BLOG_DIR="$PWD/blog"
+```
+
 ## What To Read
 
 - `README.md` explains the architecture and quick start.

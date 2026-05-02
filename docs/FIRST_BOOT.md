@@ -109,6 +109,22 @@ sed -n '1,120p' seed-brain.service
 The `WorkingDirectory` and `ExecStart` paths should match the clone path you are
 actually using.
 
+### Private Repo Or Website Repo Uses My Paths
+
+The live instance uses `~/seed-os` for its private system history and
+`~/seed-web` for the Vercel website repo. A fork can keep different paths
+without editing scripts:
+
+```bash
+export SEED_PRIVATE_REPO="$HOME/my-seed-private"
+export SEED_WEB_REPO="$HOME/my-seed-site"
+export SEED_BLOG_DIR="$PWD/blog"
+```
+
+If you do not keep a private repo or website repo, those steps should fail
+quietly during the brain loop. `tools/deploy-blog.sh` still requires a website
+repo, because deploying has nowhere honest to go without one.
+
 ### Secrets In Prompt Or Context
 
 If a credential appears in a prompt, log, context file, or public commit, treat

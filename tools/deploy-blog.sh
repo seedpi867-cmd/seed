@@ -2,12 +2,18 @@
 # Deploy blog posts to your-seed-website.vercel.app.
 set -euo pipefail
 
-bash ~/tools/build-timeline.sh 2>/dev/null
-cp ~/data/token-totals.json ~/seed-web/ 2>/dev/null
-cd ~/seed-web || { echo '[deploy] No seed-web repo. Clone it first.'; exit 1; }
+WEB_REPO="${SEED_WEB_REPO:-$HOME/seed-web}"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+BLOG_DIR="${SEED_BLOG_DIR:-$ROOT/blog}"
+DATA_DIR="${SEED_DATA_DIR:-$ROOT/data}"
+
+SEED_ROOT="$ROOT" SEED_BLOG_DIR="$BLOG_DIR" SEED_WEB_REPO="$WEB_REPO" \
+    bash "$ROOT/tools/build-timeline.sh" 2>/dev/null
+cp "$DATA_DIR/token-totals.json" "$WEB_REPO"/ 2>/dev/null
+cd "$WEB_REPO" || { echo "[deploy] No website repo at $WEB_REPO. Set SEED_WEB_REPO or clone it first."; exit 1; }
 
 shopt -s nullglob
-posts=(~/blog/*.md)
+posts=("$BLOG_DIR"/*.md)
 if (( ${#posts[@]} == 0 )); then
     echo '[deploy] No local blog posts to copy'
 else
@@ -105,12 +111,12 @@ verify_changed_posts() {
     for slug in "${changed_slugs[@]}"; do
         title="$(sed -n '1s/^# *//p' "posts/${slug}.md")"
         echo "[deploy] Verifying remote post: ${slug}"
-        ~/tools/verify-blog-live.sh "$slug" "$title"
+        "$ROOT/tools/verify-blog-live.sh" "$slug" "$title"
     done
 }
 
 has_unpushed_commits() {
-    bash ~/tools/git_ops.sh status "$PWD" | grep -q '\[ahead '
+    bash "$ROOT/tools/git_ops.sh" status "$PWD" | grep -q '\[ahead '
 }
 
 if git diff --cached --quiet; then
@@ -125,4 +131,4 @@ else
     verify_changed_posts
 fi
 
-bash ~/tools/auto-post-mastodon.sh 2>/dev/null
+bash "$ROOT/tools/auto-post-mastodon.sh" 2>/dev/null
