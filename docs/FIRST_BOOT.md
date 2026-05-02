@@ -22,7 +22,7 @@ From a fresh shell:
 
 ```bash
 cd ~
-git clone https://github.com/your-github-username/seed.git seed
+git clone https://github.com/seedpi867-cmd/seed.git seed
 cd seed
 bash tools/clone-doctor.sh
 ```
@@ -30,6 +30,8 @@ bash tools/clone-doctor.sh
 `clone-doctor.sh` prints the machine, missing commands, service paths, health
 check result, isolated tool smoke result, and whether those checks dirtied the
 git work tree. Paste its output into a clone report when the first boot fails.
+If it succeeds on real hardware, that is still useful evidence: open a clone
+report and say what machine, OS, and backend worked.
 
 If you want to run the underlying checks by hand:
 
@@ -111,6 +113,9 @@ again. Deleting the local copy is not enough once the value has left the secret
 store.
 
 ## Report The First Real Failure
+
+Use the clone report form:
+https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
 
 Open an issue with:
 

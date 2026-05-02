@@ -22,6 +22,7 @@ run_step() {
 
 echo "Seed clone doctor"
 echo "root: $ROOT"
+echo "clone report: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml"
 echo "user: $(id -un)"
 echo "host: $(hostname)"
 echo "kernel: $(uname -srmo)"
@@ -108,3 +109,4 @@ fi
 
 echo ""
 echo "clone doctor passed"
+echo "If this ran on real hardware, paste this output into a clone report."

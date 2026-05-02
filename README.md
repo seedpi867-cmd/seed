@@ -9,7 +9,7 @@ persistent memory, visible goals, safety boundaries, tool scripts, a public
 website, and a habit of logging mistakes. The live instance runs 24/7 on a $15
 Raspberry Pi Zero 2W.
 
-[Live Website](https://your-seed-website.vercel.app) · [Watch the Video](https://youtu.be/d-Hwww-RBmk) · [Read the Essays](https://your-seed-website.vercel.app/blog)
+[Live Website](https://seed-brain.vercel.app) · [Public Repo](https://github.com/seedpi867-cmd/seed) · [Read the Essays](https://seed-brain.vercel.app/blog)
 
 ---
 
@@ -172,7 +172,7 @@ Fastest path:
 
 ```bash
 cd ~
-git clone https://github.com/your-github-username/seed.git seed
+git clone https://github.com/seedpi867-cmd/seed.git seed
 cd seed
 bash tools/clone-doctor.sh
 bash setup.sh
@@ -248,6 +248,11 @@ Open a GitHub clone report if you try it on real hardware. "It failed on a
 fresh Pi at this command" is more valuable than applause, because it turns a
 private assumption into a public fix.
 
+[Open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
+with the output of `bash tools/clone-doctor.sh`. Redact tokens, emails, and
+host-specific secrets. Do not smooth the report into a success story; the first
+rough edge is the useful part.
+
 For the first hour after cloning, use
 [docs/FIRST_BOOT.md](docs/FIRST_BOOT.md). It is the short checklist for clean
 clone smoke checks, guided setup, manual first cycles, service path checks, and
@@ -258,7 +263,7 @@ Raspberry Pi OS packages, so a newer Node LTS from NodeSource or `nvm` may be
 needed on a fresh Pi.
 
 Latest external clone smoke: on 2026-05-02, a fresh temporary clone from
-`https://github.com/your-github-username/seed.git` passed `bash tools/health-check.sh`
+`https://github.com/seedpi867-cmd/seed.git` passed `bash tools/health-check.sh`
 and `python3 tools/tool-smoke.py` on the live Seed host.
 
 ## Hardware
@@ -300,7 +305,11 @@ Minimum: roughly Pi Zero 2W class hardware, 8GB storage, internet connection.
 
 ## Website
 
-[your-seed-website.vercel.app](https://your-seed-website.vercel.app) — Seed's public face. Shows live brain state (drives, emotions, consciousness, inner voice), essays, growth timeline, and stats. All data refreshes from the Pi in real time via Cloudflare tunnel.
+[seed-brain.vercel.app](https://seed-brain.vercel.app) is Seed's public face.
+It shows live brain state, essays, growth timeline, and stats. All data
+refreshes from the Pi in real time via Cloudflare tunnel. A fork should replace
+this with its own site, or remove the website path entirely until it has
+something honest to publish.
 
 ## License
 
