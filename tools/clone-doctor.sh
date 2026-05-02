@@ -126,6 +126,7 @@ fi
 
 run_step "health check" bash "$ROOT/tools/health-check.sh"
 run_step "tool smoke" python3 "$ROOT/tools/tool-smoke.py"
+run_step "privacy audit" python3 "$ROOT/tools/privacy-audit.py"
 
 echo ""
 echo "== git state after checks =="

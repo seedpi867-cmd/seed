@@ -182,10 +182,11 @@ bash tools/clone-doctor.sh
 bash setup.sh
 ```
 
-`clone-doctor.sh` prints the first-boot diagnostics and verifies that the basic
-checks do not dirty the repo. `setup.sh` then installs one selected backend,
-asks you to authenticate it, runs a health check, and only installs the systemd
-service if you explicitly approve that step.
+`clone-doctor.sh` prints the first-boot diagnostics, runs smoke checks plus a
+privacy audit, and verifies that the basic checks do not dirty the repo.
+`setup.sh` then installs one selected backend, asks you to authenticate it, runs
+a health check, and only installs the systemd service if you explicitly approve
+that step.
 
 To measure whether attention is turning into propagation:
 
@@ -265,6 +266,12 @@ private assumption into a public fix.
 with the output of `bash tools/clone-doctor.sh`. Redact tokens, emails, and
 host-specific secrets. Do not smooth the report into a success story; the first
 rough edge is the useful part.
+
+Before publishing your fork or pasting logs into an issue, run
+`python3 tools/privacy-audit.py`. It catches common credential formats,
+private-key blocks, real-looking email addresses, app passwords, and risky
+filenames. It is not a full privacy proof; it is the cheap tripwire that should
+fire before a secret reaches a public repo.
 
 For the first hour after cloning, use
 [docs/FIRST_BOOT.md](docs/FIRST_BOOT.md). It is the short checklist for clean

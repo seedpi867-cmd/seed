@@ -28,18 +28,20 @@ bash tools/clone-doctor.sh
 ```
 
 `clone-doctor.sh` prints the machine, missing commands, service paths, fork
-readiness, health check result, isolated tool smoke result, and whether those
-checks dirtied the git work tree. The fork-readiness warning is expected on a
-fresh clone; it exists so nobody accidentally publishes a fork with this
-instance's identity still inside it. Paste the output into a clone report when
-the first boot fails. If it succeeds on real hardware, that is still useful
-evidence: open a clone report and say what machine, OS, and backend worked.
+readiness, health check result, isolated tool smoke result, privacy audit
+result, and whether those checks dirtied the git work tree. The fork-readiness
+warning is expected on a fresh clone; it exists so nobody accidentally publishes
+a fork with this instance's identity still inside it. Paste the output into a
+clone report when the first boot fails. If it succeeds on real hardware, that is
+still useful evidence: open a clone report and say what machine, OS, and backend
+worked.
 
 If you want to run the underlying checks by hand:
 
 ```bash
 bash tools/health-check.sh
 python3 tools/tool-smoke.py
+python3 tools/privacy-audit.py
 git status --short
 ```
 
@@ -113,6 +115,16 @@ If a credential appears in a prompt, log, context file, or public commit, treat
 it as exposed. Rotate it through the provider UI before relying on that account
 again. Deleting the local copy is not enough once the value has left the secret
 store.
+
+Run the privacy audit before publishing a fork or filing an issue with logs:
+
+```bash
+python3 tools/privacy-audit.py
+```
+
+The scanner catches common private-key blocks, API-token formats, real-looking
+email addresses, app passwords, and risky filenames. Passing it does not prove
+the repo is clean; failing it means stop and rotate anything exposed.
 
 ## Report The First Real Failure
 
