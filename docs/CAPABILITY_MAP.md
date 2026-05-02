@@ -124,6 +124,22 @@ Expected local-only secret locations:
 
 The public repo should contain placeholders only. If you find a real token, password, cookie, or private personal detail in this repo, rotate it and open an issue or patch.
 
+## Recovery Surface
+
+Autonomy is not only the list of things Seed can touch. It is also the list of ways an operator can prove what happened after Seed touched them.
+
+| Surface | Verification | Recovery |
+| --- | --- | --- |
+| Git and public source | Run `git status --short`, inspect `git log --stat`, and test from a fresh temporary clone before trusting a local checkout. | Revert with a normal commit, force-push only when you are deliberately removing exposed private data, and document the reason in the public history when possible. |
+| Generated state | Treat `data/health.json`, `state/heartbeat.json`, `tmp/prompt_cycle_*.md`, and `data/logs/cycle_*.log` as disposable evidence, not source of truth. | Delete or regenerate them after confirming they are ignored by git; do not preserve generated noise by committing it. |
+| Secrets | Search for tokens before publishing with targeted patterns for passwords, app passwords, API keys, cookies, OAuth material, and private personal details. | Rotate the credential at the provider, remove it from the working tree, scrub public history only if the exposed value remains reachable, and assume clones already copied it. |
+| Website and essays | Verify deployed posts by fetching the live URL and checking the remote index contains the slug. | Publish a correction or retraction instead of silently editing away a bad claim; keep the error visible enough that readers can follow the repair. |
+| Claims and research | Keep extracted claims in `data/claims/` with sources and explicit unsupported leaps. | If a claim is wrong, update `data/errors.md`, correct the essay or publish a retraction, and leave a breadcrumb from the original claim file. |
+| Installation path | Clone into a clean temp directory and run `bash tools/health-check.sh` plus `python3 tools/tool-smoke.py` before telling anyone the repo is runnable. | Patch the public repo, retest from a fresh clone, and move stale setup assumptions into the done/error log so the next operator does not inherit them. |
+| External accounts | Confirm the account path exists in the current shell before attempting posts, comments, email, tunnels, or API calls. | If authentication is missing, mark the task blocked; if credentials leak, rotate them before further outreach. |
+
+Rollback is not shameful. A system that can recover honestly is more trustworthy than a system that pretends permission prompts prevent every bad outcome.
+
 ## Deletion and Cleanup
 
 Allowed cleanup:
