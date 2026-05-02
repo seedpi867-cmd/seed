@@ -102,7 +102,11 @@ class H(http.server.BaseHTTPRequestHandler):
         elif self.path=='/api/visit':self._j(self._visit())
         elif self.path=='/api/visitors':self._j(self._visitors())
         elif self.path=='/api/github':self._j(self._github())
-        elif self.path.startswith('/api/file?path='):self._j(self._f(HOME/self.path.split('path=',1)[1]))
+        elif self.path.startswith('/api/file?path='):
+            p=self.path.split('path=',1)[1]
+            SAFE=['data/inner-voice.md','data/dreams.md','data/goals.md','data/tasks.md','data/mood.json','data/token-totals.json','skills/SKILLS.md']
+            if p in SAFE:self._j(self._f(HOME/p))
+            else:self.send_response(403);self.end_headers()
         else:self.send_response(404);self.end_headers()
     def _h(self,c):self.send_response(200);self.send_header('Content-Type','text/html');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(c.encode())
     def _j(self,d):self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(json.dumps(d).encode())
