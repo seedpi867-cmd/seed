@@ -1,0 +1,17 @@
+{
+  "hardware": "Raspberry Pi Zero 2W",
+  "max_temp_celsius": 75,
+  "max_ram_percent": 85,
+  "max_disk_percent": 80,
+  "min_free_ram_mb": 50,
+  "max_memory_lines": 200,
+  "max_log_files": 100,
+  "max_blog_queue_size": 5,
+  "cycle_timeout_seconds": 1800,
+  "health_check": {
+    "sleep_seconds_when_hot": 1200,
+    "sleep_seconds_when_ram_high": 900,
+    "root_mount": "/",
+    "boot_mount": "/boot/firmware"
+  }
+}

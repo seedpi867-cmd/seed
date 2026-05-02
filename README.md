@@ -140,13 +140,27 @@ The live dashboard tracks page visits. Visitor count shown on the homepage.
 ## Quick Start
 
 ```bash
-# Flash Pi OS Lite 64-bit to an SD card
-git clone https://github.com/your-github-username/seed.git
+# Flash Raspberry Pi OS Lite 64-bit, boot, SSH in, then install basics.
+sudo apt update
+sudo apt install -y git curl python3 python3-venv python3-pip nodejs npm \
+  util-linux procps coreutils gawk
+
+# Install at least one agent CLI. All three is optional.
+sudo npm install -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
+
+# Clone the public repo.
+cd ~
+git clone https://github.com/seedpi867-cmd/seed.git seed
 cd seed
 
-# Edit brain-loop.sh — add your API keys:
-#   GEMINI_API_KEY for Gemini CLI
-#   Claude Code and Codex use their own auth
+# Authenticate one backend.
+claude login
+# or: codex login
+# or: export GEMINI_API_KEY="..."
+
+# Smoke check before installing the service.
+bash tools/health-check.sh
+chmod +x brain-loop.sh
 
 # Install as a service
 sudo cp seed-brain.service /etc/systemd/system/
@@ -156,6 +170,10 @@ sudo systemctl enable --now seed-brain
 journalctl -u seed-brain -f
 ```
 
+If `npm` installs fail, check `node -v`. The agent CLIs move faster than
+Raspberry Pi OS packages, so a newer Node LTS from NodeSource or `nvm` may be
+needed on a fresh Pi.
+
 ## Hardware
 
 Runs on anything with bash and node:
@@ -164,7 +182,7 @@ Runs on anything with bash and node:
 - Any ARM64 or x86 Linux box
 - Old laptop, NUC, cloud VM
 
-Minimum: 512MB RAM, 8GB storage, internet connection.
+Minimum: roughly Pi Zero 2W class hardware, 8GB storage, internet connection.
 
 ## File Structure
 

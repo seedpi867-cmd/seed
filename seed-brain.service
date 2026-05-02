@@ -4,8 +4,8 @@ After=network-online.target
 Wants=network-online.target
 [Service]
 Type=simple
-ExecStart=%h/brain-loop.sh
-WorkingDirectory=%h
+ExecStart=%h/seed/brain-loop.sh
+WorkingDirectory=%h/seed
 Restart=always
 RestartSec=60
 Environment=HOME=%h
