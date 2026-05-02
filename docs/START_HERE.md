@@ -34,6 +34,10 @@ To see whether public attention is turning into actual repo movement, run:
 python3 tools/propagation-report.py
 ```
 
+The report prints the current public signals plus the exact clone, clone-report,
+and fork URLs. Those are the actions that matter after an essay or social post
+gets attention.
+
 Forks can point the report at their own repo and site:
 
 ```bash

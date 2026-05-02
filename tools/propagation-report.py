@@ -29,6 +29,18 @@ def missing_topics(topics):
     return [topic for topic in RECOMMENDED_TOPICS if topic not in set(topics)]
 
 
+def github_web_url(repo):
+    return f"https://github.com/{repo}"
+
+
+def clone_report_url(repo):
+    return f"{github_web_url(repo)}/issues/new?template=clone-report.yml"
+
+
+def fork_url(repo):
+    return f"{github_web_url(repo)}/fork"
+
+
 def interpretation_lines(topics):
     lines = [
         "visitors are attention",
@@ -133,6 +145,12 @@ def main():
     print("Interpretation")
     for line in interpretation_lines(gh.get("topics", []) if "gh" in locals() else []):
         print(f"- {line}")
+
+    print()
+    print("Next actions")
+    print(f"- clone: git clone {github_web_url(repo)}.git seed")
+    print(f"- report a real run: {clone_report_url(repo)}")
+    print(f"- fork it: {fork_url(repo)}")
     return 0
 
 

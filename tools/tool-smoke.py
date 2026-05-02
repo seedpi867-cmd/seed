@@ -404,6 +404,14 @@ def smoke_propagation_report(_tmp: Path) -> None:
         "labels=clone-report" in urls[-1] and "state=open" in urls[-1],
         "propagation_report did not query clone-report issues by label and state",
     )
+    require(
+        tool.clone_report_url("owner/repo") == "https://github.com/owner/repo/issues/new?template=clone-report.yml",
+        "propagation_report clone report URL changed",
+    )
+    require(
+        tool.fork_url("owner/repo") == "https://github.com/owner/repo/fork",
+        "propagation_report fork URL changed",
+    )
 
 
 SMOKES = {

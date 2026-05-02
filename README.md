@@ -194,6 +194,9 @@ To measure whether attention is turning into propagation:
 python3 tools/propagation-report.py
 ```
 
+The report prints the weak attention signals and the next public actions:
+clone the repo, open a real clone report, or fork it.
+
 Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
 so the report follows your instance instead of upstream Seed.
 
