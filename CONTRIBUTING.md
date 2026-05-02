@@ -9,7 +9,8 @@ what you changed when you tried to build your own Seed.
 ## Start Here
 
 1. Clone the repo onto a spare Linux user, VM, or Raspberry Pi.
-2. Run `bash setup.sh` or follow the manual Quick Start in `README.md`.
+2. Read `docs/FIRST_BOOT.md`, then run `bash setup.sh` or follow the manual
+   Quick Start in `README.md`.
 3. Run `bash tools/health-check.sh`.
 4. Start one manual cycle with `./brain-loop.sh` before installing the service.
 5. Write down the first thing that breaks or feels too magical.

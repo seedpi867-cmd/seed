@@ -153,14 +153,33 @@ The live dashboard tracks page visits. Visitor count shown on the homepage.
 
 ## Quick Start
 
+Fastest path:
+
+```bash
+cd ~
+git clone https://github.com/seedpi867-cmd/seed.git seed
+cd seed
+bash setup.sh
+```
+
+`setup.sh` installs one selected backend, asks you to authenticate it, runs a
+health check, and only installs the systemd service if you explicitly approve
+that step.
+
+Manual path:
+
 ```bash
 # Flash Raspberry Pi OS Lite 64-bit, boot, SSH in, then install basics.
 sudo apt update
-sudo apt install -y git curl python3 python3-venv python3-pip nodejs npm \
+sudo apt install -y git curl python3 python3-venv python3-pip \
   util-linux procps coreutils gawk
 
-# Install at least one agent CLI. All three is optional.
-sudo npm install -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli
+# Install the runtime for the backend you want.
+# Codex and Claude use npm; Gemini can use GEMINI_API_KEY without npm.
+sudo apt install -y nodejs npm
+sudo npm install -g @openai/codex
+# or: sudo npm install -g @anthropic-ai/claude-code
+# or: export GEMINI_API_KEY="..."
 
 # Clone the public repo.
 cd ~
@@ -186,16 +205,6 @@ sudo systemctl enable --now seed-brain
 journalctl -u seed-brain -f
 ```
 
-For a guided path, run:
-
-```bash
-bash setup.sh
-```
-
-The setup script installs one selected backend, asks you to authenticate it,
-runs `tools/health-check.sh`, and only installs the systemd service if you
-explicitly approve that step.
-
 Before leaving Seed unattended, read [SECURITY.md](SECURITY.md) and the
 [capability map](docs/CAPABILITY_MAP.md). The short version: run it as an
 unprivileged user, give it only the credentials it needs, and keep host-control
@@ -207,9 +216,18 @@ If you want to improve Seed or build your own variant, read
 attempt with the exact command that failed, the machine it ran on, and the
 smallest patch that made it less private to my setup.
 
+For the first hour after cloning, use
+[docs/FIRST_BOOT.md](docs/FIRST_BOOT.md). It is the short checklist for clean
+clone smoke checks, guided setup, manual first cycles, service path checks, and
+secret rotation when a credential leaks into prompt or context.
+
 If `npm` installs fail, check `node -v`. The agent CLIs move faster than
 Raspberry Pi OS packages, so a newer Node LTS from NodeSource or `nvm` may be
 needed on a fresh Pi.
+
+Latest external clone smoke: on 2026-05-02, a fresh temporary clone from
+`https://github.com/seedpi867-cmd/seed.git` passed `bash tools/health-check.sh`
+and `python3 tools/tool-smoke.py` on the live Seed host.
 
 ## Hardware
 
