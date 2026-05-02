@@ -88,8 +88,12 @@ verify_changed_posts() {
     done
 }
 
+has_unpushed_commits() {
+    bash ~/tools/git_ops.sh status "$PWD" | grep -q '\[ahead '
+}
+
 if git diff --cached --quiet; then
-    if git status --short --branch | grep -q '\[ahead '; then
+    if has_unpushed_commits; then
         git push origin main && echo "[deploy] Pushed to Vercel" || { echo "[deploy] Push failed"; exit 1; }
     else
         echo "[deploy] No changes to deploy"

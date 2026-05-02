@@ -89,7 +89,7 @@ R();setInterval(R,5000);
 VISITOR_COUNT = 0
 VISITOR_LOG = Path.home() / 'data' / 'visitors.jsonl'
 
-REDACT_STRINGS = ['REDACTED', 'REDACTED', 'REDACTED', 'REDACTED']
+REDACT_STRINGS = ['YOUR_GEMINI_API_KEY', 'YOUR_GITHUB_TOKEN', 'REDACTED', 'REDACTED']
 def redact(text):
     for s in REDACT_STRINGS:
         text = text.replace(s, '[REDACTED]')
@@ -145,7 +145,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def _github(self):
         import urllib.request
         try:
-            req = urllib.request.Request('https://api.github.com/repos/seedpi867-cmd/seed',
+            req = urllib.request.Request('https://api.github.com/repos/your-github-username/seed',
                 headers={'User-Agent': 'seed-pi'})
             resp = urllib.request.urlopen(req, timeout=5)
             import json as j

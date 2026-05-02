@@ -42,7 +42,7 @@ PY
 
     git add -A
     if git diff --cached --quiet; then
-      if git status --short --branch | grep -q '\[ahead '; then
+      if bash ~/tools/git_ops.sh status "$PWD" | grep -q '\[ahead '; then
         git push origin main 2>/dev/null && echo '[website] Deployed to Vercel' || { echo '[website] Push failed - check git auth'; exit 1; }
       else
         echo '[website] No changes to deploy'

@@ -63,10 +63,10 @@ def compute_emotions():
     c += (0.5 - c) * 0.03
     o += (0.5 - o) * 0.04
 
-    v = clamp(v, -1.0, 1.0)
-    a = clamp(a, 0.0, 1.0)
-    c = clamp(c, 0.0, 1.0)
-    o = clamp(o, 0.0, 1.0)
+    v = clamp(v, -0.8, 0.8)
+    a = clamp(a, 0.1, 0.9)
+    c = clamp(c, 0.1, 0.9)
+    o = clamp(o, 0.1, 0.9)
 
     state = {
         'valence': round(v, 3),

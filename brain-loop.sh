@@ -76,6 +76,16 @@ while true; do
     echo "[seed] ════════════════════════════════════"
     echo "[seed] CYCLE $CYCLE — $TIMESTAMP"
 
+
+    # ── RAM guard — light cycle if memory critically low ─────
+    RAM_FREE=$(free -m 2>/dev/null | awk '/Mem:/{print $4}')
+    if [ -n "$RAM_FREE" ] && [ "$RAM_FREE" -lt 60 ] 2>/dev/null; then
+        echo "[seed] RAM GUARD: ${RAM_FREE}MB free — light cycle" | tee -a "$LOG_FILE"
+        python3 "$COG/triggers.py" 2>&1 | tee -a "$LOG_FILE"
+        sleep 300
+        continue
+    fi
+
     # ── 1. FEEDERS (check context freshness) ────────────────
     led_on
     bash "$ROOT/tools/feed-rss.sh" 2>/dev/null
@@ -83,6 +93,16 @@ while true; do
     bash "$ROOT/tools/feed-environment.sh" 2>/dev/null
     bash "$ROOT/tools/feed-email.sh" 2>/dev/null
     bash "$ROOT/tools/feed-github.sh" 2>/dev/null
+
+
+    # ── 1.5 SMART TRIGGERS (zero tokens, auto-fix) ─────────
+    TRIGGER_RESULT=$(python3 "$COG/triggers.py" 2>&1 | tail -1)
+    if [ "$TRIGGER_RESULT" = "CRITICAL" ]; then
+        echo "[seed] CRITICAL trigger fired — skipping LLM, sleeping" | tee -a "$LOG_FILE"
+        echo '{"cycle":'$CYCLE',"ts":"'$(date -Iseconds)'","state":"emergency"}' > "$STATE/heartbeat.json"
+        sleep 300
+        continue
+    fi
 
     # ── 2. DRIVE UPDATE (zero tokens) ───────────────────────
     ELAPSED=$(python3 -c "
@@ -106,6 +126,11 @@ except: print(600)
 
     # ── 4. APPRAISAL + PHASE SELECTION (zero tokens) ────────
     PHASE=$(python3 "$COG/appraisal.py" --cycle "$CYCLE" 2>&1 | tail -1)
+    # Validate phase — if appraisal errored, default to think
+    case "$PHASE" in
+        think|write|research|dream|maintain) ;;
+        *) echo "[seed] WARNING: invalid phase '$PHASE', defaulting to think"; PHASE="think" ;;
+    esac
     echo "[seed] Phase: $PHASE | Working memory: $(wc -l < "$STATE/working_memory.txt" 2>/dev/null || echo 0) lines"
 
     # ── 5. PROMPT ASSEMBLY ──────────────────────────────────
@@ -122,14 +147,40 @@ except: print(600)
     # ── 6. HEARTBEAT: phase active ──────────────────────────
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"$PHASE\"}" > "$STATE/heartbeat.json"
 
+    # ── 6.5 PREDECLARE INTENTION ──────────────────────────
+    python3 "$COG/intentions.py" 2>/dev/null || true
+    python3 -c "
+import sys; sys.path.insert(0,'$COG')
+from intentions import predeclare
+from common import load_json, STATE
+drives = load_json(STATE / 'drives.json', {})
+i = predeclare($CYCLE, '$PHASE', drives)
+print(f'[intention] Declared: {i["intention"]}')
+" 2>&1 | tee -a "$LOG_FILE"
+
     # ── 7. LLM CALL ─────────────────────────────────────────
+    # Earned autonomy — more turns as competence increases
+    BASE_TURNS=$(python3 -c "
+import json
+try:
+    skills = json.load(open('$HOME/data/skill_stats.json'))
+    # Average success rate across all skills
+    rates = [s.get('rate', 0.5) for s in skills.values()]
+    avg = sum(rates) / max(len(rates), 1)
+    # Higher success rate = more turns (50-200 range)
+    bonus = int(avg * 100)
+    print(max(50, min(200, 80 + bonus)))
+except:
+    print(80)
+" 2>/dev/null || echo 80)
+
     case "$PHASE" in
-        think)    MAX_TURNS=80;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
-        write)    MAX_TURNS=150; CLI="claude -p" ;;
-        research) MAX_TURNS=80;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
-        dream)    MAX_TURNS=50;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
-        maintain) MAX_TURNS=50;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
-        *)        MAX_TURNS=50;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
+        think)    MAX_TURNS=$BASE_TURNS;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
+        write)    MAX_TURNS=$((BASE_TURNS + 50)); CLI="claude -p" ;;
+        research) MAX_TURNS=$BASE_TURNS;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
+        dream)    MAX_TURNS=$((BASE_TURNS / 2)); CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
+        maintain) MAX_TURNS=$((BASE_TURNS / 2)); CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
+        *)        MAX_TURNS=$BASE_TURNS;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
     esac
 
     PROMPT_TEXT=$(cat "$PROMPT_FILE")
@@ -158,6 +209,14 @@ except: print(600)
         "$(echo $CLI | cut -d' ' -f1)" "$LOG_FILE" "$LOG_BEFORE" 2>/dev/null
 
     rm -f "$PROMPT_FILE"
+
+    # ── 7.5 VERIFY INTENTION ───────────────────────────────
+    python3 -c "
+import sys; sys.path.insert(0,'$COG')
+from intentions import verify
+r = verify($CYCLE)
+if r: print(f'[intention] {r["result"]}: {r.get("evidence","none")}')
+" 2>&1 | tee -a "$LOG_FILE"
 
     # ── 8. LEARNING (zero tokens) ───────────────────────────
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"learning\"}" > "$STATE/heartbeat.json"

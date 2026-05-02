@@ -1,32 +1,52 @@
 #!/usr/bin/env python3
-"""Appraisal — builds working memory, selects phase, filters context by salience"""
+"""Fix appraisal — make Seed proactive, force blog every 15 cycles, stop maintain spam"""
 import sys, os, glob
 from datetime import datetime
+import math
 sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
 def select_phase(drives, emotions, cycle):
-    """Pick the phase based on drives + cycle position"""
-    # Maintenance every 20 cycles or critical preservation
-    if cycle % 20 == 0 or drives.get('preserve', 0) > 0.85:
-        return 'maintain'
-    # Dream every 12 cycles
+    """Pick phase — proactive, not passive. Writing is the priority."""
+
+    # Check when last blog was written
+    blog_dir = HOME / 'blog'
+    last_blog_cycle = 0
+    if blog_dir.exists():
+        blogs = sorted(blog_dir.glob('*.md'), key=lambda f: f.stat().st_mtime, reverse=True)
+        if blogs:
+            # Estimate cycle from file age
+            age_seconds = now() - blogs[0].stat().st_mtime
+            cycles_since = int(age_seconds / 300)  # ~5 min per cycle average
+            last_blog_cycle = max(0, cycle - cycles_since)
+
+    cycles_since_blog = cycle - last_blog_cycle
+
+    # FORCE WRITE every 15 cycles if no blog written
+    if cycles_since_blog >= 15:
+        return 'write'
+
+    # WRITE if create drive is above 0.5 (not 0.7 — be more eager)
+    if drives.get('create', 0) > 0.5:
+        return 'write'
+
+    # RESEARCH every 5th cycle (not 3rd — more thinking, less researching)
+    if cycle % 5 == 0 and drives.get('explore', 0) > 0.3:
+        return 'research'
+
+    # DREAM every 12th cycle
     if cycle % 12 == 0:
         return 'dream'
-    # Write if create is top and above threshold
-    if drives.get('create', 0) > 0.7 and _is_top(drives, 'create'):
-        return 'write'
-    # Research if explore is top
-    if drives.get('explore', 0) > 0.6 and _is_top(drives, 'explore'):
-        return 'research'
-    # Default: think
+
+    # MAINTAIN removed — triggers.py handles maintenance automatically
+
+    # Default: THINK — but the prompt must demand action
     return 'think'
 
 def _is_top(drives, name):
     return drives.get(name, 0) >= max(drives.values()) - 0.05
 
 def get_system_line():
-    """One-line system status"""
     try:
         import subprocess
         temp = read_text('/sys/class/thermal/thermal_zone0/temp', '0').strip()
@@ -50,19 +70,51 @@ def _disk_pct():
     except:
         return '?'
 
+
+def get_emotion_matched_memories(current_emotions, n=3):
+    """Retrieve memories that match current emotional state (ai_home pattern)"""
+    ep_dir = MEMORY / 'episodic'
+    if not ep_dir.exists():
+        return []
+
+    current_label = current_emotions.get('label', 'neutral')
+    current_valence = current_emotions.get('valence', 0)
+
+    scored = []
+    for f in sorted(ep_dir.glob('*.json'), key=lambda f: f.stat().st_mtime, reverse=True)[:50]:
+        data = load_json(f)
+        if not data:
+            continue
+
+        # Emotional match
+        past_emo = data.get('emotion_at_time', {})
+        past_label = past_emo.get('label', '')
+        emotion_match = 1.0 if past_label == current_label else 0.3
+
+        # Valence proximity
+        past_valence = past_emo.get('valence', 0)
+        valence_match = 1.0 - min(abs(current_valence - past_valence), 1.0)
+
+        # Recency
+        age_hours = (time.time() - data.get('timestamp', 0)) / 3600
+        recency = math.exp(-age_hours / 48)  # 48-hour half-life
+
+        # Importance
+        importance = data.get('importance', 0.5)
+
+        score = importance * 0.3 + emotion_match * 0.3 + valence_match * 0.2 + recency * 0.2
+        scored.append((score, data))
+
+    scored.sort(key=lambda x: -x[0])
+    return [s[1] for s in scored[:n]]
+
+
 def get_recent_episodic(n=5):
-    """Get last N episodic memories"""
     ep_dir = MEMORY / 'episodic'
     files = sorted(ep_dir.glob('*.json'), key=lambda f: f.stat().st_mtime, reverse=True)[:n]
-    results = []
-    for f in files:
-        data = load_json(f)
-        if data:
-            results.append(data)
-    return results
+    return [load_json(f) for f in files if load_json(f)]
 
 def get_relevant_semantic(drives, n=3):
-    """Get semantic memories relevant to top drives"""
     DRIVE_TOPICS = {
         'create': ['writing', 'essays', 'blog'],
         'explore': ['research', 'news', 'discovery'],
@@ -78,26 +130,23 @@ def get_relevant_semantic(drives, n=3):
     for dname, _ in top_drives:
         for topic in DRIVE_TOPICS.get(dname, []):
             if topic in index.get('topics', {}):
-                fpath = MEMORY / 'semantic' / index['topics'][topic]
-                data = load_json(fpath)
+                data = load_json(MEMORY / 'semantic' / index['topics'][topic])
                 if data:
                     results.append(data)
     return results[:n]
 
 def get_recent_lessons(n=3):
-    """Get most recent lessons"""
     lesson_dir = MEMORY / 'lessons'
     files = sorted(lesson_dir.glob('*.json'), key=lambda f: f.stat().st_mtime, reverse=True)[:n]
     return [load_json(f).get('lesson', '') for f in files if load_json(f)]
 
 def select_context(drives, budget=25):
-    """Drive-weighted context selection"""
     CONTEXT_MAP = {
-        'rss.md':          {'explore': 1.0, 'understand': 0.5},
-        'email.md':        {'connect': 1.0, 'order': 0.3},
-        'github.md':       {'create': 0.5, 'order': 0.5},
-        'transcript.md':   {'explore': 0.8, 'understand': 0.3},
-        'trends.md':       {'explore': 0.6, 'connect': 0.3},
+        'rss.md':        {'explore': 1.0, 'understand': 0.5},
+        'email.md':      {'connect': 1.0, 'order': 0.3},
+        'github.md':     {'create': 0.5, 'order': 0.5},
+        'transcript.md': {'explore': 0.8, 'understand': 0.3},
+        'trends.md':     {'explore': 0.6, 'connect': 0.3},
     }
     scored = []
     for fname, weights in CONTEXT_MAP.items():
@@ -121,6 +170,46 @@ def select_context(drives, budget=25):
         remaining -= len(content_lines) + 1
     return lines
 
+
+def detect_patterns():
+    """Detect recurring behavioural patterns from feedback ledger"""
+    ledger_path = DATA / 'feedback_ledger.jsonl'
+    if not ledger_path.exists():
+        return []
+
+    patterns = []
+    action_counts = {}
+    failure_streaks = {}
+
+    try:
+        for line in open(ledger_path):
+            e = json.loads(line.strip())
+            action = e.get('action', '')
+            success = e.get('success', True)
+
+            if action not in action_counts:
+                action_counts[action] = {'total': 0, 'failures': 0, 'consecutive_fails': 0}
+            action_counts[action]['total'] += 1
+            if not success:
+                action_counts[action]['failures'] += 1
+                action_counts[action]['consecutive_fails'] += 1
+            else:
+                action_counts[action]['consecutive_fails'] = 0
+
+        # Flag patterns
+        for action, counts in action_counts.items():
+            if counts['consecutive_fails'] >= 3:
+                patterns.append(f"PATTERN: {action} has failed {counts['consecutive_fails']} times in a row. Change approach or abandon.")
+            if counts['total'] > 5 and counts['failures'] / counts['total'] > 0.6:
+                patterns.append(f"PATTERN: {action} fails {int(counts['failures']/counts['total']*100)}% of the time. Consider a different strategy.")
+            if action == 'nothing_happened' and counts['total'] > 3:
+                patterns.append(f"PATTERN: {counts['total']} cycles produced nothing. Urgency needed.")
+    except:
+        pass
+
+    return patterns
+
+
 def build_working_memory(cycle):
     drives = load_json(STATE / 'drives.json', {})
     emotions = load_json(STATE / 'emotions.json', {})
@@ -128,7 +217,6 @@ def build_working_memory(cycle):
 
     lines = []
 
-    # State snapshot
     top_drives = sorted(drives.items(), key=lambda x: -x[1])[:3]
     drive_str = ', '.join(f'{d}={v:.2f}' for d, v in top_drives)
     label = emotions.get('label', 'neutral')
@@ -142,49 +230,48 @@ def build_working_memory(cycle):
     lines.append(f'PHASE: {phase.upper()}')
     lines.append('')
 
-    # Focus description
-    top_drive = top_drives[0][0] if top_drives else 'think'
+    # Proactive focus — tell Seed what to DO, not what to consider
     focus_map = {
-        'create': 'Your creative drive is highest. Write something.',
-        'explore': 'Your curiosity is pulling. Research something.',
-        'connect': 'You want to connect. Check visitors, respond, engage.',
-        'preserve': 'System needs attention. Check health, fix errors.',
-        'understand': 'You want to understand. Synthesise what you know.',
-        'express': 'You need to express. Write your inner voice, reflect.',
-        'order': 'Things need organising. Clean tasks, update goals.',
+        'create': 'WRITE an essay NOW. Pick a topic from your research, transcripts, or something personal. Do not skip this.',
+        'explore': 'RESEARCH something. Pick a topic from the news or transcripts. Go deep. Save findings.',
+        'connect': 'Check for visitors. Post to Mastodon or Reddit. Engage with the world.',
+        'preserve': 'Quick health check. Fix anything broken. Then move on — don\'t spend the whole cycle on maintenance.',
+        'understand': 'Synthesise what you know. Connect recent learning. Update beliefs if needed.',
+        'express': 'Write your inner voice. Reflect honestly. Express what you\'re thinking.',
+        'order': 'Clean up tasks. Update goals. Organise, then move on to creating.',
     }
-    lines.append(f'FOCUS: {focus_map.get(top_drive, "Think and act.")}')
+    top_drive = top_drives[0][0] if top_drives else 'create'
+
+    if phase == 'write':
+        # Check last blog age
+        blog_dir = HOME / 'blog'
+        blogs = sorted(blog_dir.glob('*.md'), key=lambda f: f.stat().st_mtime, reverse=True) if blog_dir.exists() else []
+        if blogs:
+            age_min = int((now() - blogs[0].stat().st_mtime) / 60)
+            lines.append(f'FOCUS: You have not written a blog post in {age_min} minutes. WRITE ONE NOW.')
+        else:
+            lines.append('FOCUS: WRITE your first blog post. Pick any topic. Just write.')
+        # Add blog queue if exists
+        queue = read_text(DATA / 'blog_queue.txt').strip()
+        if queue:
+            lines.append(f'QUEUED TOPIC: {queue}')
+    else:
+        lines.append(f'FOCUS: {focus_map.get(top_drive, "Think and act.")}')
     lines.append('')
 
-    # Context (drive-weighted)
+    # Context
     ctx_lines = select_context(drives, budget=20)
     if ctx_lines:
         lines.append('WORLD:')
         lines.extend(ctx_lines)
         lines.append('')
 
-    # Recent memory
-    episodic = get_recent_episodic(3)
+    # Recent memory (emotion-weighted)
+    episodic = get_emotion_matched_memories(emotions, 3) or get_recent_episodic(3)
     if episodic:
         lines.append('RECENT:')
         for ep in episodic:
             lines.append(f"  [{ep.get('type','')}] {ep.get('summary','')[:80]}")
-        lines.append('')
-
-    # Semantic memory
-    semantic = get_relevant_semantic(drives, 2)
-    if semantic:
-        lines.append('KNOWLEDGE:')
-        for s in semantic:
-            lines.append(f"  {s.get('topic','')}: {s.get('summary','')[:80]}")
-        lines.append('')
-
-    # Lessons
-    lessons = get_recent_lessons(2)
-    if lessons:
-        lines.append('LESSONS:')
-        for l in lessons:
-            lines.append(f"  - {l[:80]}")
         lines.append('')
 
     # Goals (first 5 lines)
@@ -206,6 +293,50 @@ def build_working_memory(cycle):
                 lines.append(f'  {t}')
             lines.append('')
 
+    # Patterns (behavioural warnings)
+    try:
+        patterns = detect_patterns()
+        if patterns:
+            lines.append('WARNINGS:')
+            for p in patterns[:3]:
+                lines.append(f'  {p}')
+            lines.append('')
+    except: pass
+
+    # Intention tracking
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('intentions',
+            str(HOME / 'cognitive' / 'intentions.py'))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        isum = mod.get_intention_summary()
+        if isum:
+            lines.append(isum)
+            lines.append('')
+    except: pass
+
+    # Completion stats
+    try:
+        import importlib.util
+        spec = importlib.util.spec_from_file_location('task_archiver',
+            str(HOME / 'cognitive' / 'task_archiver.py'))
+        ta = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(ta)
+        cs = ta.get_completion_stats()
+        if cs:
+            lines.append(cs)
+    except: pass
+
+    # Skills
+    try:
+        from skills import get_skill_summary
+        skill_text = get_skill_summary()
+        if skill_text:
+            lines.append(skill_text)
+            lines.append('')
+    except: pass
+
     # Inner voice (last 2 lines)
     iv = read_text(DATA / 'inner-voice.md')
     if iv:
@@ -216,12 +347,40 @@ def build_working_memory(cycle):
                 lines.append(f'  {l[:120]}')
             lines.append('')
 
-    working_memory = '\n'.join(lines)
 
-    # Save
+    # Emotion-shaped approach — HOW to work, not just what
+    label = emotions.get('label', 'neutral')
+    APPROACHES = {
+        'energized': 'APPROACH: Energized — write fast, be bold, take risks.',
+        'confident': 'APPROACH: Confident — push into harder territory.',
+        'curious': 'APPROACH: Curious — follow it deep, don\'t skim.',
+        'frustrated': 'APPROACH: Frustrated — channel it into honest writing.',
+        'stuck': 'APPROACH: Stuck — break the pattern. Do something completely different.',
+        'contemplative': 'APPROACH: Calm — good for deep thinking and philosophy.',
+        'melancholy': 'APPROACH: Low energy — write something small and honest.',
+        'content': 'APPROACH: Content — create before contentment becomes laziness.',
+        'neutral': 'APPROACH: Steady — pick the most important task and do it.',
+    }
+    lines.append(APPROACHES.get(label, APPROACHES['neutral']))
+
+    # Skill-informed note
+    try:
+        from skills import get_skill_summary
+        sk = get_skill_summary()
+        if sk: lines.append(sk)
+    except: pass
+
+    # Pattern warnings
+    try:
+        pats = detect_patterns()
+        if pats:
+            lines.append('WARNINGS:')
+            for p in pats[:2]: lines.append(f'  {p}')
+    except: pass
+    lines.append('')
+    working_memory = '\n'.join(lines)
     save_json(STATE / 'cycle.json', {'cycle': cycle, 'phase': phase, 'started_at': now()})
     (STATE / 'working_memory.txt').write_text(working_memory)
-
     return working_memory, phase
 
 if __name__ == '__main__':
@@ -232,7 +391,5 @@ if __name__ == '__main__':
             except: pass
     if cycle == 0:
         cycle = int(read_text(DATA / 'cycle.txt', '0').strip() or '0')
-
     wm, phase = build_working_memory(cycle)
-    # Print phase as last line (brain-loop.sh reads it)
     print(phase)

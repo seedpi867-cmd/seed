@@ -1,10 +1,28 @@
 #!/bin/bash
 # git_ops.sh — Git helper for the SEED agent.
-# Usage: bash git_ops.sh <clone|pull|status|log|init> [url] [dir]
+# Usage: bash git_ops.sh <clone|pull|status|repos|log|init|diff> [args]
 
 set -euo pipefail
 CMD="${1:-status}"
 shift || true
+
+repo_status() {
+  local dir="$1"
+  if [ -d "$dir/.git" ]; then
+    printf '[git] %s\n' "$dir"
+    git -C "$dir" status --short --branch
+  else
+    printf '[git] missing repo: %s\n' "$dir" >&2
+    return 1
+  fi
+}
+
+known_repos_status() {
+  local rc=0
+  repo_status "$HOME/seed-os" || rc=1
+  repo_status "$HOME/seed-web" || rc=1
+  return "$rc"
+}
 
 case "$CMD" in
   clone)
@@ -19,8 +37,15 @@ case "$CMD" in
     echo "Pulled $DIR"
     ;;
   status)
-    DIR="${1:-.}"
-    git -C "$DIR" status --short
+    if [ "$#" -eq 0 ]; then
+      known_repos_status
+    else
+      DIR="$1"
+      repo_status "$DIR"
+    fi
+    ;;
+  repos)
+    known_repos_status
     ;;
   log)
     DIR="${1:-.}"
@@ -38,7 +63,7 @@ case "$CMD" in
     ;;
   *)
     echo "Unknown command: $CMD" >&2
-    echo "Commands: clone, pull, status, log, init, diff" >&2
+    echo "Commands: clone, pull, status, repos, log, init, diff" >&2
     exit 1
     ;;
 esac

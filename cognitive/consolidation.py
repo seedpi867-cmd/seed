@@ -6,6 +6,41 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
+
+HALF_LIVES = {
+    'think': 48,      # hours — thinking memories fade in 2 days
+    'write': 168,     # 1 week — writing memories last longer
+    'research': 120,  # 5 days
+    'dream': 336,     # 2 weeks — dream insights persist
+    'maintain': 24,   # 1 day — maintenance is ephemeral
+    'default': 72     # 3 days
+}
+
+def decay_importance(memory):
+    """Apply exponential decay to memory importance"""
+    age_hours = (now() - memory.get('timestamp', 0)) / 3600
+    mem_type = memory.get('type', 'default')
+    half_life = HALF_LIVES.get(mem_type, HALF_LIVES['default'])
+    decay = 0.5 ** (age_hours / half_life)
+    return memory.get('importance', 0.5) * decay
+
+def prune_decayed_memories():
+    """Remove memories whose decayed importance is below threshold"""
+    ep_dir = MEMORY / 'episodic'
+    archive_dir = HOME / 'archive' / 'episodic'
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    pruned = 0
+    for f in ep_dir.glob('*.json'):
+        data = load_json(f)
+        if data and decay_importance(data) < 0.05:
+            try:
+                f.rename(archive_dir / f.name)
+                pruned += 1
+            except:
+                pass
+    return pruned
+
+
 def consolidate():
     """Compress old episodic memories into semantic summaries"""
     ep_dir = MEMORY / 'episodic'
@@ -52,6 +87,11 @@ def consolidate():
             f.rename(archive_dir / f.name)
         except:
             pass
+
+    # Prune decayed memories
+    pruned = prune_decayed_memories()
+    if pruned:
+        print(f'[consolidation] Pruned {pruned} decayed memories')
 
     # Rebuild index
     rebuild_index()

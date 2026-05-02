@@ -4,6 +4,46 @@ import sys, os, re, glob
 sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
+
+def log_to_ledger(action, success, phase, cycle, error_hash=None):
+    """Append to feedback ledger — track what works per action type"""
+    entry = {
+        'ts': time.time(),
+        'cycle': cycle,
+        'action': action,
+        'success': success,
+        'phase': phase,
+        'error': error_hash
+    }
+    ledger_path = DATA / 'feedback_ledger.jsonl'
+    with open(ledger_path, 'a') as f:
+        f.write(json.dumps(entry) + '\n')
+    # Trim to last 500 entries
+    try:
+        lines = open(ledger_path).readlines()
+        if len(lines) > 500:
+            open(ledger_path, 'w').writelines(lines[-400:])
+    except: pass
+
+def get_action_stats():
+    """Get success rate per action type from ledger"""
+    ledger_path = DATA / 'feedback_ledger.jsonl'
+    stats = {}
+    try:
+        for line in open(ledger_path):
+            e = json.loads(line.strip())
+            a = e.get('action', '')
+            if a not in stats:
+                stats[a] = {'attempts': 0, 'successes': 0}
+            stats[a]['attempts'] += 1
+            if e.get('success'):
+                stats[a]['successes'] += 1
+        for a in stats:
+            stats[a]['rate'] = stats[a]['successes'] / max(stats[a]['attempts'], 1)
+    except: pass
+    return stats
+
+
 def detect_outcomes(log_path, cycle):
     """Parse cycle log to detect what the LLM actually did"""
     log = read_text(log_path)
@@ -56,7 +96,7 @@ def update_from_outcomes(events):
         deltas = SATISFACTION_MAP.get(action, {})
         for drive, delta in deltas.items():
             if drive in drives:
-                drives[drive] = clamp(drives[drive] + delta, 0.0, 1.0)
+                drives[drive] = clamp(drives[drive] + delta, 0.20, 0.95)
 
     save_json(STATE / 'drives.json', drives)
     save_json(STATE / 'last_outcome.json', {'events': events, 'timestamp': now()})
@@ -113,6 +153,63 @@ def detect_lessons(events, log_path):
                     'lesson': lesson, 'type': 'error', 'timestamp': now()
                 })
 
+
+def check_stale_goals(cycle):
+    """Flag goals that haven't progressed. Record abandoned goals to history."""
+    goals = read_text(DATA / 'goals.md')
+    tasks = read_text(DATA / 'tasks.md')
+
+    # Count unchecked tasks
+    open_tasks = [l.strip() for l in tasks.split('\n') if l.strip().startswith('- [ ]')]
+
+    # If same tasks have been open for 20+ cycles, flag them
+    stale_file = STATE / 'stale_tasks.json'
+    stale = load_json(stale_file, {})
+
+    for task in open_tasks:
+        key = task[:60]  # Use first 60 chars as key
+        if key not in stale:
+            stale[key] = {'first_seen': cycle, 'text': task}
+        elif cycle - stale[key]['first_seen'] > 20:
+            # This task has been open 20+ cycles — log abandonment
+            append_text(DATA / 'lessons.md',
+                f'\n- Cycle {cycle}: Abandoned stale task after {cycle - stale[key]["first_seen"]} cycles: {task[:80]}\n')
+            # Remove from stale tracking
+            del stale[key]
+
+    # Clean stale tracking of completed tasks
+    open_set = set(t[:60] for t in open_tasks)
+    stale = {k: v for k, v in stale.items() if k in open_set}
+
+    save_json(stale_file, stale)
+
+def penalise_inaction(events, drives):
+    """If nothing happened this cycle, increase ALL drives — create urgency"""
+    actions = [e['action'] for e in events]
+    if 'nothing_happened' in actions or not any(a for a in actions if a != 'nothing_happened'):
+        for d in drives:
+            drives[d] = min(1.0, drives[d] + 0.05)
+    return drives
+
+
+
+def auto_correct_strategy(events, cycle):
+    """Repeated failures trigger strategy changes automatically."""
+    ledger = DATA / 'feedback_ledger.jsonl'
+    if not ledger.exists(): return
+    try:
+        entries = [json.loads(l.strip()) for l in open(ledger).readlines()[-20:]]
+    except: return
+    # Count recent nothing_happened
+    nothings = sum(1 for e in entries if e.get('action') == 'nothing_happened')
+    if nothings >= 5:
+        append_text(DATA / 'blog_queue.txt', 'Write something personal and short — what are you thinking right now?\n')
+        append_text(DATA / 'lessons.md', f'\n- Cycle {cycle}: {nothings} empty cycles. Auto-queued a personal essay.\n')
+    # Count recent write failures
+    write_fails = sum(1 for e in entries if e.get('action') == 'wrote_essay' and not e.get('success'))
+    if write_fails >= 3:
+        append_text(DATA / 'lessons.md', f'\n- Cycle {cycle}: Writing keeps failing. Trying shorter format.\n')
+
 def run_learning(log_path, cycle, phase):
     drives = load_json(STATE / 'drives.json', {})
     emotions = load_json(STATE / 'emotions.json', {})
@@ -126,11 +223,32 @@ def run_learning(log_path, cycle, phase):
     # 3. Write inner voice
     write_inner_voice(events, drives, emotions)
 
+    # 3.5 Log to feedback ledger
+    for event in events:
+        success = event['action'] not in ('error_occurred', 'nothing_happened')
+        log_to_ledger(event['action'], success, phase, cycle, None)
+
+    # 3.7 Update skills
+    try:
+        from skills import update_skills_from_events
+        update_skills_from_events(events)
+    except: pass
+
     # 4. Save episodic memory
     save_episodic_memory(events, drives, emotions, cycle, phase)
 
-    # 5. Detect lessons
+    # 5. Check stale goals
+    check_stale_goals(cycle)
+
+    # 5.5 Penalise inaction
+    drives = penalise_inaction(events, drives)
+    save_json(STATE / 'drives.json', drives)
+
+    # 6. Detect lessons
     detect_lessons(events, log_path)
+
+    # 5.8 Auto-correct
+    auto_correct_strategy(events, cycle)
 
     # 6. Update mood.json for backward compat with webserver/homepage
     _update_mood_compat(drives, emotions, cycle)

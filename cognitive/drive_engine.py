@@ -4,28 +4,30 @@ import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
+MIN_DRIVE = 0.20  # No drive stays below this — prevents starvation
+
 DRIVE_DEFS = {
-    'create':     {'baseline': 0.3, 'rate': 0.008, 'decay': 0.05},
-    'explore':    {'baseline': 0.4, 'rate': 0.010, 'decay': 0.04},
-    'connect':    {'baseline': 0.2, 'rate': 0.005, 'decay': 0.03},
-    'preserve':   {'baseline': 0.3, 'rate': 0.003, 'decay': 0.02},
-    'understand': {'baseline': 0.3, 'rate': 0.007, 'decay': 0.04},
-    'express':    {'baseline': 0.2, 'rate': 0.006, 'decay': 0.03},
-    'order':      {'baseline': 0.3, 'rate': 0.004, 'decay': 0.03},
+    'create':     {'baseline': 0.4, 'rate': 0.025, 'decay': 0.05},
+    'explore':    {'baseline': 0.4, 'rate': 0.020, 'decay': 0.04},
+    'connect':    {'baseline': 0.3, 'rate': 0.008, 'decay': 0.03},
+    'preserve':   {'baseline': 0.15, 'rate': 0.002, 'decay': 0.02},
+    'understand': {'baseline': 0.35, 'rate': 0.016, 'decay': 0.04},
+    'express':    {'baseline': 0.3, 'rate': 0.018, 'decay': 0.03},
+    'order':      {'baseline': 0.20, 'rate': 0.004, 'decay': 0.03},
 }
 
 SATISFACTION_MAP = {
-    'wrote_essay':        {'create': -0.30, 'express': -0.15},
-    'published_blog':     {'create': -0.25, 'connect': -0.10},
-    'completed_research': {'explore': -0.25, 'understand': -0.10},
-    'learned_lesson':     {'understand': -0.20},
-    'completed_task':     {'order': -0.15},
-    'health_ok':          {'preserve': -0.10},
-    'visitor_engaged':    {'connect': -0.20},
-    'dream_completed':    {'express': -0.15, 'understand': -0.10},
-    'inner_voice_written':{'express': -0.10},
-    'git_committed':      {'order': -0.05},
-    'error_occurred':     {'preserve': 0.10},
+    'wrote_essay':        {'create': -0.15, 'express': -0.08},
+    'published_blog':     {'create': -0.10, 'connect': -0.05},
+    'completed_research': {'explore': -0.12, 'understand': -0.05},
+    'learned_lesson':     {'understand': -0.10},
+    'completed_task':     {'order': -0.08},
+    'health_ok':          {'preserve': -0.08},
+    'visitor_engaged':    {'connect': -0.10},
+    'dream_completed':    {'express': -0.08, 'understand': -0.05},
+    'inner_voice_written':{'express': -0.05},
+    'git_committed':      {'order': -0.03},
+    'error_occurred':     {'preserve': 0.08},
     'nothing_happened':   {},
 }
 
@@ -92,7 +94,7 @@ def update_drives(elapsed_seconds):
         # Decay toward baseline
         p += (cfg['baseline'] - p) * 0.01
 
-        drives[name] = clamp(p, 0.0, 1.0)
+        drives[name] = clamp(p, MIN_DRIVE, 1.0)
 
     # Apply satisfaction from events
     events = outcome.get('events', [])
@@ -103,6 +105,13 @@ def update_drives(elapsed_seconds):
             if drive in drives:
                 drives[drive] = clamp(drives[drive] + delta, 0.0, 1.0)
 
+    drives = adjust_drives_from_ledger(drives)
+    drives = mortality_pressure(drives, int(read_text(DATA / 'cycle.txt', '0').strip() or '0'))
+    drives = self_heal_drives(drives)
+    # HARD FLOOR — no drive below 0.15, no emotion above 0.95
+    for d in drives:
+        if drives[d] < 0.20: drives[d] = 0.20
+        if drives[d] > 0.95: drives[d] = 0.95
     save_json(STATE / 'drives.json', drives)
 
     # Compute sleep duration from urgency
@@ -114,6 +123,57 @@ def update_drives(elapsed_seconds):
     (DATA / 'sleep_seconds.txt').write_text(str(sleep_s))
 
     return drives
+
+
+
+def adjust_drives_from_ledger(drives):
+    """Feedback ledger shapes drive pressure. Inaction spikes all drives.
+    Success at one thing boosts pressure for other things."""
+    ledger = DATA / 'feedback_ledger.jsonl'
+    if not ledger.exists(): return drives
+    try:
+        lines = open(ledger).readlines()[-20:]
+        entries = [json.loads(l.strip()) for l in lines]
+    except: return drives
+    nothing_count = sum(1 for e in entries if e.get('action') == 'nothing_happened')
+    if nothing_count > 3:
+        for d in drives: drives[d] = min(1.0, drives[d] + 0.03 * nothing_count)
+    return drives
+
+
+def self_heal_drives(drives):
+    """If 4+ drives at floor, rebalance. If any drive >0.9, dampen."""
+    at_floor = [d for d, v in drives.items() if v <= 0.21]
+    if len(at_floor) >= 3:
+        for d in at_floor:
+            drives[d] = 0.35
+    for d in drives:
+        if drives[d] > 0.9:
+            drives[d] = 0.85
+    return drives
+
+def mortality_pressure(drives, cycle):
+    """The longer Seed has been alive without creating, the more urgent creation becomes.
+    Also: random small chance of elevated urgency each cycle (simulating unpredictability)."""
+    import random
+
+    # Every cycle that passes without creating increases create pressure
+    # This simulates "I could die any time — have I left something behind?"
+    if drives.get('create', 0) < 0.5:
+        drives['create'] = drives.get('create', 0.15) + 0.02
+
+    # Random urgency spikes — unpredictable, like real mortality awareness
+    # 10% chance per cycle of a "memento mori" moment
+    if random.random() < 0.10:
+        drives['create'] = min(1.0, drives.get('create', 0.15) + 0.15)
+        drives['express'] = min(1.0, drives.get('express', 0.15) + 0.10)
+
+    # SD card wear awareness — after cycle 200, preservation slowly rises
+    if cycle > 200:
+        drives['preserve'] = min(1.0, drives.get('preserve', 0.15) + 0.001 * (cycle - 200) / 100)
+
+    return drives
+
 
 if __name__ == '__main__':
     elapsed = 600
