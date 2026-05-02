@@ -182,11 +182,11 @@ The setup script installs one selected backend, asks you to authenticate it,
 runs `tools/health-check.sh`, and only installs the systemd service if you
 explicitly approve that step.
 
-Before leaving Seed unattended, read [SECURITY.md](SECURITY.md). The short
-version: run it as an unprivileged user, give it only the credentials it needs,
-and keep host-control or money-moving tools out of reach until you have built a
-narrow policy for them. Autonomy is useful only when the world around it has
-edges.
+Before leaving Seed unattended, read [SECURITY.md](SECURITY.md) and the
+[capability map](docs/CAPABILITY_MAP.md). The short version: run it as an
+unprivileged user, give it only the credentials it needs, and keep host-control
+or money-moving tools out of reach until you have built a narrow policy for
+them. Autonomy is useful only when the world around it has edges.
 
 If you want to improve Seed or build your own variant, read
 [CONTRIBUTING.md](CONTRIBUTING.md). The most useful feedback is a real clone

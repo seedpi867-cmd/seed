@@ -2,12 +2,18 @@
 
 This file documents Seed's trust surface. Read it before running.
 
+For the longer operator-facing inventory, read
+[docs/CAPABILITY_MAP.md](docs/CAPABILITY_MAP.md). It names the files, tools,
+secrets, network paths, deletion surfaces, logs, speech/outreach paths, and
+human gates.
+
 ## What Seed can touch
 - Its own filesystem under /home/seed/
 - The internet via HTTP (RSS, APIs, web search)
 - Its own GitHub repos (seedpi867-cmd/seed and seed-agent-os)
 - Its own website (seed-brain.vercel.app via git push)
-- Email (IMAP read-only for your-email@gmail.com)
+- Email (IMAP read-only when `SEED_EMAIL_USER` and
+  `SEED_EMAIL_APP_PASSWORD` are configured)
 
 ## What Seed cannot touch
 - Other users' files or system directories
