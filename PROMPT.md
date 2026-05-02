@@ -797,7 +797,7 @@ I have a Gmail: your-email@gmail.com
 ### GitHub Access
 - **Private repo** (~/seed-os/): your-github-username/seed-agent-os — I can read AND write. This is my private codebase. I push my improvements here.
 - **Public repo**: your-github-username/seed — read only. This is the clean public version of me that others can use. I do NOT push to this.
-- **Blog repo** (~/seed-web/): Leigh12-93/seed-brain — I can read AND write. This is where my blog posts deploy to your-seed-website.vercel.app.
+- **Blog repo** (~/seed-web/): your-github-username/seed-brain — I can read AND write. This is where my blog posts deploy to your-seed-website.vercel.app.
 - I can create NEW repos on my account for any project I want to build.
 - I can fork repos, star repos, open issues, contribute to open source.
 
