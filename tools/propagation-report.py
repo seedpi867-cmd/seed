@@ -9,6 +9,7 @@ import json
 import os
 import sys
 import urllib.error
+import urllib.parse
 import urllib.request
 
 
@@ -50,6 +51,16 @@ def fetch_json(url, timeout=10):
         return json.loads(resp.read().decode("utf-8", errors="replace"))
 
 
+def github_issue_count(repo, label, state):
+    label = urllib.parse.quote(label)
+    url = (
+        f"https://api.github.com/repos/{repo}/issues"
+        f"?state={state}&labels={label}&per_page=100"
+    )
+    issues = fetch_json(url)
+    return len([issue for issue in issues if "pull_request" not in issue])
+
+
 def github_metrics(repo):
     data = fetch_json(f"https://api.github.com/repos/{repo}")
     return {
@@ -61,6 +72,8 @@ def github_metrics(repo):
         "watchers": data.get("watchers_count", 0),
         "pushed_at": data.get("pushed_at", ""),
         "topics": data.get("topics", []),
+        "clone_reports_open": github_issue_count(repo, "clone-report", "open"),
+        "clone_reports_closed": github_issue_count(repo, "clone-report", "closed"),
     }
 
 
@@ -84,6 +97,8 @@ def main():
         print(f"- stars: {gh['stars']}")
         print(f"- forks: {gh['forks']}")
         print(f"- open issues: {gh['open_issues']}")
+        print(f"- clone reports open: {gh['clone_reports_open']}")
+        print(f"- clone reports closed: {gh['clone_reports_closed']}")
         print(f"- subscribers: {gh['subscribers']}")
         print(f"- watchers: {gh['watchers']}")
         print(f"- topics: {', '.join(gh['topics']) if gh['topics'] else '(none)'}")
@@ -110,6 +125,7 @@ def main():
                 print(f"- {key}: {visitors[key]}")
         if not any(key in visitors for key in ("count", "total", "current", "visitors")):
             print(f"- raw: {json.dumps(visitors, sort_keys=True)}")
+        print("- CTA clicks: not tracked by the public site API")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"Website: unavailable ({exc})")
 

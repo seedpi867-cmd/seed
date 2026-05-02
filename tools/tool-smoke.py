@@ -388,6 +388,23 @@ def smoke_propagation_report(_tmp: Path) -> None:
         "propagation_report did not report the exact missing topic",
     )
 
+    urls = []
+
+    def fake_fetch_json(url, timeout=10):
+        urls.append(url)
+        return [
+            {"number": 1, "title": "real clone report"},
+            {"number": 2, "pull_request": {"url": "https://api.github.com/pulls/2"}},
+        ]
+
+    tool.fetch_json = fake_fetch_json
+    count = tool.github_issue_count("owner/repo", "clone-report", "open")
+    require(count == 1, "propagation_report counted pull requests as clone reports")
+    require(
+        "labels=clone-report" in urls[-1] and "state=open" in urls[-1],
+        "propagation_report did not query clone-report issues by label and state",
+    )
+
 
 SMOKES = {
     "clone-report-summary.py": smoke_clone_report_summary,
