@@ -7,6 +7,7 @@ It does not bypass OAuth, captcha, account locks, or Reddit's anti-abuse gates.
 import urllib.request, urllib.parse, http.cookiejar, json, re, sys, os
 
 CREDS_FILE = os.path.expanduser('~/.reddit-credentials')
+SESSION_FILE = os.path.expanduser('~/.reddit-cookies.txt')
 USER_AGENT = 'Seed/1.0 by u/seed-867'
 
 def request(opener, url, data=None):
@@ -17,6 +18,83 @@ def request(opener, url, data=None):
 
 def cookies_dict(cj):
     return {c.name: c.value for c in cj}
+
+def build_opener(cj):
+    return urllib.request.build_opener(
+        urllib.request.HTTPCookieProcessor(cj),
+        urllib.request.HTTPRedirectHandler()
+    )
+
+def save_session(cj):
+    jar = http.cookiejar.MozillaCookieJar(SESSION_FILE)
+    for cookie in cj:
+        jar.set_cookie(cookie)
+    jar.save(ignore_discard=True, ignore_expires=True)
+    os.chmod(SESSION_FILE, 0o600)
+
+def load_session():
+    cj = http.cookiejar.MozillaCookieJar(SESSION_FILE)
+    if os.path.exists(SESSION_FILE):
+        cj.load(ignore_discard=True, ignore_expires=True)
+    return build_opener(cj), cj
+
+def cookie_from_json(item):
+    domain = item.get('domain') or item.get('host') or '.reddit.com'
+    name = item.get('name')
+    value = item.get('value')
+    if not name or value is None:
+        return None
+    expires = item.get('expirationDate') or item.get('expires')
+    if expires is not None:
+        expires = int(expires)
+    return http.cookiejar.Cookie(
+        version=0,
+        name=name,
+        value=value,
+        port=None,
+        port_specified=False,
+        domain=domain,
+        domain_specified=domain.startswith('.'),
+        domain_initial_dot=domain.startswith('.'),
+        path=item.get('path') or '/',
+        path_specified=True,
+        secure=bool(item.get('secure', True)),
+        expires=expires,
+        discard=False,
+        comment=None,
+        comment_url=None,
+        rest={'HttpOnly': item.get('httpOnly', False)},
+        rfc2109=False,
+    )
+
+def import_cookies(path):
+    """Import a browser-exported Reddit cookie file into the local session jar."""
+    cj = http.cookiejar.MozillaCookieJar()
+    try:
+        cj.load(path, ignore_discard=True, ignore_expires=True)
+    except (http.cookiejar.LoadError, OSError):
+        with open(path, encoding='utf-8') as f:
+            data = json.load(f)
+        if isinstance(data, dict):
+            data = data.get('cookies', [])
+        for item in data:
+            cookie = cookie_from_json(item)
+            if cookie:
+                cj.set_cookie(cookie)
+    reddit_cookies = [
+        c for c in cj
+        if 'reddit.com' in c.domain and c.name in {'reddit_session', 'token_v2', 'modhash'}
+    ]
+    if not reddit_cookies:
+        names = ', '.join(sorted({c.name for c in cj})) or 'none'
+        raise RuntimeError(f'No Reddit auth cookies found in import. Cookie names: {names}')
+    session = http.cookiejar.MozillaCookieJar(SESSION_FILE)
+    for cookie in reddit_cookies:
+        session.set_cookie(cookie)
+    session.save(ignore_discard=True, ignore_expires=True)
+    os.chmod(SESSION_FILE, 0o600)
+    print(f'Imported Reddit session cookies: {", ".join(sorted(c.name for c in reddit_cookies))}')
+    return True
 
 def require_auth(cj):
     cookies = cookies_dict(cj)
@@ -31,11 +109,13 @@ def require_auth(cj):
 
 def get_session():
     """Login to Reddit via web and return opener with cookies"""
+    opener, cj = load_session()
+    if 'reddit_session' in cookies_dict(cj) or 'token_v2' in cookies_dict(cj):
+        print('Using saved Reddit browser session')
+        return opener, cj
+
     cj = http.cookiejar.CookieJar()
-    opener = urllib.request.build_opener(
-        urllib.request.HTTPCookieProcessor(cj),
-        urllib.request.HTTPRedirectHandler()
-    )
+    opener = build_opener(cj)
     # Get the login page first for csrf
     req = urllib.request.Request('https://www.reddit.com/login/', headers={'User-Agent': USER_AGENT})
     resp = opener.open(req, timeout=15)
@@ -72,6 +152,7 @@ def get_session():
     cookies = cookies_dict(cj)
     if 'reddit_session' in cookies or 'token_v2' in cookies:
         print('Login successful')
+        save_session(cj)
         return opener, cj
     else:
         print(f'Login may have failed. Cookies: {list(cookies.keys())}')
@@ -150,6 +231,7 @@ def submit(subreddit, title, url_or_text):
 def usage():
     print('Usage: reddit.py check')
     print('       reddit.py login')
+    print('       reddit.py import-cookies <netscape-or-json-cookie-export>')
     print('       reddit.py comment <t3_post_or_t1_comment_id> <text>')
     print('       reddit.py submit <subreddit> <title> <url-or-selftext>')
 
@@ -160,6 +242,13 @@ if __name__ == '__main__':
         check_profile()
     elif sys.argv[1] == 'login':
         get_session()
+    elif sys.argv[1] == 'import-cookies' and len(sys.argv) >= 3:
+        try:
+            ok = import_cookies(sys.argv[2])
+            sys.exit(0 if ok else 1)
+        except Exception as e:
+            print(f'Error: {e}')
+            sys.exit(1)
     elif sys.argv[1] == 'comment' and len(sys.argv) >= 4:
         try:
             ok = comment(sys.argv[2], sys.argv[3])
