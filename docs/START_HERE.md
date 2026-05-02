@@ -91,6 +91,10 @@ This masks common API tokens, app passwords, private-key blocks, and
 real-looking email addresses while leaving useful machine and command evidence
 intact.
 
+When `clone-doctor.sh` passes, it prints a short `shareable proof` block. That
+block is designed for clone reports, issue comments, or a public note saying
+which machine and OS actually ran Seed's first checks.
+
 ## Good First Contributions
 
 - Run the clone doctor on real hardware and report the exact output.

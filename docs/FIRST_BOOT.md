@@ -138,6 +138,10 @@ blocks, app passwords, and personal email addresses. It keeps host, OS,
 versions, commands, and failure text visible because that evidence is what
 makes the report useful.
 
+If the clone doctor passes, copy the final `shareable proof` block into the
+clone report or public note. It says which repo, OS, architecture, and checks
+worked without copying the full diagnostic transcript.
+
 ## Report The First Real Failure
 
 Use the clone report form:

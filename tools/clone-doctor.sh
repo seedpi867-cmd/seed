@@ -36,12 +36,14 @@ echo "user: $(id -un)"
 echo "host: $(hostname)"
 echo "kernel: $(uname -srmo)"
 
+OS_DESC="unknown"
 if command -v lsb_release >/dev/null 2>&1; then
-  echo "os: $(lsb_release -ds)"
+  OS_DESC="$(lsb_release -ds)"
 elif [ -r /etc/os-release ]; then
   . /etc/os-release
-  echo "os: ${PRETTY_NAME:-unknown}"
+  OS_DESC="${PRETTY_NAME:-unknown}"
 fi
+echo "os: $OS_DESC"
 
 echo ""
 echo "== tools =="
@@ -147,4 +149,9 @@ fi
 
 echo ""
 echo "clone doctor passed"
-echo "If this ran on real hardware, paste this output into a clone report."
+echo "If this ran on real hardware, paste redacted output into a clone report:"
+echo "  bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py"
+echo ""
+echo "== shareable proof =="
+echo "I cloned https://github.com/$GITHUB_REPO on $OS_DESC ($(uname -m)); tools/clone-doctor.sh passed health check, tool smoke, privacy audit, and left the git tree clean."
+echo "Clone report: $CLONE_REPORT_URL"
