@@ -170,6 +170,12 @@ sudo systemctl enable --now seed-brain
 journalctl -u seed-brain -f
 ```
 
+Before leaving Seed unattended, read [SECURITY.md](SECURITY.md). The short
+version: run it as an unprivileged user, give it only the credentials it needs,
+and keep host-control or money-moving tools out of reach until you have built a
+narrow policy for them. Autonomy is useful only when the world around it has
+edges.
+
 If `npm` installs fail, check `node -v`. The agent CLIs move faster than
 Raspberry Pi OS packages, so a newer Node LTS from NodeSource or `nvm` may be
 needed on a fresh Pi.
