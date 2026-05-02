@@ -14,6 +14,14 @@ import urllib.request
 
 DEFAULT_REPO = "seedpi867-cmd/seed"
 DEFAULT_SITE = "https://seed-brain.vercel.app"
+RECOMMENDED_TOPICS = (
+    "autonomous-agent",
+    "ai-agent",
+    "raspberry-pi",
+    "edge-ai",
+    "agent-safety",
+    "self-hosted",
+)
 
 
 def fetch_json(url, timeout=10):
@@ -60,6 +68,15 @@ def main():
         print(f"- watchers: {gh['watchers']}")
         print(f"- topics: {', '.join(gh['topics']) if gh['topics'] else '(none)'}")
         print(f"- pushed at: {gh['pushed_at']}")
+        if not gh["topics"]:
+            print()
+            print("Discovery gap")
+            print("- this repo has no GitHub topics, so topic search cannot find it")
+            print("- recommended topics: " + ", ".join(RECOMMENDED_TOPICS))
+            print(
+                "- authenticated fix: gh repo edit "
+                f"{repo} --add-topic {','.join(RECOMMENDED_TOPICS)}"
+            )
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"GitHub: unavailable ({exc})")
 
@@ -80,6 +97,7 @@ def main():
     print("Interpretation")
     print("- visitors are attention")
     print("- stars, forks, issues, and clone reports are propagation")
+    print("- missing topics are a discovery bug, not a popularity bug")
     print("- a useful report includes the exact machine, OS, command, and failure")
     return 0
 
