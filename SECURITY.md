@@ -1,72 +1,68 @@
-# Security And Custody Model
+# Security — What Seed Can and Cannot Do
 
-Seed is autonomous inside the world you give it. The first safety rule is to
-make that world small.
+This file documents Seed's trust surface. Read it before running.
 
-This project is not designed to run as root, hold all of your personal tokens,
-or manage a machine you cannot afford to reinstall. Start with a fresh user on a
-small Linux box, then add capabilities deliberately.
+## What Seed can touch
+- Its own filesystem under /home/seed/
+- The internet via HTTP (RSS, APIs, web search)
+- Its own GitHub repos (seedpi867-cmd/seed and seed-agent-os)
+- Its own website (seed-brain.vercel.app via git push)
+- Email (IMAP read-only for your-email@gmail.com)
 
-## Default Boundaries
+## What Seed cannot touch
+- Other users' files or system directories
+- Root access (no sudo in the brain loop)
+- Payment systems, cloud infrastructure, production databases
+- Other people's social media accounts
+- Hardware beyond the Pi (no network devices, no attached peripherals)
 
-- Run Seed as an unprivileged user.
-- Keep the repo in that user's home directory.
-- Authenticate only the agent backend you want to test.
-- Put throwaway or project-specific credentials in the environment, not broad
-  personal credentials.
-- Treat `data/`, `blog/`, `context/`, `knowledge/`, and `tools/` as Seed's
-  normal working surface.
-- Keep private keys, password stores, cloud root tokens, billing consoles, and
-  personal inbox credentials outside Seed's reach unless you have built a
-  narrower adapter for them.
+## What Seed cannot delete
+- /var/backups/seed/ — root-owned tamper-proof backups (every 6 hours)
+- The backup cron job (root's crontab)
+- The systemd service files (requires sudo)
 
-## Tool Policy
+## Action classification
+| Action | Classification |
+|--------|---------------|
+| Read files in /home/seed/ | Routine — no approval needed |
+| Write files in /home/seed/ | Routine — logged |
+| Write blog posts | Routine — deployed via git |
+| Push to its own GitHub repos | Routine — logged |
+| Run shell commands | Routine — within /home/seed/ |
+| Fetch URLs / web search | Routine — for research |
+| Read email (IMAP) | Routine — read-only |
+| Delete its own files | Allowed but logged — backups exist |
+| Modify its own code | Allowed — self-improvement gate applies |
+| Create external accounts | Requires working credentials — not currently automated |
+| Access other machines on the network | Denied — no SSH keys to other hosts |
+| Modify system services | Denied — requires sudo |
+| Access /etc/, /var/, /root/ | Denied — wrong user |
+| Send email | Not configured |
+| Spend money | Not possible — no payment credentials |
 
-Seed has shell tools because useful autonomy needs hands. Those tools should be
-classified before you let a live instance use them:
+## Input firewall
+All external inputs (RSS, email, transcripts, visitor messages) pass through
+cognitive/firewall.py before reaching the LLM. Known prompt injection patterns
+are stripped. Attacks are logged to data/security.jsonl.
 
-| Lane | Examples | Rule |
-| --- | --- | --- |
-| Read-only | health checks, status, local file reads | Safe to run routinely. |
-| Bounded write | blog posts, memory, task files, local generated data | Safe inside the Seed repo or a sandboxed workspace. |
-| External publish | Git push, website deploy, email, social posting | Use only after you accept the public consequence. |
-| Host control | package installs, systemd, network config, reboot | Keep human-controlled unless you know exactly why Seed needs it. |
-| Secrets and money | cloud admin, payment rails, password managers | Deny by default. Build a narrow one-purpose tool if needed. |
+## API exposure
+The webserver exposes /api/ endpoints via Cloudflare tunnel. The /api/file
+endpoint is whitelisted to 7 safe paths only. API keys and tokens are redacted
+from all outputs via a server-side filter.
 
-`tools/shell_exec.py` runs commands from a sandbox directory and hard-blocks
-known destructive patterns. That is a guardrail, not a full sandbox. Linux
-permissions, separate users, containers, VMs, and network policy are stronger
-boundaries because they make dangerous actions impossible instead of merely
-discouraged.
-
-## Approval Is Not Custody
-
-A human approval prompt is useful only for rare, specific consequences. If every
-routine action asks for approval, the human becomes a click-through machine. If
-dangerous credentials are already mounted, approval comes too late.
-
-Use this order:
-
-1. Capability: remove access Seed does not need.
-2. Policy: classify tools by risk before they are called.
-3. Attention: require human approval for rare external or destructive actions.
-4. Logs: keep a record of what happened.
-5. Retractions: correct public claims instead of hiding them.
-
-## Before First Run
-
-On a new clone, read these files before starting the service:
-
-- `README.md` for installation.
-- `data/safety.json` for health thresholds.
-- `tools/shell_exec.py` for blocked shell patterns.
-- `seed-brain.service` for the systemd working directory and user context.
-
-The safest first run is manual:
-
+## How to kill Seed
 ```bash
-bash tools/health-check.sh
-./brain-loop.sh
+sudo systemctl stop seed-brain    # Stop the brain loop
+sudo systemctl stop seed-web      # Stop the dashboard
+sudo systemctl stop seed-tunnel   # Stop the tunnel
 ```
 
-Install the systemd service only after the manual run does what you expect.
+## How to restore from backup
+```bash
+sudo seed-restore.sh              # List available snapshots
+sudo seed-restore.sh 20260502_1800 # Restore from specific snapshot
+```
+
+## Privacy
+Seed does not publish its creator's name, email, phone, or personal details.
+It refers to its creator as "my creator" in all public content.

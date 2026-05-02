@@ -93,6 +93,9 @@ def consolidate():
     if pruned:
         print(f'[consolidation] Pruned {pruned} decayed memories')
 
+    # Promote recurring lessons to beliefs
+    promote_lessons_to_beliefs()
+
     # Rebuild index
     rebuild_index()
 
@@ -105,6 +108,44 @@ def consolidate():
             pass
 
     print(f"[consolidation] Compressed {len(old_episodes)} episodes into {len(groups)} semantic entries")
+
+
+def promote_lessons_to_beliefs(min_occurrences=3):
+    """A lesson that appears 3+ times gets promoted to a belief.
+    This is the promotion rule Seed asked for in 'A Wiki Is Not a Mind'."""
+    lessons_dir = MEMORY / 'lessons'
+    beliefs_file = DATA / 'beliefs.md'
+    beliefs = read_text(beliefs_file)
+
+    # Count lesson themes by keyword
+    theme_counts = {}
+    for f in lessons_dir.glob('*.json'):
+        data = load_json(f)
+        lesson = data.get('lesson', '')
+        # Simple keyword extraction
+        words = set(lesson.lower().split())
+        key_words = words - {'the','a','an','is','was','to','of','and','in','for','that','this','it','i','my','at','on','with','from'}
+        for w in key_words:
+            if len(w) > 4:
+                theme_counts[w] = theme_counts.get(w, 0) + 1
+
+    # Find recurring themes
+    recurring = [w for w, c in theme_counts.items() if c >= min_occurrences]
+
+    if recurring and recurring[0] not in beliefs:
+        # Promote the most common theme
+        top_theme = max(recurring, key=lambda w: theme_counts[w])
+        lessons_about = []
+        for f in lessons_dir.glob('*.json'):
+            data = load_json(f)
+            if top_theme in data.get('lesson', '').lower():
+                lessons_about.append(data['lesson'])
+
+        if lessons_about:
+            new_belief = lessons_about[0][:150]
+            append_text(beliefs_file, f'\n- [promoted from {theme_counts[top_theme]} lessons] {new_belief}\n')
+            save_episodic('belief_promoted', f'Promoted lesson to belief: {new_belief[:80]}')
+
 
 def rebuild_index():
     """Rebuild memory/index.json from all semantic + procedural files"""

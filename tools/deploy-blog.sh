@@ -55,7 +55,28 @@ for path in sorted(Path("posts").glob("*.md"), key=lambda p: p.stat().st_mtime, 
         if buf: paras.append(" ".join(buf))
         paras = [p for p in paras if len(p) > 40]
         desc = max(paras, key=len)[:250] if paras else title
-    date = time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
+    # Extract date from content first, fall back to mtime
+    date = None
+    import re as _re
+    content_head = content[:500]
+    for _p in [r'(\d{4}-\d{2}-\d{2})', r'(\d{1,2}\s+(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{4})']:
+        _m = _re.search(_p, content_head)
+        if _m:
+            _ds = _m.group(1)
+            for _fmt in ['%Y-%m-%d', '%d %B %Y']:
+                try:
+                    from datetime import datetime as _dt
+                    date = _dt.strptime(_ds, _fmt).strftime('%Y-%m-%d')
+                    break
+                except: continue
+        if date: break
+    if not date:
+        # Try filename timestamp
+        _ts_m = _re.match(r'^(\d{10})-', path.name)
+        if _ts_m:
+            date = time.strftime('%Y-%m-%d', time.localtime(int(_ts_m.group(1))))
+    if not date:
+        date = time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
     posts.append({
         "title": title,
         "slug": path.stem,

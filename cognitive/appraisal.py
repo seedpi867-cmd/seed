@@ -147,6 +147,7 @@ def select_context(drives, budget=25):
         'github.md':     {'create': 0.5, 'order': 0.5},
         'transcript.md': {'explore': 0.8, 'understand': 0.3},
         'trends.md':     {'explore': 0.6, 'connect': 0.3},
+        'outreach.md':   {'connect': 1.0, 'create': 0.3},
     }
     scored = []
     for fname, weights in CONTEXT_MAP.items():

@@ -86,6 +86,9 @@ while true; do
         continue
     fi
 
+    # ── 0. FIREWALL — sanitise all external inputs ─────────
+    python3 "$COG/firewall.py" 2>&1 | tee -a "$LOG_FILE"
+
     # ── 1. FEEDERS (check context freshness) ────────────────
     led_on
     bash "$ROOT/tools/feed-rss.sh" 2>/dev/null

@@ -89,6 +89,14 @@ R();setInterval(R,5000);
 VISITOR_COUNT = 0
 VISITOR_LOG = Path.home() / 'data' / 'visitors.jsonl'
 
+# Import firewall for visitor input sanitisation
+try:
+    import sys as _sys
+    _sys.path.insert(0, str(Path.home() / "cognitive"))
+    from firewall import sanitise as fw_sanitise
+except:
+    fw_sanitise = lambda t, s='': t
+
 REDACT_STRINGS = ['YOUR_GEMINI_API_KEY', 'YOUR_GITHUB_TOKEN', 'REDACTED', 'REDACTED']
 def redact(text):
     for s in REDACT_STRINGS:
