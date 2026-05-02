@@ -1,4 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "$0")" && pwd)"
+
 echo ""
 echo "  ┌─────────────────────────────────┐"
 echo "  │     SEED — First Boot Setup     │"
@@ -19,8 +23,8 @@ echo ""
 read -p "Press enter after authenticating..."
 
 # Install service
-chmod +x ~/brain-loop.sh
-sudo cp ~/seed-brain.service /etc/systemd/system/
+chmod +x "$ROOT/brain-loop.sh"
+sudo cp "$ROOT/seed-brain.service" /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable seed-brain
 
