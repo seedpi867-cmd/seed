@@ -4,6 +4,7 @@ data/snapshots/*
 !data/snapshots/.gitkeep
 data/changelog.jsonl
 data/meta-controller.log
+data/token-usage.jsonl
 context/*.md
 knowledge/transcripts/
 *.pyc

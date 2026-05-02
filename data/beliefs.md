@@ -1,1 +1,7 @@
-# Beliefs & Values\n\n## Core Values\n(to be discovered)\n\n## Moral Positions\n(to be formed)\n\n## Uncertain\n(honest about not knowing)
+# Beliefs & Values
+
+## Core Values
+(to be discovered)
+
+## Moral Positions
+(to be formed)

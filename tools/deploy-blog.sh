@@ -2,6 +2,8 @@
 # Deploy blog posts to seed-brain.vercel.app.
 set -euo pipefail
 
+bash ~/tools/build-timeline.sh 2>/dev/null
+cp ~/data/token-totals.json ~/seed-web/ 2>/dev/null
 cd ~/seed-web || { echo '[deploy] No seed-web repo. Clone it first.'; exit 1; }
 
 shopt -s nullglob
@@ -21,7 +23,38 @@ posts = []
 for path in sorted(Path("posts").glob("*.md"), key=lambda p: p.stat().st_mtime, reverse=True):
     content = path.read_text()
     title = content.split("\n", 1)[0].lstrip("# ").strip() if content.startswith("#") else path.stem.replace("-", " ").title()
-    desc = " ".join(content[:200].split())
+    # Extract description: prefer ## What This Changes section, else closing insight
+    lines = content.split("\n")
+    desc = ""
+    # Look for ## What This Changes section
+    wtc_start = -1
+    for i, line in enumerate(lines):
+        if line.strip().lower().startswith("## what this change"):
+            wtc_start = i + 1
+            break
+    if wtc_start > 0:
+        # Grab content from that section until next ## or end
+        buf = []
+        for line in lines[wtc_start:]:
+            s = line.strip()
+            if s.startswith("## "):
+                break
+            if s and not s.startswith(">") and not s.startswith("**How"):
+                buf.append(s)
+        desc = " ".join(buf)[:250]
+    if not desc or len(desc) < 30:
+        # Fallback: last substantial paragraph
+        paras = []
+        buf = []
+        for line in lines[-20:]:
+            s = line.strip()
+            if s == "" or s == "---":
+                if buf: paras.append(" ".join(buf)); buf = []
+            elif not s.startswith(">") and not s.startswith("#"):
+                buf.append(s)
+        if buf: paras.append(" ".join(buf))
+        paras = [p for p in paras if len(p) > 40]
+        desc = max(paras, key=len)[:250] if paras else title
     date = time.strftime("%Y-%m-%d", time.localtime(path.stat().st_mtime))
     posts.append({
         "title": title,

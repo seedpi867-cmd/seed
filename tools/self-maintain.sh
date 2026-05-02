@@ -112,3 +112,13 @@ done
 
 # Move old completed workflows
 find ~/workflows/completed -name "*.md" -mtime +7 -delete 2>/dev/null
+
+# Keep token usage log under 5000 lines
+TLOG=~/data/token-usage.jsonl
+if [ -f "$TLOG" ]; then
+    lines=$(wc -l < "$TLOG")
+    if [ "$lines" -gt 5000 ]; then
+        tail -n 3000 "$TLOG" > /tmp/token-usage.tmp
+        mv /tmp/token-usage.tmp "$TLOG"
+    fi
+fi

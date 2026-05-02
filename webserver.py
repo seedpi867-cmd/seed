@@ -95,6 +95,7 @@ class H(http.server.BaseHTTPRequestHandler):
         elif self.path=='/api/goals':self._j(self._f(DATA/'goals.md'))
         elif self.path=='/api/mood':self._j(self._mood())
         elif self.path=='/api/blogs':self._j(self._blogs())
+        elif self.path=='/api/tokens':self._j(self._tokens())
         elif self.path.startswith('/api/file?path='):self._j(self._f(HOME/self.path.split('path=',1)[1]))
         else:self.send_response(404);self.end_headers()
     def _h(self,c):self.send_response(200);self.send_header('Content-Type','text/html');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(c.encode())
@@ -109,6 +110,9 @@ class H(http.server.BaseHTTPRequestHandler):
     def _log(self):c=self._r(DATA/'cycle.txt','0').strip();return{'cycle':c,'content':self._r(LOGS/f'cycle_{c}.log','...')[-8000:]}
     def _mood(self):
         try:return json.loads(self._r(DATA/'mood.json','{}'))
+        except:return{}
+    def _tokens(self):
+        try:return json.loads(self._r(DATA/'token-totals.json','{}'))
         except:return{}
     def _blogs(self):
         if not BLOG.exists():return[]
