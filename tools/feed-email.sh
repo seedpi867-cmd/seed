@@ -4,7 +4,7 @@ python3 - << 'PYEOF'
 import imaplib, email, os, time
 from email.header import decode_header
 
-USER = "seedpi867@gmail.com"
+USER = "your-email@gmail.com"
 PASS = "utgj nnqk gzoz thcl".replace(" ", "")
 IMAP = "imap.gmail.com"
 OUT = os.path.expanduser("~/context/emails.md")
