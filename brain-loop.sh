@@ -97,6 +97,12 @@ while true; do
   bash "$ROOT/tools/feed-transcript.sh" 2>/dev/null
   # Run RSS feeder
   bash "$ROOT/tools/feed-rss.sh" 2>/dev/null
+  bash "$ROOT/tools/feed-email.sh" 2>/dev/null
+  bash "$ROOT/tools/feed-environment.sh" 2>/dev/null
+  bash "$ROOT/tools/feed-github.sh" 2>/dev/null
+  bash "$ROOT/tools/meta-controller.sh" 2>/dev/null
+  bash "$ROOT/tools/change-logger.sh" 2>/dev/null
+  bash "$ROOT/tools/seek-knowledge.sh" 2>/dev/null
 
   # ── PHASE 1: CODEX — Main agent ─────────────────────────
   led_working

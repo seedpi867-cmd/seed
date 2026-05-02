@@ -8,8 +8,8 @@ BLOG="$HOME_DIR/blog"
 LOGS="$DATA/logs"
 
 # ── MEMORY COMPACTION ──────────────────────────
-# Keep newest 200 lines in memory.md, archive the older tail.
-# memory.md is newest-first, so tail-based compaction would preserve stale entries.
+# Keep newest 200 lines in memory.md, archive the older head.
+# memory.md is chronological, so the newest entries are at the bottom.
 MEM="$DATA/memory.md"
 ARCHIVE="$DATA/memory-archive.md"
 if [ -f "$MEM" ]; then
@@ -17,8 +17,8 @@ if [ -f "$MEM" ]; then
     if [ "$LINES" -gt 200 ]; then
         KEEP=200
         ARCHIVED=$((LINES - KEEP))
-        tail -n "$ARCHIVED" "$MEM" >> "$ARCHIVE"
-        head -n "$KEEP" "$MEM" > /tmp/mem_compact.tmp
+        head -n "$ARCHIVED" "$MEM" >> "$ARCHIVE"
+        tail -n "$KEEP" "$MEM" > /tmp/mem_compact.tmp
         mv /tmp/mem_compact.tmp "$MEM"
         echo "[maintain] Memory compacted: archived $ARCHIVED older lines"
     fi

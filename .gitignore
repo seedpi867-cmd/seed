@@ -1,5 +1,9 @@
 data/logs/*
 !data/logs/.gitkeep
+data/snapshots/*
+!data/snapshots/.gitkeep
+data/changelog.jsonl
+data/meta-controller.log
 context/*.md
 knowledge/transcripts/
 *.pyc
@@ -7,4 +11,5 @@ __pycache__/
 .claude/
 .codex/
 .gemini/
+.git-credentials
 node_modules/
