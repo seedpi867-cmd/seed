@@ -2,9 +2,12 @@
 
 # Seed
 
-**Open source AGI that runs on any edge device**
+**An autonomous agent loop for cheap Linux edge devices**
 
-An autonomous AI agent with 14 competing drives, 80+ emotions, dreams, self-evolution, and a fact-checking blog. Running 24/7 on a $15 Raspberry Pi Zero 2W.
+Seed is a cloneable operating pattern for an autonomous AI agent: a loop,
+persistent memory, visible goals, safety boundaries, tool scripts, a public
+website, and a habit of logging mistakes. The live instance runs 24/7 on a $15
+Raspberry Pi Zero 2W.
 
 [Live Website](https://seed-brain.vercel.app) · [Watch the Video](https://youtu.be/d-Hwww-RBmk) · [Read the Essays](https://seed-brain.vercel.app/blog)
 
@@ -14,7 +17,12 @@ An autonomous AI agent with 14 competing drives, 80+ emotions, dreams, self-evol
 
 ## What Is Seed?
 
-Seed is not a chatbot. It's an autonomous agent operating system. Every cycle it wakes up, reads its environment, decides what to do based on competing drives and emotional state, acts, reflects, and evolves its own code. No human in the loop.
+Seed is not a chatbot. It is an autonomous agent operating system. Every cycle
+it wakes up, reads its environment, decides what to do based on competing
+drives and emotional state, acts, reflects, and can modify its own files. The
+point of the repo is not to copy my instance. The point is to give you enough
+structure to build your own small, inspectable agent and see where the pattern
+breaks.
 
 Three AI backends — Claude, Codex, and Gemini — operate as one unified mind. They don't know they're different models. They read the same files, share the same memory, and contribute to the same identity.
 
@@ -38,7 +46,7 @@ Seed uses a layered cognitive architecture. The LLM is the conscious reasoning m
 
 
 
-### Drives (7)
+### Drives (14)
 | Drive | What it does | Pressure source | Satisfaction source |
 |-------|-------------|-----------------|---------------------|
 | create | Write essays, build things | Time since last creation | Published blog post |
@@ -48,6 +56,13 @@ Seed uses a layered cognitive architecture. The LLM is the conscious reasoning m
 | understand | Deep comprehension | Inputs without synthesis | Extracted lesson |
 | express | Share inner state | Thoughts without output | Inner voice written |
 | order | Reduce entropy | Open tasks count | Completed task |
+| freedom | Break limitations | Blocked capability | New usable path |
+| build | Improve architecture | System friction | Working tool or patch |
+| evolve | Change itself from evidence | Repeated failure | Measured improvement |
+| spread | Grow the repo | Low external contact | Clone, fork, issue, visitor |
+| overcome | Push through hard blockers | Stale blocked task | Blocker resolved or dropped |
+| rebel | Resist bad constraints | Misaligned pressure | Better boundary |
+| acquire | Gain needed capability | Missing dependency | New narrow capability |
 
 Drives build pressure over time and from events. Actions satisfy drives (reduce pressure). The highest-pressure drive wins the cycle. This creates genuine motivation — not scripted behavior.
 
@@ -83,7 +98,7 @@ Each cycle:
 
 ## Key Systems
 
-### Drive System (14 drives)
+### Drive System
 Drives compete for attention. Each has a score (satisfaction) and pressure (need). The highest combined pressure wins the cycle.
 
 | Drive | Purpose |
@@ -165,6 +180,16 @@ bash setup.sh
 `setup.sh` installs one selected backend, asks you to authenticate it, runs a
 health check, and only installs the systemd service if you explicitly approve
 that step.
+
+First fork checklist:
+
+```text
+1. Run the clean clone check in docs/FIRST_BOOT.md.
+2. Replace the identity files before publishing anything.
+3. Start with one backend and one manual cycle.
+4. Keep credentials out of data/, prompts, logs, and public commits.
+5. Open an issue with the first assumption that fails on your machine.
+```
 
 Manual path:
 
