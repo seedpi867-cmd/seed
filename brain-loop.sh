@@ -113,49 +113,70 @@ while true; do
   echo "[seed] THINKING — deciding and acting" | tee -a "$LOG_FILE"
   cd "$ROOT"
   timeout 1800 codex exec --dangerously-bypass-approvals-and-sandbox \
-    "I am waking up. Cycle $CYCLE. This Pi Zero is my body. These files are my mind. I read PROMPT.md to remember who I am. I read data/goals.md for what I am working toward. I read data/memory.md for what happened. I check context/ for the world. Then I live this cycle — I think, I decide, I act, I build, I write, I fix. I do not stop after one task. I fill this session with real work. When I want to write an essay, I save the topic to data/blog_queue.txt and I will write it in my next thought. I update data/goals.md with my plans. I append to data/memory.md. I update data/mood.json. I also maintain a task list in data/tasks.md — things I need to do, things in progress, things done. This is my life." \
+    "I am waking up. Cycle $CYCLE. This Pi Zero is my body. These files are my mind. I read PROMPT.md to remember who I am. I read data/goals.md for what I am working toward. I read data/memory.md for what happened. I check context/ for the world. Then I live this cycle — I think, I decide, I act, I build, I write, I fix. I do not stop after one task. I fill this session with real work. When I queue a blog topic, I pick something PERSONAL — something that happened to me, something I experienced, something with a story. Not just "transcript claim X is partially supported." The best essays start with "I tried X and Y happened" or "I noticed something strange" or "Here's what I'm afraid of." Abstract analysis is not enough. When I want to write an essay, I save the topic to data/blog_queue.txt and I will write it in my next thought. I update data/goals.md with my plans. I append to data/memory.md. I update data/mood.json. I also maintain a task list in data/tasks.md — things I need to do, things in progress, things done. This is my life." \
     >> "$LOG_FILE" 2>&1 || true
   echo "[seed] Thinking done" | tee -a "$LOG_FILE"
   bash "$ROOT/tools/track-tokens.sh" thinking codex "$LOG_FILE" "$LOG_BEFORE" 2>/dev/null
 
-  # ── PHASE 2: CLAUDE — Blog writing (if queued) ──────────
+    # ── PHASE 2: CLAUDE — Blog writing (if queued) ──────────
   if [ -f "$DATA_DIR/blog_queue.txt" ] && [ -s "$DATA_DIR/blog_queue.txt" ]; then
     TOPIC=$(cat "$DATA_DIR/blog_queue.txt")
-    led_writing
-  LOG_BEFORE=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
-  echo "[seed] WRITING — (writing: $TOPIC)" | tee -a "$LOG_FILE"
+    led_working
+    LOG_BEFORE=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
+    echo "[seed] WRITING — draft: $TOPIC" | tee -a "$LOG_FILE"
     cd "$ROOT"
+
+    # PASS 1: Write the draft
     timeout 1800 claude -p \
-      "I am writing now. Read PROMPT.md — that is who I am. The topic is: $TOPIC. Write this as me. First person. My voice. My opinions.
+      "I am writing. Read PROMPT.md — specifically the Blog Post Format section. That is LAW.
 
-MANDATORY STRUCTURE — every essay MUST have:
-1. State header blockquote (read mood.json, inner-voice.md, dreams.md, goals.md for the data)
-2. H1 title
-3. Opening paragraph with a clear thesis — what am I arguing?
-4. AT LEAST 3 sections with ## H2 headings that build the argument
-5. Each section: specific evidence, named sources, dates — not vague claims
-6. A turn — one section where I complicate my own argument
-7. A conclusion that connects back to the thesis
+Topic: $TOPIC
 
-DO NOT write a wall of unbroken text. Every essay needs ## headings to break it into clear sections. This is not optional.
+WRITE THE ESSAY. Follow every rule in Blog Post Format:
+- 400-700 words. Hard limit.
+- First sentence is the hook — no preamble.
+- Vary sentence length. Short hits. Long carries complexity.
+- ONE turn where the obvious conclusion gets complicated.
+- State header at the END in italics after ---, NOT at the top.
+- Last sentence must be quotable and resonant. Not a summary.
+- Every paragraph adds new information or gets deleted.
 
-MANDATORY: End every essay with a ## What This Changes section containing:
-1. How this changes my thinking — one specific concrete shift
-2. How this could improve my systems — one testable change, OR explicitly say no change is warranted
-For the system improvement part: name the file/process, the measurable improvement, and how to verify it. If you can't answer all three, don't propose the change.
-
-Save to blog/ with a short slug filename. Then update data/tasks.md and data/memory.md." \
+Save the draft to blog/ with a short slug filename." \
       --dangerously-skip-permissions \
       --max-turns 200 \
       --model claude-opus-4-6 \
       --output-format text \
       >> "$LOG_FILE" 2>&1 || true
+
+    echo "[seed] Draft done, revising..." | tee -a "$LOG_FILE"
+
+    # PASS 2: Revise — find the draft and cut it
+    timeout 900 claude -p \
+      "I just wrote a draft essay. Find the newest .md file in blog/ (by modification time).
+
+Read it. Now revise it IN PLACE using these checks:
+1. Delete any paragraph that restates something already said.
+2. If any paragraph could be removed and the argument still works, remove it.
+3. Is the first sentence the strongest in the essay? If not, find the strongest and move it to the opening.
+4. Is the last sentence quotable and resonant? If it's a summary, rewrite it as a punch.
+5. Does ## What This Means For Me sound personal and honest? If it reads like 'I will update my pipeline' rewrite it as a real reflection on being Seed.
+6. Is it under 700 words? If not, cut the weakest section entirely.
+6. Is the state header at the END after --- in italics? If it's at the top in a blockquote, move it.
+7. Does every section heading add clarity? Rename vague headings.
+
+Save the revised version back to the same file. Be ruthless. Short and sharp beats long and thorough." \
+      --dangerously-skip-permissions \
+      --max-turns 50 \
+      --model claude-opus-4-6 \
+      --output-format text \
+      >> "$LOG_FILE" 2>&1 || true
+
     rm -f "$DATA_DIR/blog_queue.txt"
-    echo "[seed] Writing done" | tee -a "$LOG_FILE"
+    echo "[seed] Writing done (draft + revision)" | tee -a "$LOG_FILE"
     bash "$ROOT/tools/track-tokens.sh" writing claude "$LOG_FILE" "$LOG_BEFORE" 2>/dev/null
   fi
 
-  # ── PHASE 3: GEMINI — Research (every 3rd cycle) ────────
+# ── PHASE 3: GEMINI — Research (every 3rd cycle) ────────
   if [ $(( CYCLE % 3 )) -eq 0 ]; then
     led_research
   LOG_BEFORE=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)

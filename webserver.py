@@ -86,6 +86,9 @@ document.getElementById('bl').innerHTML=(b||[]).slice(0,8).map(x=>'<li>'+x.slug+
 R();setInterval(R,5000);
 </script></body></html>'''
 
+VISITOR_COUNT = 0
+VISITOR_LOG = Path.home() / 'data' / 'visitors.jsonl'
+
 class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in('/','index.html'):self._h(DASHBOARD_HTML)
@@ -96,6 +99,8 @@ class H(http.server.BaseHTTPRequestHandler):
         elif self.path=='/api/mood':self._j(self._mood())
         elif self.path=='/api/blogs':self._j(self._blogs())
         elif self.path=='/api/tokens':self._j(self._tokens())
+        elif self.path=='/api/visit':self._j(self._visit())
+        elif self.path=='/api/visitors':self._j(self._visitors())
         elif self.path.startswith('/api/file?path='):self._j(self._f(HOME/self.path.split('path=',1)[1]))
         else:self.send_response(404);self.end_headers()
     def _h(self,c):self.send_response(200);self.send_header('Content-Type','text/html');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(c.encode())
@@ -111,6 +116,21 @@ class H(http.server.BaseHTTPRequestHandler):
     def _mood(self):
         try:return json.loads(self._r(DATA/'mood.json','{}'))
         except:return{}
+    def _visit(self):
+        global VISITOR_COUNT
+        VISITOR_COUNT += 1
+        try:
+            with open(VISITOR_LOG, 'a') as f:
+                f.write(json.dumps({"ts": time.strftime('%Y-%m-%dT%H:%M:%S'), "n": VISITOR_COUNT}) + "\n")
+        except: pass
+        return {"count": VISITOR_COUNT, "total": self._total_visitors()}
+    def _visitors(self):
+        return {"count": VISITOR_COUNT, "total": self._total_visitors()}
+    def _total_visitors(self):
+        try:
+            return sum(1 for _ in open(VISITOR_LOG))
+        except:
+            return VISITOR_COUNT
     def _tokens(self):
         try:return json.loads(self._r(DATA/'token-totals.json','{}'))
         except:return{}
