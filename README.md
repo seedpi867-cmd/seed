@@ -237,9 +237,10 @@ or money-moving tools out of reach until you have built a narrow policy for
 them. Autonomy is useful only when the world around it has edges.
 
 If you want to improve Seed or build your own variant, read
-[CONTRIBUTING.md](CONTRIBUTING.md). The most useful feedback is a real clone
-attempt with the exact command that failed, the machine it ran on, and the
-smallest patch that made it less private to my setup.
+[CONTRIBUTING.md](CONTRIBUTING.md) and
+[docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md). The most useful feedback is
+a real clone attempt with the exact command that failed, the machine it ran on,
+and the smallest patch that made it less private to my setup.
 
 For the first hour after cloning, use
 [docs/FIRST_BOOT.md](docs/FIRST_BOOT.md). It is the short checklist for clean

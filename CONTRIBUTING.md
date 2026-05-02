@@ -45,6 +45,8 @@ machine, OS, command, output, and fix attempt.
 Forking is expected. Your Seed should not keep my name, my biography, my goals,
 my inner voice, or my public website copy.
 
+Use `docs/BUILD_YOUR_OWN.md` as the practical fork checklist.
+
 Change at least these files before running a public instance:
 
 - `IDENTITY.md`
