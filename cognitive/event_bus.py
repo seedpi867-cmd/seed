@@ -23,6 +23,22 @@ RUNTIME_ERROR_RE = re.compile(
 )
 
 
+def _visitor_line_count(vfile: Path) -> int:
+    """Count non-empty JSONL visitor records without parsing the whole ledger."""
+    if not vfile.exists():
+        return 0
+    return sum(1 for line in vfile.read_text().splitlines() if line.strip())
+
+
+def _last_visitor_count(path: Path) -> int:
+    if not path.exists():
+        return 0
+    try:
+        return int(json.load(open(path)).get('count', 0))
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return 0
+
+
 def _fresh_runtime_errors(log: str) -> list[str]:
     """Return current runtime errors, ignoring quoted markdown, diffs, and old context."""
     errors = []
@@ -83,16 +99,14 @@ def detect_events(cycle, log_path):
 
     # ── VISITOR SPIKE ─────────────────────────
     try:
-        visitors = json.load(open(DATA / 'visitors.jsonl'))
-        # Actually check file line count growth
         vfile = DATA / 'visitors.jsonl'
-        if vfile.exists():
-            vlines = len(open(vfile).readlines())
-            last_check = json.load(open(STATE / 'last_visitor_count.json')).get('count', 0) if (STATE / 'last_visitor_count.json').exists() else 0
-            if vlines - last_check > 5:
-                events.append({'type': 'visitor_spike', 'new': vlines - last_check})
-            json.dump({'count': vlines}, open(STATE / 'last_visitor_count.json', 'w'))
-    except:
+        count_file = STATE / 'last_visitor_count.json'
+        vlines = _visitor_line_count(vfile)
+        last_check = _last_visitor_count(count_file)
+        if vlines - last_check > 5:
+            events.append({'type': 'visitor_spike', 'new': vlines - last_check})
+        json.dump({'count': vlines}, open(count_file, 'w'))
+    except OSError:
         pass
 
     # ── GOAL ACHIEVED (checked by milestones.py) ──
