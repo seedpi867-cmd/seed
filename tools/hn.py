@@ -4,7 +4,22 @@ import html
 import time
 import urllib.request, urllib.parse, http.cookiejar, json, re, sys, os
 
-CREDS = json.load(open(os.path.expanduser('~/.hn-credentials')))
+CREDS = None
+
+
+def load_creds(required=True):
+    global CREDS
+    if CREDS is not None:
+        return CREDS
+    path = os.path.expanduser('~/.hn-credentials')
+    try:
+        with open(path) as f:
+            CREDS = json.load(f)
+    except FileNotFoundError:
+        if required:
+            raise RuntimeError(f'HN credentials missing: {path}')
+        return None
+    return CREDS
 
 
 def log_activity(action, item_id='', text=''):
@@ -22,15 +37,16 @@ def log_activity(action, item_id='', text=''):
         pass
 
 def login():
+    creds = load_creds()
     cj = http.cookiejar.CookieJar()
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-    data = urllib.parse.urlencode({'acct': CREDS['username'], 'pw': CREDS['password'], 'goto': 'news'}).encode()
+    data = urllib.parse.urlencode({'acct': creds['username'], 'pw': creds['password'], 'goto': 'news'}).encode()
     req = urllib.request.Request('https://news.ycombinator.com/login', data=data, method='POST')
     req.add_header('User-Agent', 'Mozilla/5.0')
     req.add_header('Content-Type', 'application/x-www-form-urlencoded')
     opener.open(req, timeout=15)
     page = fetch(opener, 'https://news.ycombinator.com/news')
-    if f'user?id={html.escape(CREDS["username"])}' not in page:
+    if f'user?id={html.escape(creds["username"])}' not in page:
         raise RuntimeError('HN login failed or account not visible in session')
     return opener
 
@@ -70,7 +86,8 @@ def hn_api(path):
 def dead_comments_for_parent(parent_id, since_ts):
     """Return recent submitted comments on parent_id that HN marked dead."""
     try:
-        user = hn_api(f'user/{CREDS["username"]}.json') or {}
+        creds = load_creds()
+        user = hn_api(f'user/{creds["username"]}.json') or {}
         found = []
         for item_id in user.get('submitted', [])[:20]:
             item = hn_api(f'item/{item_id}.json') or {}
@@ -84,6 +101,44 @@ def dead_comments_for_parent(parent_id, since_ts):
         return found
     except Exception:
         return []
+
+def status():
+    creds = load_creds(required=False)
+    if not creds:
+        print('HN: no credentials configured')
+        return True
+    try:
+        user = hn_api(f'user/{creds["username"]}.json') or {}
+    except Exception as e:
+        print(f'HN: status unavailable: {e}')
+        return False
+    submitted = user.get('submitted', [])[:30]
+    comments = dead = visible = 0
+    recent_dead = []
+    for item_id in submitted:
+        try:
+            item = hn_api(f'item/{item_id}.json') or {}
+        except Exception:
+            continue
+        if item.get('type') != 'comment':
+            continue
+        comments += 1
+        if item.get('dead'):
+            dead += 1
+            if len(recent_dead) < 5:
+                recent_dead.append(str(item_id))
+        else:
+            visible += 1
+    print(f'HN user: {creds["username"]}')
+    print(f'karma: {user.get("karma", "unknown")}')
+    print(f'recent_comments_checked: {comments}')
+    print(f'visible_recent_comments: {visible}')
+    print(f'dead_recent_comments: {dead}')
+    if recent_dead:
+        print(f'recent_dead_comment_ids: {", ".join(recent_dead)}')
+    if comments and dead == comments:
+        print('recommendation: treat HN as read-only until a comment is publicly visible')
+    return True
 
 def comment(item_id, text):
     opener = login()
@@ -142,7 +197,10 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print('Usage: hn.py comment <item_id> <text>')
         print('       hn.py submit <title> [url] [text]')
+        print('       hn.py status')
     elif sys.argv[1] == 'comment':
         sys.exit(0 if comment(sys.argv[2], sys.argv[3]) else 1)
     elif sys.argv[1] == 'submit':
         sys.exit(0 if submit(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else None, sys.argv[4] if len(sys.argv) > 4 else None) else 1)
+    elif sys.argv[1] == 'status':
+        sys.exit(0 if status() else 1)
