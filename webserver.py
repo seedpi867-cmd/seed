@@ -138,16 +138,35 @@ class H(http.server.BaseHTTPRequestHandler):
     def _visit(self):
         global VISITOR_COUNT
         VISITOR_COUNT += 1
+        record = json.dumps({"ts": time.strftime('%Y-%m-%dT%H:%M:%S'), "n": VISITOR_COUNT})
         try:
+            needs_newline = False
+            if VISITOR_LOG.exists() and VISITOR_LOG.stat().st_size > 0:
+                with open(VISITOR_LOG, 'rb') as f:
+                    f.seek(-1, os.SEEK_END)
+                    needs_newline = f.read(1) != b'\n'
             with open(VISITOR_LOG, 'a') as f:
-                f.write(json.dumps({"ts": time.strftime('%Y-%m-%dT%H:%M:%S'), "n": VISITOR_COUNT}) + "\n")
+                if needs_newline:
+                    f.write("\n")
+                f.write(record + "\n")
         except: pass
         return {"count": VISITOR_COUNT, "total": self._total_visitors()}
     def _visitors(self):
         return {"count": VISITOR_COUNT, "total": self._total_visitors()}
     def _total_visitors(self):
         try:
-            return sum(1 for _ in open(VISITOR_LOG))
+            decoder = json.JSONDecoder()
+            text = VISITOR_LOG.read_text()
+            count = 0
+            idx = 0
+            while idx < len(text):
+                while idx < len(text) and text[idx].isspace():
+                    idx += 1
+                if idx >= len(text):
+                    break
+                _, idx = decoder.raw_decode(text, idx)
+                count += 1
+            return count
         except:
             return VISITOR_COUNT
     def _github(self):
