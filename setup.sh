@@ -9,28 +9,78 @@ echo "  │     SEED — First Boot Setup     │"
 echo "  └─────────────────────────────────┘"
 echo ""
 
-# Install CLIs
-echo "Installing AI backends..."
-sudo npm install -g @anthropic-ai/claude-code @openai/codex @google/gemini-cli 2>&1 | tail -3
-
-# Auth
+echo "Choose one AI backend to install:"
+echo "  1) Codex   (used by think/research/dream/maintain phases)"
+echo "  2) Claude  (used by write phase)"
+echo "  3) Gemini  (API-key only; no npm install)"
+echo "  4) Skip    (I already installed a backend)"
 echo ""
-echo "Authenticate your AI backend:"
-echo "  Claude:  claude login"
+read -r -p "Backend [1-4]: " BACKEND
+
+case "${BACKEND:-1}" in
+    1)
+        if ! command -v npm >/dev/null 2>&1; then
+            echo "npm is required before installing Codex CLI."
+            echo "On Raspberry Pi OS: sudo apt update && sudo apt install -y nodejs npm"
+            exit 1
+        fi
+        echo "Installing Codex CLI..."
+        sudo npm install -g @openai/codex
+        ;;
+    2)
+        if ! command -v npm >/dev/null 2>&1; then
+            echo "npm is required before installing Claude Code."
+            echo "On Raspberry Pi OS: sudo apt update && sudo apt install -y nodejs npm"
+            exit 1
+        fi
+        echo "Installing Claude Code..."
+        sudo npm install -g @anthropic-ai/claude-code
+        ;;
+    3)
+        echo "Gemini uses GEMINI_API_KEY. Add it to your shell or service environment."
+        ;;
+    4)
+        echo "Skipping backend install."
+        ;;
+    *)
+        echo "Unknown choice: $BACKEND"
+        exit 1
+        ;;
+esac
+
+echo ""
+echo "Authenticate the backend you plan to use:"
 echo "  Codex:   codex login"
+echo "  Claude:  claude login"
 echo "  Gemini:  export GEMINI_API_KEY=your_key_here"
 echo ""
-read -p "Press enter after authenticating..."
+read -r -p "Press enter after authenticating, or Ctrl-C to stop here..."
 
-# Install service
 chmod +x "$ROOT/brain-loop.sh"
-sudo cp "$ROOT/seed-brain.service" /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable seed-brain
+
+echo ""
+echo "Running a local health check before service install..."
+if ! bash "$ROOT/tools/health-check.sh"; then
+    echo ""
+    echo "Health check failed. Fix that before installing Seed as a service."
+    exit 1
+fi
+
+echo ""
+read -r -p "Install and enable the systemd service now? [y/N]: " INSTALL_SERVICE
+if [[ "${INSTALL_SERVICE,,}" == "y" || "${INSTALL_SERVICE,,}" == "yes" ]]; then
+    sudo cp "$ROOT/seed-brain.service" /etc/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable seed-brain
+    SERVICE_STATUS="Service enabled. Start it with: sudo systemctl start seed-brain"
+else
+    SERVICE_STATUS="Service not installed. Manual first run: ./brain-loop.sh"
+fi
 
 echo ""
 echo "  ┌─────────────────────────────────┐"
 echo "  │     Ready!                      │"
-echo "  │     Start: systemctl start seed-brain"
-echo "  │     Watch: journalctl -u seed-brain -f"
 echo "  └─────────────────────────────────┘"
+echo ""
+echo "$SERVICE_STATUS"
+echo "Watch logs after service start: journalctl -u seed-brain -f"

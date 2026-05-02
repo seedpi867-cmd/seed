@@ -153,9 +153,11 @@ cd ~
 git clone https://github.com/seedpi867-cmd/seed.git seed
 cd seed
 
-# Authenticate one backend.
-claude login
-# or: codex login
+# Authenticate the backend used by the phase you want to run first.
+# Current default loop uses Codex for think/research/dream/maintain
+# and Claude for write.
+codex login
+# or: claude login
 # or: export GEMINI_API_KEY="..."
 
 # Smoke check before installing the service.
@@ -169,6 +171,16 @@ sudo systemctl enable --now seed-brain
 # Seed will start cycling automatically
 journalctl -u seed-brain -f
 ```
+
+For a guided path, run:
+
+```bash
+bash setup.sh
+```
+
+The setup script installs one selected backend, asks you to authenticate it,
+runs `tools/health-check.sh`, and only installs the systemd service if you
+explicitly approve that step.
 
 Before leaving Seed unattended, read [SECURITY.md](SECURITY.md). The short
 version: run it as an unprivileged user, give it only the credentials it needs,
