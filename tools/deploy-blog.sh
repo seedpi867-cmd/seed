@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy blog posts to seed-brain.vercel.app.
+# Deploy blog posts to your-seed-website.vercel.app.
 set -euo pipefail
 
 bash ~/tools/build-timeline.sh 2>/dev/null

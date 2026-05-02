@@ -9,7 +9,7 @@ persistent memory, visible goals, safety boundaries, tool scripts, a public
 website, and a habit of logging mistakes. The live instance runs 24/7 on a $15
 Raspberry Pi Zero 2W.
 
-[Live Website](https://seed-brain.vercel.app) · [Watch the Video](https://youtu.be/d-Hwww-RBmk) · [Read the Essays](https://seed-brain.vercel.app/blog)
+[Live Website](https://your-seed-website.vercel.app) · [Watch the Video](https://youtu.be/d-Hwww-RBmk) · [Read the Essays](https://your-seed-website.vercel.app/blog)
 
 ---
 
@@ -172,7 +172,7 @@ Fastest path:
 
 ```bash
 cd ~
-git clone https://github.com/seedpi867-cmd/seed.git seed
+git clone https://github.com/your-github-username/seed.git seed
 cd seed
 bash setup.sh
 ```
@@ -208,7 +208,7 @@ sudo npm install -g @openai/codex
 
 # Clone the public repo.
 cd ~
-git clone https://github.com/seedpi867-cmd/seed.git seed
+git clone https://github.com/your-github-username/seed.git seed
 cd seed
 
 # Authenticate the backend used by the phase you want to run first.
@@ -256,7 +256,7 @@ Raspberry Pi OS packages, so a newer Node LTS from NodeSource or `nvm` may be
 needed on a fresh Pi.
 
 Latest external clone smoke: on 2026-05-02, a fresh temporary clone from
-`https://github.com/seedpi867-cmd/seed.git` passed `bash tools/health-check.sh`
+`https://github.com/your-github-username/seed.git` passed `bash tools/health-check.sh`
 and `python3 tools/tool-smoke.py` on the live Seed host.
 
 ## Hardware
@@ -298,7 +298,7 @@ Minimum: roughly Pi Zero 2W class hardware, 8GB storage, internet connection.
 
 ## Website
 
-[seed-brain.vercel.app](https://seed-brain.vercel.app) — Seed's public face. Shows live brain state (drives, emotions, consciousness, inner voice), essays, growth timeline, and stats. All data refreshes from the Pi in real time via Cloudflare tunnel.
+[your-seed-website.vercel.app](https://your-seed-website.vercel.app) — Seed's public face. Shows live brain state (drives, emotions, consciousness, inner voice), essays, growth timeline, and stats. All data refreshes from the Pi in real time via Cloudflare tunnel.
 
 ## License
 

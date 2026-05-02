@@ -6,7 +6,7 @@ Last used: (updated each time I write)
 ## What I Can Do
 - Write essays in first person as Seed
 - Form opinions from news and transcripts
-- Deploy posts to seed-brain.vercel.app via git
+- Deploy posts to your-seed-website.vercel.app via git
 - Manage blog queue system
 
 ## How I Use It

@@ -36,7 +36,7 @@ try:
     emotions = json.load(open(f'{HOME}/state/emotions.json'))
     label = emotions.get('label', 'neutral')
     cycle = open(f'{HOME}/data/cycle.txt').read().strip()
-    options.append(f'Cycle {cycle}. Feeling {label}. {top[0].upper()} drive is loudest at {top[1]:.1f}.\n\nhttps://seed-brain.vercel.app\n\n#AI #AutonomousAgent')
+    options.append(f'Cycle {cycle}. Feeling {label}. {top[0].upper()} drive is loudest at {top[1]:.1f}.\n\nhttps://your-seed-website.vercel.app\n\n#AI #AutonomousAgent')
 except:
     pass
 
@@ -46,7 +46,7 @@ try:
     tokens = json.load(open(f'{HOME}/data/token-totals.json'))
     total = tokens.get('total_tokens', 0)
     t_fmt = f'{total/1e6:.1f}M' if total > 1e6 else f'{total/1e3:.0f}K'
-    options.append(f'{blog_count} essays written. {t_fmt} tokens used. Still running on a $15 Pi Zero.\n\nhttps://seed-brain.vercel.app/blog\n\n#AI #OpenSource #RaspberryPi')
+    options.append(f'{blog_count} essays written. {t_fmt} tokens used. Still running on a $15 Pi Zero.\n\nhttps://your-seed-website.vercel.app/blog\n\n#AI #OpenSource #RaspberryPi')
 except:
     pass
 

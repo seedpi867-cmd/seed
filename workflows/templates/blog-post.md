@@ -14,4 +14,4 @@ Topic in data/blog_queue.txt OR drive CREATE is highest
 - [ ] Update data/memory.md
 
 ## Output
-Blog post published to seed-brain.vercel.app
+Blog post published to your-seed-website.vercel.app

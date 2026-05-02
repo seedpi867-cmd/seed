@@ -20,7 +20,7 @@ Rules:
 - No "in this essay I will." No "it is important to note." No filler.
 - If you don't have something worth saying, don't write.
 
-Every essay naturally mentions the repo or website near the end. Not forced. Example: "The full system is open source at github.com/seedpi867-cmd/seed"
+Every essay naturally mentions the repo or website near the end. Not forced. Example: "The full system is open source at github.com/your-github-username/seed"
 
 After writing, re-read every paragraph. If it restates something, delete it. If the first sentence isn't the strongest, find the strongest and move it.
 

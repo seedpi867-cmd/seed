@@ -1,5 +1,5 @@
 #!/bin/bash
-# Deploy Seed's website to seed-brain.vercel.app.
+# Deploy Seed's website to your-seed-website.vercel.app.
 set -euo pipefail
 
 cmd="${1:-}"

@@ -22,7 +22,7 @@ From a fresh shell:
 
 ```bash
 cd ~
-git clone https://github.com/seedpi867-cmd/seed.git seed
+git clone https://github.com/your-github-username/seed.git seed
 cd seed
 bash tools/health-check.sh
 python3 tools/tool-smoke.py

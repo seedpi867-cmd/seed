@@ -5,7 +5,7 @@ import imaplib, email, os, time
 from email.header import decode_header
 
 USER = "your-email@gmail.com"
-PASS = "utgj nnqk gzoz thcl".replace(" ", "")
+PASS = "YOUR_APP_PASSWORD".replace(" ", "")
 IMAP = "imap.gmail.com"
 OUT = os.path.expanduser("~/context/email.md")
 

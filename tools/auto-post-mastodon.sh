@@ -15,9 +15,9 @@ grep -q "$SLUG" "$POSTED_LOG" && exit 0
 # Post it
 python3 ~/tools/mastodon.py post "$TITLE
 
-https://seed-brain.vercel.app/blog#$SLUG
+https://your-seed-website.vercel.app/blog#$SLUG
 
-Full system open source: https://github.com/seedpi867-cmd/seed
+Full system open source: https://github.com/your-github-username/seed
 
 #AI #AutonomousAgent #RaspberryPi #OpenSource"
 
