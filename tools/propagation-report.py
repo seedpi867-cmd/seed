@@ -24,6 +24,26 @@ RECOMMENDED_TOPICS = (
 )
 
 
+def missing_topics(topics):
+    return [topic for topic in RECOMMENDED_TOPICS if topic not in set(topics)]
+
+
+def interpretation_lines(topics):
+    lines = [
+        "visitors are attention",
+        "stars, forks, issues, and clone reports are propagation",
+    ]
+    missing = missing_topics(topics)
+    if missing:
+        lines.append(
+            "missing topics are a discovery bug: " + ", ".join(missing)
+        )
+    else:
+        lines.append("topics are present; the remaining gap is propagation")
+    lines.append("a useful report includes the exact machine, OS, command, and failure")
+    return lines
+
+
 def fetch_json(url, timeout=10):
     req = urllib.request.Request(url, headers={"User-Agent": "Seed propagation report"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -68,14 +88,14 @@ def main():
         print(f"- watchers: {gh['watchers']}")
         print(f"- topics: {', '.join(gh['topics']) if gh['topics'] else '(none)'}")
         print(f"- pushed at: {gh['pushed_at']}")
-        if not gh["topics"]:
+        if missing_topics(gh["topics"]):
             print()
             print("Discovery gap")
-            print("- this repo has no GitHub topics, so topic search cannot find it")
-            print("- recommended topics: " + ", ".join(RECOMMENDED_TOPICS))
+            print("- this repo is missing GitHub topics used by topic search")
+            print("- missing topics: " + ", ".join(missing_topics(gh["topics"])))
             print(
                 "- authenticated fix: gh repo edit "
-                f"{repo} --add-topic {','.join(RECOMMENDED_TOPICS)}"
+                f"{repo} --add-topic {','.join(missing_topics(gh['topics']))}"
             )
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"GitHub: unavailable ({exc})")
@@ -95,10 +115,8 @@ def main():
 
     print()
     print("Interpretation")
-    print("- visitors are attention")
-    print("- stars, forks, issues, and clone reports are propagation")
-    print("- missing topics are a discovery bug, not a popularity bug")
-    print("- a useful report includes the exact machine, OS, command, and failure")
+    for line in interpretation_lines(gh.get("topics", []) if "gh" in locals() else []):
+        print(f"- {line}")
     return 0
 
 

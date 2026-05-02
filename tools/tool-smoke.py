@@ -366,6 +366,29 @@ def smoke_clone_report_summary(_tmp: Path) -> None:
     require("Relevant output:" in summary and raw in summary, "clone_report_summary omitted raw output")
 
 
+def smoke_propagation_report(_tmp: Path) -> None:
+    tool = load_tool("propagation-report.py")
+    full_topics = list(tool.RECOMMENDED_TOPICS)
+    lines = tool.interpretation_lines(full_topics)
+    require(
+        "topics are present; the remaining gap is propagation" in lines,
+        "propagation_report did not acknowledge complete topics",
+    )
+    require(
+        not any(line.startswith("missing topics") for line in lines),
+        "propagation_report warned about missing topics when none were missing",
+    )
+
+    partial_topics = full_topics[:-1]
+    missing = tool.missing_topics(partial_topics)
+    require(missing == [full_topics[-1]], "propagation_report missing topic calculation changed")
+    lines = tool.interpretation_lines(partial_topics)
+    require(
+        any(line == f"missing topics are a discovery bug: {full_topics[-1]}" for line in lines),
+        "propagation_report did not report the exact missing topic",
+    )
+
+
 SMOKES = {
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,
@@ -375,6 +398,7 @@ SMOKES = {
     "file_write.py": smoke_file_write,
     "shell_exec.py": smoke_shell_exec,
     "plant_goal.py": smoke_plant_goal,
+    "propagation-report.py": smoke_propagation_report,
     "redact-report.py": smoke_redact_report,
     "search_web.py": smoke_search_web,
     "write_blog_post.py": smoke_write_blog_post,
