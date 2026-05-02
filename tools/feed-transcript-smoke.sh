@@ -16,7 +16,8 @@ tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
 out="$tmpdir/transcript.md"
-TRANSCRIPT_CONTEXT_OUT="$out" "$FEEDER" >/dev/null
+selection_log="$tmpdir/selections.log"
+TRANSCRIPT_CONTEXT_OUT="$out" TRANSCRIPT_SELECTION_LOG="$selection_log" "$FEEDER" >/dev/null
 
 required_fields=(
     "Source path:"
@@ -64,6 +65,16 @@ fi
 
 if [[ ! "$source_sha" =~ ^[0-9a-f]{64}$ ]]; then
     echo "[transcript-smoke] Source sha256 is not a 64-char hex digest: ${source_sha:-<empty>}" >&2
+    exit 1
+fi
+
+if [[ ! -s "$selection_log" ]]; then
+    echo "[transcript-smoke] Selection log was not written" >&2
+    exit 1
+fi
+
+if ! grep -Fq "$source_sha" "$selection_log" || ! grep -Fq "$source_path" "$selection_log" || ! grep -Fq "$out" "$selection_log"; then
+    echo "[transcript-smoke] Selection log does not match transcript provenance" >&2
     exit 1
 fi
 

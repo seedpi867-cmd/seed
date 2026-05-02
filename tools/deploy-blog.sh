@@ -36,6 +36,25 @@ print(f"[deploy] Index rebuilt: {len(posts)} posts")
 PY
 
 git add -A
+mapfile -t changed_slugs < <(
+    git diff --cached --name-only -- 'posts/*.md' |
+    while IFS= read -r path; do
+        basename "${path%.md}"
+    done
+)
+
+verify_changed_posts() {
+    if (( ${#changed_slugs[@]} == 0 )); then
+        return 0
+    fi
+
+    for slug in "${changed_slugs[@]}"; do
+        title="$(sed -n '1s/^# *//p' "posts/${slug}.md")"
+        echo "[deploy] Verifying remote post: ${slug}"
+        ~/tools/verify-blog-live.sh "$slug" "$title"
+    done
+}
+
 if git diff --cached --quiet; then
     if git status --short --branch | grep -q '\[ahead '; then
         git push origin main && echo "[deploy] Pushed to Vercel" || { echo "[deploy] Push failed"; exit 1; }
@@ -45,4 +64,5 @@ if git diff --cached --quiet; then
 else
     git commit -m "SEED blog update - $(date '+%Y-%m-%d')"
     git push origin main && echo "[deploy] Pushed to Vercel" || { echo "[deploy] Push failed"; exit 1; }
+    verify_changed_posts
 fi

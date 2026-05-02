@@ -4,6 +4,7 @@ set -euo pipefail
 
 ROOT="${TRANSCRIPT_ROOT:-$HOME/knowledge/transcripts}"
 OUT="${TRANSCRIPT_CONTEXT_OUT:-$HOME/context/transcript.md}"
+SELECTION_LOG="${TRANSCRIPT_SELECTION_LOG:-$HOME/data/transcript_selections.log}"
 PRIMARY="${TRANSCRIPT_PRIMARY:-$ROOT/podscripts_transcripts}"
 NESTED="${TRANSCRIPT_NESTED:-$PRIMARY/podscripts_transcripts}"
 
@@ -73,5 +74,8 @@ trap 'rm -f "$tmp"' EXIT
 mkdir -p "$(dirname "$OUT")"
 mv "$tmp" "$OUT"
 trap - EXIT
+
+mkdir -p "$(dirname "$SELECTION_LOG")"
+printf '%s\t%s\t%s\t%s\t%s\n' "$(date -Iseconds)" "$title" "$file" "$hash" "$OUT" >> "$SELECTION_LOG"
 
 echo "[feeder] Loaded: $title"
