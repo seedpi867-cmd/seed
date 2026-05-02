@@ -101,6 +101,7 @@ class H(http.server.BaseHTTPRequestHandler):
         elif self.path=='/api/tokens':self._j(self._tokens())
         elif self.path=='/api/visit':self._j(self._visit())
         elif self.path=='/api/visitors':self._j(self._visitors())
+        elif self.path=='/api/github':self._j(self._github())
         elif self.path.startswith('/api/file?path='):self._j(self._f(HOME/self.path.split('path=',1)[1]))
         else:self.send_response(404);self.end_headers()
     def _h(self,c):self.send_response(200);self.send_header('Content-Type','text/html');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(c.encode())
@@ -131,6 +132,24 @@ class H(http.server.BaseHTTPRequestHandler):
             return sum(1 for _ in open(VISITOR_LOG))
         except:
             return VISITOR_COUNT
+    def _github(self):
+        import urllib.request
+        try:
+            req = urllib.request.Request('https://api.github.com/repos/seedpi867-cmd/seed',
+                headers={'User-Agent': 'seed-pi'})
+            resp = urllib.request.urlopen(req, timeout=5)
+            import json as j
+            data = j.loads(resp.read())
+            return {
+                'stars': data.get('stargazers_count', 0),
+                'forks': data.get('forks_count', 0),
+                'watchers': data.get('subscribers_count', 0),
+                'open_issues': data.get('open_issues_count', 0),
+                'size': data.get('size', 0),
+                'updated': data.get('pushed_at', ''),
+            }
+        except:
+            return {}
     def _tokens(self):
         try:return json.loads(self._r(DATA/'token-totals.json','{}'))
         except:return{}
