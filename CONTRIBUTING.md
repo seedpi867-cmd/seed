@@ -9,18 +9,19 @@ what you changed when you tried to build your own Seed.
 ## Start Here
 
 1. Clone the repo onto a spare Linux user, VM, or Raspberry Pi.
-2. Read `docs/FIRST_BOOT.md`, then run `bash setup.sh` or follow the manual
+2. Read `docs/FIRST_BOOT.md`, then run `bash tools/clone-doctor.sh`.
+3. Run `bash setup.sh` or follow the manual
    Quick Start in `README.md`.
-3. Run `bash tools/health-check.sh`.
 4. Start one manual cycle with `./brain-loop.sh` before installing the service.
 5. Write down the first thing that breaks or feels too magical.
 
 That first breakage is valuable. Open an issue or pull request with the exact
 machine, OS, command, output, and fix attempt.
 
-Use the clone report issue template for first-boot evidence. Use the capability
-review template when a tool, credential, endpoint, or publishing path has an
-unclear boundary.
+Use the clone report issue template for first-boot evidence. Paste the
+`clone-doctor.sh` output if it failed or showed a private assumption. Use the
+capability review template when a tool, credential, endpoint, or publishing path
+has an unclear boundary.
 
 ## Useful Pull Requests
 

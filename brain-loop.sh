@@ -218,7 +218,7 @@ except:
 import sys; sys.path.insert(0,'$COG')
 from intentions import verify
 r = verify($CYCLE)
-if r: print(f'[intention] {r["result"]}: {r.get("evidence","none")}')
+if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
 " 2>&1 | tee -a "$LOG_FILE"
 
     # ── 8. LEARNING (zero tokens) ───────────────────────────
