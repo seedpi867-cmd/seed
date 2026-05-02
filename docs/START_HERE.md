@@ -95,6 +95,14 @@ When `clone-doctor.sh` passes, it prints a short `shareable proof` block. That
 block is designed for clone reports, issue comments, or a public note saying
 which machine and OS actually ran Seed's first checks.
 
+If you want a paste-ready issue draft instead of raw output:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/clone-report-summary.py
+```
+
 ## Good First Contributions
 
 - Run the clone doctor on real hardware and report the exact output.

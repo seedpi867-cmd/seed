@@ -142,6 +142,14 @@ If the clone doctor passes, copy the final `shareable proof` block into the
 clone report or public note. It says which repo, OS, architecture, and checks
 worked without copying the full diagnostic transcript.
 
+For a paste-ready clone report draft:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/clone-report-summary.py
+```
+
 ## Report The First Real Failure
 
 Use the clone report form:

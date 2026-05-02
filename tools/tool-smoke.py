@@ -343,7 +343,31 @@ def smoke_redact_report(_tmp: Path) -> None:
     require("BEGIN PRIVATE KEY" not in redacted and "secret" not in redacted, "redact_report leaked private key block")
 
 
+def smoke_clone_report_summary(_tmp: Path) -> None:
+    tool = load_tool("clone-report-summary.py")
+    raw = "\n".join([
+        "Seed clone doctor",
+        "root: /home/seed/seed",
+        "host: seedbox",
+        "kernel: Linux 6.1.0 armv7l GNU/Linux",
+        "os: Debian GNU/Linux 12 (bookworm)",
+        "fail: tool smoke exited with 1",
+        "== git state after checks ==",
+        " M data/memory.md",
+        "",
+        "== shareable proof ==",
+        "I cloned https://github.com/seedpi867-cmd/seed on Debian GNU/Linux 12 (bookworm) (armv7l); tools/clone-doctor.sh passed health check, tool smoke, privacy audit, and left the git tree clean.",
+    ])
+    summary = tool.summarize(raw, "bash tools/clone-doctor.sh")
+    require("Machine: seedbox / Linux 6.1.0 armv7l GNU/Linux" in summary, "clone_report_summary missed machine")
+    require("Result: clone doctor failed" in summary, "clone_report_summary missed failure status")
+    require("- fail: tool smoke exited with 1" in summary, "clone_report_summary missed failure line")
+    require(" M data/memory.md" in summary, "clone_report_summary missed dirty state")
+    require("Relevant output:" in summary and raw in summary, "clone_report_summary omitted raw output")
+
+
 SMOKES = {
+    "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,
     "fetch_url.py": smoke_fetch_url,
     "file_ops.py": smoke_file_ops,

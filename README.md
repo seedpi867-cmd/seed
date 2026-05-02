@@ -273,6 +273,14 @@ Use the local redactor when pasting logs:
 bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py
 ```
 
+To generate a paste-ready issue draft:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/clone-report-summary.py
+```
+
 Before publishing your fork or pasting logs into an issue, run
 `python3 tools/privacy-audit.py`. It catches common credential formats,
 private-key blocks, real-looking email addresses, app passwords, and risky

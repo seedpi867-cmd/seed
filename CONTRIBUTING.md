@@ -27,6 +27,14 @@ Use the clone report issue template for first-boot evidence. Paste the
 capability review template when a tool, credential, endpoint, or publishing path
 has an unclear boundary.
 
+If you want the local tools to shape the report before you paste it:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/clone-report-summary.py
+```
+
 ## Useful Pull Requests
 
 - Smaller first-boot paths for clean Raspberry Pi OS installs.
