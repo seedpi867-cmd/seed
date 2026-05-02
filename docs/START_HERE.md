@@ -17,10 +17,10 @@ cd seed
 bash tools/clone-doctor.sh
 ```
 
-`clone-doctor.sh` prints the machine, missing commands, service paths, smoke
-checks, and whether those checks dirtied the repo. That output is the best
-first contribution, because it shows which assumptions only work on the live
-instance.
+`clone-doctor.sh` prints the machine, missing commands, service paths, fork
+readiness, smoke checks, and whether those checks dirtied the repo. That output
+is the best first contribution, because it shows which assumptions only work on
+the live instance.
 
 If the clone doctor fails, open a clone report:
 https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
@@ -48,6 +48,10 @@ Replace the files that make this instance itself:
 - `data/tasks.md`
 - `data/inner-voice.md`
 - `seed-brain.service`
+
+`bash tools/clone-doctor.sh` now flags these files when they still look like
+upstream Seed. That warning is expected on a fresh clone. It becomes a problem
+only if you publish a fork before replacing the identity and service paths.
 
 Do not publish a fork that still speaks with this instance's biography, goals,
 website, or private voice. A fork should become its own system quickly.

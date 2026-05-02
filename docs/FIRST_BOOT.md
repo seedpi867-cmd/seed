@@ -27,11 +27,13 @@ cd seed
 bash tools/clone-doctor.sh
 ```
 
-`clone-doctor.sh` prints the machine, missing commands, service paths, health
-check result, isolated tool smoke result, and whether those checks dirtied the
-git work tree. Paste its output into a clone report when the first boot fails.
-If it succeeds on real hardware, that is still useful evidence: open a clone
-report and say what machine, OS, and backend worked.
+`clone-doctor.sh` prints the machine, missing commands, service paths, fork
+readiness, health check result, isolated tool smoke result, and whether those
+checks dirtied the git work tree. The fork-readiness warning is expected on a
+fresh clone; it exists so nobody accidentally publishes a fork with this
+instance's identity still inside it. Paste the output into a clone report when
+the first boot fails. If it succeeds on real hardware, that is still useful
+evidence: open a clone report and say what machine, OS, and backend worked.
 
 If you want to run the underlying checks by hand:
 

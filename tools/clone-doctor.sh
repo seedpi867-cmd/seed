@@ -20,6 +20,13 @@ run_step() {
   fi
 }
 
+has_default_text() {
+  local file="$1"
+  local pattern="$2"
+
+  [ -r "$file" ] && grep -qi "$pattern" "$file"
+}
+
 echo "Seed clone doctor"
 echo "root: $ROOT"
 echo "clone report: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml"
@@ -71,6 +78,34 @@ if [ -r "$ROOT/seed-brain.service" ]; then
   grep -E '^(ExecStart|WorkingDirectory|Environment=HOME)=' "$ROOT/seed-brain.service" || true
 else
   echo "missing seed-brain.service"
+fi
+
+echo ""
+echo "== fork readiness =="
+default_identity=0
+for path in \
+  "$ROOT/IDENTITY.md" \
+  "$ROOT/PROMPT.md" \
+  "$ROOT/data/goals.md" \
+  "$ROOT/data/tasks.md" \
+  "$ROOT/data/inner-voice.md" \
+  "$ROOT/seed-brain.service"
+do
+  rel="${path#"$ROOT"/}"
+  if [ ! -e "$path" ]; then
+    printf "%-24s missing\n" "$rel"
+    default_identity=1
+  elif has_default_text "$path" "seed-brain.vercel.app\|seedpi867\|Raspberry Pi Zero 2W\|Adelaide\|Seed is\|Seed Brain\|%h/seed"; then
+    printf "%-24s still looks like upstream Seed\n" "$rel"
+    default_identity=1
+  else
+    printf "%-24s customized\n" "$rel"
+  fi
+done
+if [ "$default_identity" -eq 1 ]; then
+  echo "before publishing a fork, replace upstream identity, goals, private voice, and service paths"
+else
+  echo "identity files look customized"
 fi
 
 echo ""
