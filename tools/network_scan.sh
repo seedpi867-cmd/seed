@@ -1,7 +1,7 @@
 #!/bin/bash
 # network_scan.sh — Discover devices on the local network.
 # Uses arp-scan if available, falls back to ping sweep.
-# Usage: bash network_scan.sh [--subnet 192.168.1.0/24] [--json]
+# Usage: bash network_scan.sh [--subnet 192.168.8.0/24] [--json]
 
 SUBNET=""
 AS_JSON=false
@@ -11,7 +11,7 @@ while [[ $# -gt 0 ]]; do
         --subnet) SUBNET="$2"; shift 2 ;;
         --json)   AS_JSON=true;  shift ;;
         -h|--help)
-            echo "Usage: bash network_scan.sh [--subnet 192.168.1.0/24] [--json]"
+            echo "Usage: bash network_scan.sh [--subnet 192.168.8.0/24] [--json]"
             exit 0
             ;;
         *) shift ;;

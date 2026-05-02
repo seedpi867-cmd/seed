@@ -243,6 +243,11 @@ if r: print(f'[intention] {r["result"]}: {r.get("evidence","none")}')
     }
     cd "$ROOT"
 
+    # ── EVENT-DRIVEN REACTIONS ─────────────────────────────
+    python3 "$COG/event_bus.py" "$CYCLE" 2>&1 | tee -a "$LOG_FILE"
+    python3 "$COG/milestones.py" 2>/dev/null
+    python3 "$COG/compactor.py" 2>/dev/null
+    bash "$ROOT/tools/build-social-feed.sh" 2>/dev/null
     bash "$ROOT/tools/build-timeline.sh" 2>/dev/null
     cp "$DATA/token-totals.json" ~/seed-web/ 2>/dev/null
     cd ~/seed-web 2>/dev/null && {

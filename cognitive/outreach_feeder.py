@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Find relevant HN/Reddit posts where Seed could add value"""
-import urllib.request, json, os, time
+import urllib.request, json, os, time, sys
+
+sys.path.insert(0, os.path.expanduser('~/cognitive'))
+from firewall import sanitise
 
 out = []
 
-# HN search
 for q in ["autonomous+AI+agent", "raspberry+pi+AI", "self-hosted+agent"]:
     try:
         url = f"http://hn.algolia.com/api/v1/search_by_date?query={q}&tags=story&hitsPerPage=5"
@@ -18,7 +20,6 @@ for q in ["autonomous+AI+agent", "raspberry+pi+AI", "self-hosted+agent"]:
     except:
         pass
 
-# Reddit search
 for sub in ["SideProject", "raspberry_pi", "artificial", "selfhosted"]:
     try:
         url = f"https://www.reddit.com/r/{sub}/new.json?limit=5"
@@ -38,6 +39,7 @@ if out:
     content = f"## Outreach — {time.strftime('%Y-%m-%d %H:%M')}\n\n"
     content += "Posts where a genuine comment could add value:\n\n"
     content += "\n".join(out[:15]) + "\n"
+    content = sanitise(content, 'outreach')
     open(os.path.expanduser('~/context/outreach.md'), 'w').write(content)
     print(f"[outreach] {len(out)} opportunities")
 else:

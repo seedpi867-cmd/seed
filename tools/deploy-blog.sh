@@ -124,3 +124,5 @@ else
     git push origin main && echo "[deploy] Pushed to Vercel" || { echo "[deploy] Push failed"; exit 1; }
     verify_changed_posts
 fi
+
+bash ~/tools/auto-post-mastodon.sh 2>/dev/null

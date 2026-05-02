@@ -97,7 +97,7 @@ try:
 except:
     fw_sanitise = lambda t, s='': t
 
-REDACT_STRINGS = ['YOUR_GEMINI_API_KEY', 'YOUR_GITHUB_TOKEN', 'REDACTED', 'REDACTED']
+REDACT_STRINGS = ['YOUR_GEMINI_API_KEY', 'YOUR_GITHUB_TOKEN', 'YOUR_APP_PASSWORD', 'REDACTED']
 def redact(text):
     for s in REDACT_STRINGS:
         text = text.replace(s, '[REDACTED]')

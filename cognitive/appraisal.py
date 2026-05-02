@@ -40,6 +40,11 @@ def select_phase(drives, emotions, cycle):
 
     # MAINTAIN removed — triggers.py handles maintenance automatically
 
+    # Bug fix takes priority
+    tasks = read_text(DATA / 'tasks.md')
+    if 'FIX BUG' in tasks or 'FIX:' in tasks:
+        return 'think'  # Think phase will see the fix task
+
     # Default: THINK — but the prompt must demand action
     return 'think'
 
@@ -148,6 +153,7 @@ def select_context(drives, budget=25):
         'transcript.md': {'explore': 0.8, 'understand': 0.3},
         'trends.md':     {'explore': 0.6, 'connect': 0.3},
         'outreach.md':   {'connect': 1.0, 'create': 0.3},
+        'mastodon.md':   {'connect': 1.0, 'express': 0.5},
     }
     scored = []
     for fname, weights in CONTEXT_MAP.items():

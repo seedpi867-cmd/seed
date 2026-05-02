@@ -4,16 +4,12 @@ python3 - << 'PYEOF'
 import imaplib, email, os, time
 from email.header import decode_header
 
-USER = os.environ.get("SEED_EMAIL_USER", "")
-PASS = os.environ.get("SEED_EMAIL_APP_PASSWORD", "").replace(" ", "")
+USER = "your-email@gmail.com"
+PASS = "utgj nnqk gzoz thcl".replace(" ", "")
 IMAP = "imap.gmail.com"
 OUT = os.path.expanduser("~/context/email.md")
 
 try:
-    if not USER or not PASS:
-        print("[email] SEED_EMAIL_USER or SEED_EMAIL_APP_PASSWORD not set")
-        raise SystemExit(0)
-
     m = imaplib.IMAP4_SSL(IMAP)
     m.login(USER, PASS)
     m.select("INBOX")

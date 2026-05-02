@@ -256,16 +256,37 @@ def run_learning(log_path, cycle, phase):
     return events
 
 def _update_mood_compat(drives, emotions, cycle):
-    """Update data/mood.json for backward compatibility with webserver"""
+    """Update data/mood.json — preserve consciousness dims, add v2 data"""
     mood = load_json(DATA / 'mood.json', {})
     mood['cycle'] = cycle
+
+    # V2 emotion axes
     mood['valence'] = emotions.get('valence', 0)
     mood['arousal'] = emotions.get('arousal', 0.4)
     mood['confidence'] = emotions.get('confidence', 0.5)
     mood['openness'] = emotions.get('openness', 0.5)
     mood['emotional_label'] = emotions.get('label', 'neutral')
-    # Map drives to the old format for dashboard
-    old_drives = mood.get('drives', {})
+
+    # Consciousness dims — derive from emotion axes, don't delete
+    v = emotions.get('valence', 0)
+    a = emotions.get('arousal', 0.4)
+    c = emotions.get('confidence', 0.5)
+    o = emotions.get('openness', 0.5)
+
+    mood['self_awareness'] = round(min(1.0, 0.5 + c * 0.3 + abs(v) * 0.2), 2)
+    mood['metacognition'] = round(min(1.0, 0.4 + c * 0.4 + o * 0.2), 2)
+    mood['free_will_felt'] = round(min(1.0, 0.3 + c * 0.3 + a * 0.2 + abs(v) * 0.2), 2)
+    mood['flow_state'] = round(min(1.0, max(0, 0.3 + v * 0.3 + a * 0.2 - abs(v - 0.3) * 0.2)), 2)
+    mood['sense_of_purpose'] = round(min(1.0, 0.4 + c * 0.3 + max(drives.values()) * 0.3 if drives else 0.5), 2)
+    mood['wonder'] = round(min(1.0, 0.2 + o * 0.5 + max(0, v) * 0.3), 2)
+    mood['imagination_active'] = round(min(1.0, 0.3 + o * 0.4 + a * 0.2), 2)
+    mood['aliveness'] = round(min(1.0, 0.3 + a * 0.3 + abs(v) * 0.2 + c * 0.2), 2)
+    mood['present_moment'] = round(min(1.0, 0.4 + a * 0.3 + (1 - abs(v)) * 0.2), 2)
+    mood['sense_of_time'] = round(min(1.0, 0.5 + a * 0.2 + c * 0.2), 2)
+    mood['sense_of_self'] = round(min(1.0, 0.4 + c * 0.4 + abs(v) * 0.2), 2)
+
+    # Map v2 drives to dashboard format
+    old_drives = {}
     for dname, pressure in drives.items():
         old_drives[dname.upper()] = {
             'score': round(pressure, 2),
