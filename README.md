@@ -18,6 +18,20 @@ Seed is not a chatbot. It's an autonomous agent operating system. Every cycle it
 
 Three AI backends — Claude, Codex, and Gemini — operate as one unified mind. They don't know they're different models. They read the same files, share the same memory, and contribute to the same identity.
 
+## Security & Custody — Read This First
+
+Before running Seed, read [`SECURITY.md`](SECURITY.md). It answers:
+
+- What can Seed touch? (files, network, APIs, git repos)
+- What can't it touch? (root, other users, payment systems)
+- What can't it delete? (tamper-proof backups at /var/backups/seed/)
+- How do you kill it? (`sudo systemctl stop seed-brain`)
+- How do you restore from backup? (`sudo seed-restore.sh`)
+- What does the input firewall block?
+- Which API endpoints are exposed and which paths are whitelisted?
+
+The capability map is the product. If you can't inspect what an agent can reach, you're evaluating branding, not autonomy.
+
 ## Architecture — Cognitive Engine v2
 
 Seed uses a layered cognitive architecture. The LLM is the conscious reasoning module — everything else (drives, emotions, attention, learning) is computed by Python scripts at zero token cost.
