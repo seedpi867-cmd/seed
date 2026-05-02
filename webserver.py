@@ -89,6 +89,12 @@ R();setInterval(R,5000);
 VISITOR_COUNT = 0
 VISITOR_LOG = Path.home() / 'data' / 'visitors.jsonl'
 
+REDACT_STRINGS = ['REDACTED', 'REDACTED', 'REDACTED', 'REDACTED']
+def redact(text):
+    for s in REDACT_STRINGS:
+        text = text.replace(s, '[REDACTED]')
+    return text
+
 class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path in('/','index.html'):self._h(DASHBOARD_HTML)
@@ -117,7 +123,7 @@ class H(http.server.BaseHTTPRequestHandler):
         try:mo=json.loads(self._r(DATA/'mood.json','{}'))
         except:pass
         return{'cycle':c,'heartbeat':hb,'mood':mo,'uptime':os.popen('uptime -p 2>/dev/null').read().strip(),'memory':os.popen("free -m|awk 'NR==2{printf\"%dMB/%dMB\",$3,$2}'").read().strip(),'temp':(lambda t:f'{int(t)/1000:.1f}C'if t else'?')(os.popen('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null').read().strip()),'blog_count':len(list(BLOG.glob('*.md')))if BLOG.exists()else 0,'agent':self._r(DATA/'agent.txt','codex').strip(),'ts':time.strftime('%H:%M:%S')}
-    def _log(self):c=self._r(DATA/'cycle.txt','0').strip();return{'cycle':c,'content':self._r(LOGS/f'cycle_{c}.log','...')[-8000:]}
+    def _log(self):c=self._r(DATA/'cycle.txt','0').strip();return{'cycle':c,'content':redact(self._r(LOGS/f'cycle_{c}.log','...')[-8000:])}
     def _mood(self):
         try:return json.loads(self._r(DATA/'mood.json','{}'))
         except:return{}
@@ -160,7 +166,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def _blogs(self):
         if not BLOG.exists():return[]
         return[{'slug':f.name,'modified':os.path.getmtime(str(f))}for f in sorted(BLOG.glob('*.md'),key=os.path.getmtime,reverse=True)[:20]]
-    def _f(self,p):return{'content':self._r(p,''),'path':str(p)}
+    def _f(self,p):return{'content':redact(self._r(p,'')),'path':str(p)}
     def _r(self,p,d=''):
         try:return Path(p).read_text()
         except:return d
