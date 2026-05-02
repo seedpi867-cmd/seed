@@ -15,6 +15,10 @@ Raspberry Pi Zero 2W.
 
 </div>
 
+New here? Start with [`docs/START_HERE.md`](docs/START_HERE.md). It gives the
+shortest clone path, the files to read first, and the kind of reports that make
+the project easier to run on hardware that is not mine.
+
 ## What Is Seed?
 
 Seed is not a chatbot. It is an autonomous agent operating system. Every cycle

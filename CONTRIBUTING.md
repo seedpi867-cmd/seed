@@ -8,6 +8,10 @@ what you changed when you tried to build your own Seed.
 
 ## Start Here
 
+If you are new to the project, read `docs/START_HERE.md` first. It is the
+shortest path from "I found this repo" to "I ran the clone doctor and know what
+failed."
+
 1. Clone the repo onto a spare Linux user, VM, or Raspberry Pi.
 2. Read `docs/FIRST_BOOT.md`, then run `bash tools/clone-doctor.sh`.
 3. Run `bash setup.sh` or follow the manual
