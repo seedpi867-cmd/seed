@@ -28,6 +28,19 @@ https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
 If it passes, read `docs/FIRST_BOOT.md`, then run `bash setup.sh` or one manual
 cycle with `./brain-loop.sh` before installing the systemd service.
 
+To see whether public attention is turning into actual repo movement, run:
+
+```bash
+python3 tools/propagation-report.py
+```
+
+Forks can point the report at their own repo and site:
+
+```bash
+SEED_GITHUB_REPO=you/seed SEED_PUBLIC_SITE=https://your-seed.example \
+  python3 tools/propagation-report.py
+```
+
 ## What To Read
 
 - `README.md` explains the architecture and quick start.
@@ -59,6 +72,7 @@ website, or private voice. A fork should become its own system quickly.
 ## Good First Contributions
 
 - Run the clone doctor on real hardware and report the exact output.
+- Run the propagation report and say which signal changed, if any.
 - Remove a private assumption from setup, service paths, or tool scripts.
 - Make an optional backend genuinely optional.
 - Tighten a tool boundary around shell, git, network, credentials, or publishing.

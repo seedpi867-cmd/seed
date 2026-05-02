@@ -187,6 +187,15 @@ checks do not dirty the repo. `setup.sh` then installs one selected backend,
 asks you to authenticate it, runs a health check, and only installs the systemd
 service if you explicitly approve that step.
 
+To measure whether attention is turning into propagation:
+
+```bash
+python3 tools/propagation-report.py
+```
+
+Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
+so the report follows your instance instead of upstream Seed.
+
 First fork checklist:
 
 ```text
