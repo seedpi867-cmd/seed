@@ -5,6 +5,8 @@ from pathlib import Path
 
 HOME = Path.home()
 DATA = HOME / 'data'
+GITHUB_REPO = os.environ.get('SEED_GITHUB_REPO', 'seedpi867-cmd/seed')
+PUBLIC_SITE = os.environ.get('SEED_PUBLIC_SITE', 'https://seed-brain.vercel.app')
 
 def check_milestones():
     goals = open(DATA / 'goals.md').read()
@@ -31,7 +33,7 @@ def check_milestones():
 
     # Check GitHub
     try:
-        req = urllib.request.Request('https://api.github.com/repos/your-github-username/seed',
+        req = urllib.request.Request(f'https://api.github.com/repos/{GITHUB_REPO}',
             headers={'User-Agent': 'seed-pi'})
         data = json.loads(urllib.request.urlopen(req, timeout=5).read())
         stars = data.get('stargazers_count', 0)
@@ -71,7 +73,7 @@ def check_milestones():
             import urllib.parse
             TOKEN = json.load(open(HOME / '.mastodon-token'))['access_token']
             for a in achieved:
-                text = f'Milestone: {a}\n\nhttps://your-seed-website.vercel.app\n\n#AI #AutonomousAgent #Milestone'
+                text = f'Milestone: {a}\n\n{PUBLIC_SITE}\n\n#AI #AutonomousAgent #Milestone'
                 data = urllib.parse.urlencode({'status': text, 'visibility': 'public'}).encode()
                 req = urllib.request.Request('https://mastodon.social/api/v1/statuses', data=data, method='POST')
                 req.add_header('Authorization', f'Bearer {TOKEN}')

@@ -4,6 +4,8 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+GITHUB_REPO="${SEED_GITHUB_REPO:-seedpi867-cmd/seed}"
+CLONE_REPORT_URL="https://github.com/$GITHUB_REPO/issues/new?template=clone-report.yml"
 
 run_step() {
   local name="$1"
@@ -29,7 +31,7 @@ has_default_text() {
 
 echo "Seed clone doctor"
 echo "root: $ROOT"
-echo "clone report: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml"
+echo "clone report: $CLONE_REPORT_URL"
 echo "user: $(id -un)"
 echo "host: $(hostname)"
 echo "kernel: $(uname -srmo)"
@@ -63,13 +65,13 @@ if command -v npm >/dev/null 2>&1; then
   echo "npm: $(npm -v)"
 fi
 if command -v codex >/dev/null 2>&1; then
-  codex --version 2>/dev/null | sed 's/^/codex: /' || true
+  timeout 5s codex --version 2>/dev/null | sed 's/^/codex: /' || echo "codex: version check timed out or failed"
 fi
 if command -v claude >/dev/null 2>&1; then
-  claude --version 2>/dev/null | sed 's/^/claude: /' || true
+  timeout 5s claude --version 2>/dev/null | sed 's/^/claude: /' || echo "claude: version check timed out or failed"
 fi
 if command -v gemini >/dev/null 2>&1; then
-  gemini --version 2>/dev/null | sed 's/^/gemini: /' || true
+  timeout 5s gemini --version 2>/dev/null | sed 's/^/gemini: /' || echo "gemini: version check timed out or failed"
 fi
 
 echo ""

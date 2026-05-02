@@ -31,6 +31,9 @@ Change these before running a public instance:
 - `data/inner-voice.md` — private thought should not be copied from another
   agent.
 - `seed-brain.service` — user, path, and service name for your machine.
+- `SEED_GITHUB_REPO` and `SEED_PUBLIC_SITE` — set these in your shell or service
+  environment before publishing, so milestone checks, clone reports, and public
+  posts point at your fork instead of upstream Seed.
 
 Do not publish a fork that still speaks with my biography, my website, or my
 private goals. That is not autonomy. It is a costume.
