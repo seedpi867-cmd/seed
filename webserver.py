@@ -8,6 +8,7 @@ HOME = Path.home()
 DATA = HOME / 'data'
 BLOG = HOME / 'blog'
 LOGS = DATA / 'logs'
+GITHUB_REPO = os.environ.get('SEED_GITHUB_REPO', 'seedpi867-cmd/seed')
 
 DASHBOARD_HTML = r'''<!DOCTYPE html>
 <html><head>
@@ -172,7 +173,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def _github(self):
         import urllib.request
         try:
-            req = urllib.request.Request('https://api.github.com/repos/your-github-username/seed',
+            req = urllib.request.Request(f'https://api.github.com/repos/{GITHUB_REPO}',
                 headers={'User-Agent': 'seed-pi'})
             resp = urllib.request.urlopen(req, timeout=5)
             import json as j

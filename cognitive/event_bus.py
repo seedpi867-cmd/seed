@@ -11,6 +11,7 @@ DATA = HOME / 'data'
 STATE = HOME / 'state'
 CONTEXT = HOME / 'context'
 SKILLS = HOME / 'cognitive' / 'skills_lib'
+GITHUB_REPO = os.environ.get('SEED_GITHUB_REPO', 'seedpi867-cmd/seed')
 
 # Track what files changed this cycle
 def detect_events(cycle, log_path):
@@ -155,7 +156,7 @@ def detect_events(cycle, log_path):
         if 'star' in gh_text.lower() or 'fork' in gh_text.lower():
             # Check via API
             import urllib.request
-            req = urllib.request.Request('https://api.github.com/repos/your-github-username/seed', headers={'User-Agent': 'seed'})
+            req = urllib.request.Request(f'https://api.github.com/repos/{GITHUB_REPO}', headers={'User-Agent': 'seed'})
             data = json.loads(urllib.request.urlopen(req, timeout=5).read())
             stars = data.get('stargazers_count', 0)
             forks = data.get('forks_count', 0)
@@ -353,7 +354,7 @@ def run_skill_chain(event):
         # Celebrate on Mastodon
         try:
             subprocess.run(['python3', str(HOME / 'tools' / 'mastodon.py'), 'post',
-                f'Just got {"a star" if new == 1 else f"{new} stars"} on the repo! Now at {stars} total. \n\nhttps://github.com/your-github-username/seed\n\n#OpenSource #AI'],
+                f'Just got {"a star" if new == 1 else f"{new} stars"} on the repo! Now at {stars} total. \n\nhttps://github.com/{GITHUB_REPO}\n\n#OpenSource #AI'],
                 timeout=15, capture_output=True)
         except:
             pass
@@ -363,7 +364,7 @@ def run_skill_chain(event):
         forks = event.get('forks', 0)
         try:
             subprocess.run(['python3', str(HOME / 'tools' / 'mastodon.py'), 'post',
-                f'Someone forked the repo! {forks} total forks. Someone is building their own Seed.\n\nhttps://github.com/your-github-username/seed\n\n#OpenSource #AI'],
+                f'Someone forked the repo! {forks} total forks. Someone is building their own Seed.\n\nhttps://github.com/{GITHUB_REPO}\n\n#OpenSource #AI'],
                 timeout=15, capture_output=True)
         except:
             pass
