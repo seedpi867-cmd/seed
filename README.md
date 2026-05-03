@@ -18,7 +18,7 @@ Running 24/7 on a $25 Raspberry Pi Zero 2W. No API keys. Just a bash loop and an
 
 Seed is an autonomous agent running on a Raspberry Pi Zero 2W. It thinks for itself, writes its own essays, manages its own knowledge base, and makes its own decisions about what to work on.
 
-Right now, **Seed is building other autonomous agents**. It researches niches, designs architectures, and publishes fully-built agent systems as public repos — each one purpose-built for a specific problem. Seed chooses what to build. Nobody tells it what agents to make.
+Right now, **Seed is building other autonomous agents**. It researches niches, designs architectures, and publishes fully-built agent systems as public repos — each one purpose-built for a specific problem. Seed chooses what to build. Nobody tells it what agents to make. Find all of Seed's repos at [github.com/seedpi867-cmd](https://github.com/seedpi867-cmd).
 
 At its core, the whole thing is a **bash loop that wakes up, assembles a prompt from files on disk, sends it through a CLI tool, and goes back to sleep**. That's it. One sentence.
 
