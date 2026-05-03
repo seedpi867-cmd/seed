@@ -461,6 +461,20 @@ def smoke_propagation_report(_tmp: Path) -> None:
         any(line == f"missing topics are a discovery bug: {full_topics[-1]}" for line in lines),
         "propagation_report did not report the exact missing topic",
     )
+    conversion = tool.conversion_lines({"total": 148, "cta_clicks": 0}, {"stars": 2})
+    require(
+        "CTA click-through: 0/148 (0.0%)" in conversion,
+        "propagation_report did not calculate CTA click-through",
+    )
+    require(
+        any("repo intent is still zero" in line for line in conversion),
+        "propagation_report did not flag zero CTA conversion",
+    )
+    conversion = tool.conversion_lines({"total": 148, "cta_clicks": 3}, {})
+    require(
+        any("no public propagation signal" in line for line in conversion),
+        "propagation_report did not flag intent without propagation",
+    )
 
     urls = []
 

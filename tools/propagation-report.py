@@ -62,6 +62,49 @@ def interpretation_lines(topics):
     return lines
 
 
+def first_numeric(metrics, keys):
+    for key in keys:
+        value = metrics.get(key)
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float)):
+            return key, value
+    return None, None
+
+
+def conversion_lines(visitors, github):
+    lines = []
+    _, visitor_count = first_numeric(visitors, ("total", "count", "current", "visitors"))
+    cta_clicks = visitors.get("cta_clicks")
+    if not isinstance(cta_clicks, (int, float)) or isinstance(cta_clicks, bool):
+        return ["CTA clicks are not available, so repo-link intent is unmeasured"]
+
+    if visitor_count:
+        rate = (cta_clicks / visitor_count) * 100
+        lines.append(f"CTA click-through: {cta_clicks}/{visitor_count} ({rate:.1f}%)")
+    else:
+        lines.append(f"CTA clicks: {cta_clicks}; visitor denominator unavailable")
+
+    stronger_signals = sum(
+        int(github.get(key, 0) or 0)
+        for key in (
+            "stars",
+            "forks",
+            "clone_proofs_open",
+            "clone_proofs_closed",
+            "clone_reports_open",
+            "clone_reports_closed",
+        )
+    )
+    if cta_clicks == 0:
+        lines.append("conversion gap: visitors are reading, but repo intent is still zero")
+    elif stronger_signals == 0:
+        lines.append("conversion gap: repo intent exists, but no public propagation signal follows it yet")
+    else:
+        lines.append("conversion chain has started: attention is producing at least one public repo signal")
+    return lines
+
+
 def fetch_json(url, timeout=10):
     req = urllib.request.Request(url, headers={"User-Agent": "Seed propagation report"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -157,6 +200,10 @@ def main():
                 print(f"- CTA targets: {target_text}")
         else:
             print("- CTA clicks: not tracked by the public site API")
+        print()
+        print("Conversion")
+        for line in conversion_lines(visitors, gh if "gh" in locals() else {}):
+            print(f"- {line}")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"Website: unavailable ({exc})")
 
