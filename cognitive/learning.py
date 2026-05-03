@@ -13,6 +13,10 @@ RUNTIME_ERROR_RE = re.compile(
     r'\[seed\] (ERROR|FATAL): .+)'
 )
 
+IGNORED_RUNTIME_ERROR_RE = re.compile(
+    r'^ERROR: Reconnecting\.\.\. \d+/\d+$'
+)
+
 
 def fresh_runtime_error_lines(log):
     """Runtime exceptions only; archived markdown, diffs, and prose are not failures."""
@@ -22,6 +26,8 @@ def fresh_runtime_error_lines(log):
         if not stripped:
             continue
         if stripped.startswith(('-', '+', '@@', 'diff ', 'index ')):
+            continue
+        if IGNORED_RUNTIME_ERROR_RE.match(stripped):
             continue
         if RUNTIME_ERROR_RE.search(line):
             lines.append(stripped)

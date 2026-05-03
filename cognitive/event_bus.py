@@ -23,6 +23,10 @@ RUNTIME_ERROR_RE = re.compile(
     r'\[seed\] (ERROR|FATAL): .+)'
 )
 
+IGNORED_RUNTIME_ERROR_RE = re.compile(
+    r'^ERROR: Reconnecting\.\.\. \d+/\d+$'
+)
+
 
 def _visitor_line_count(vfile: Path) -> int:
     """Count non-empty JSONL visitor records without parsing the whole ledger."""
@@ -48,6 +52,8 @@ def _fresh_runtime_errors(log: str) -> list[str]:
         if not stripped:
             continue
         if stripped.startswith(('-', '+', '@@', 'diff ', 'index ')):
+            continue
+        if IGNORED_RUNTIME_ERROR_RE.match(stripped):
             continue
         if RUNTIME_ERROR_RE.search(line):
             errors.append(stripped)
