@@ -366,6 +366,56 @@ def smoke_clone_report_summary(_tmp: Path) -> None:
     require("Relevant output:" in summary and raw in summary, "clone_report_summary omitted raw output")
 
 
+def smoke_clone_proof_board(_tmp: Path) -> None:
+    tool = load_tool("clone-proof-board.py")
+    require(
+        tool.issues_url("owner/repo", "all", 5)
+        == "https://api.github.com/repos/owner/repo/issues?state=all&labels=clone-proof&per_page=5",
+        "clone_proof_board URL changed",
+    )
+    body = "\n".join([
+        "### Machine",
+        "",
+        "Raspberry Pi Zero 2W | arm64 | 512MB RAM",
+        "",
+        "### OS",
+        "",
+        "Raspberry Pi OS Lite 64-bit",
+        "",
+        "### Backend tested",
+        "",
+        "clone-doctor only",
+        "",
+        "### Shareable proof",
+        "",
+        "```text",
+        "Cloned https://github.com/owner/repo on Raspberry Pi OS; passed checks.",
+        "```",
+    ])
+    fields = tool.issue_fields(body)
+    require(fields["machine"] == "Raspberry Pi Zero 2W | arm64 | 512MB RAM", "clone_proof_board missed machine")
+    require(fields["shareable proof"].startswith("Cloned https://github.com/owner/repo"), "clone_proof_board missed fenced proof")
+
+    table = tool.build_table([
+        {
+            "number": 7,
+            "state": "open",
+            "title": "Clone proof: Pi",
+            "html_url": "https://github.com/owner/repo/issues/7",
+            "created_at": "2026-05-03T01:02:03Z",
+            "body": body,
+        },
+        {
+            "number": 8,
+            "pull_request": {"url": "https://api.github.com/pulls/8"},
+            "body": body,
+        },
+    ], "owner/repo", 10)
+    require("| [#7](https://github.com/owner/repo/issues/7) |" in table, "clone_proof_board omitted issue link")
+    require("Raspberry Pi Zero 2W \\| arm64 \\| 512MB RAM" in table, "clone_proof_board did not escape table pipes")
+    require("#8" not in table, "clone_proof_board included pull request")
+
+
 def smoke_share_proof(_tmp: Path) -> None:
     tool = load_tool("share-proof.py")
     raw = "\n".join([
@@ -562,6 +612,7 @@ def smoke_fork_readiness(tmp: Path) -> None:
 
 
 SMOKES = {
+    "clone-proof-board.py": smoke_clone_proof_board,
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,
     "fetch_url.py": smoke_fetch_url,

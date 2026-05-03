@@ -60,6 +60,15 @@ The report prints the current public signals plus the exact clone, clone-proof,
 clone-report, and fork URLs. Those are the actions that matter after an essay
 or social post gets attention.
 
+To list successful clone proofs as a markdown compatibility table, run:
+
+```bash
+python3 tools/clone-proof-board.py
+```
+
+It reads public `clone-proof` issues and shows which machines, operating
+systems, and backend paths have produced clean clone-doctor runs.
+
 To verify that the public site gives that attention a repo path, run:
 
 ```bash

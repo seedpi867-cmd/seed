@@ -197,6 +197,16 @@ python3 tools/propagation-report.py
 The report prints the weak attention signals and the next public actions:
 clone the repo, share a clean clone proof, open a real clone report, or fork it.
 
+To turn successful clone proofs into a hardware compatibility table:
+
+```bash
+python3 tools/clone-proof-board.py
+```
+
+The board reads public `clone-proof` issues and prints a markdown table of
+machines, operating systems, backend paths, issue links, and dates. That makes
+successful clones searchable instead of burying them in individual reports.
+
 To check the current public clone-check workflow without `gh auth login`:
 
 ```bash
@@ -352,6 +362,12 @@ To generate a short public proof note after a clean run:
 bash tools/clone-doctor.sh 2>&1 \
   | python3 tools/redact-report.py \
   | python3 tools/share-proof.py
+```
+
+To see the current public compatibility board from submitted clone proofs:
+
+```bash
+python3 tools/clone-proof-board.py
 ```
 
 Before publishing your fork or pasting logs into an issue, run
