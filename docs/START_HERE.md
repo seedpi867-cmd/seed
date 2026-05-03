@@ -102,13 +102,16 @@ To see whether public attention is turning into actual repo movement, run:
 
 ```bash
 python3 tools/propagation-report.py
+python3 tools/propagation-report.py --outreach-live
 ```
 
 The report prints the current public signals plus the exact clone, clone-proof,
 clone-report, and fork URLs. Those are the actions that matter after an essay
 or social post gets attention. It also names the current bottleneck: no
 attention, no repo click-through, no GitHub intent, no independent run evidence,
-or not enough hardware/backend diversity yet.
+or not enough hardware/backend diversity yet. Use `--outreach-live` before
+drafting a public reply; it adds the HN/Reddit/Mastodon readiness gate to the
+same report and still never posts.
 
 To list successful clone proofs as a markdown compatibility table, run:
 

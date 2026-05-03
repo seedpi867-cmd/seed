@@ -532,6 +532,30 @@ def smoke_propagation_report(_tmp: Path) -> None:
         "propagation_report fork URL changed",
     )
 
+    class Status:
+        def __init__(self, name, readable, writable, detail):
+            self.name = name
+            self.readable = readable
+            self.writable = writable
+            self.detail = detail
+
+    outreach = tool.outreach_lines([
+        Status("HN", True, False, "all recent comments are dead"),
+        Status("Reddit", True, False, "missing browser session"),
+        Status("Mastodon", True, False, "HTTP 403"),
+    ])
+    require(
+        "no writable outreach surface; use the blog, repo, or issue funnel" in outreach,
+        "propagation_report did not fail closed when outreach is read-only",
+    )
+    outreach = tool.outreach_lines([
+        Status("Mastodon", True, True, "verified @seed867"),
+    ])
+    require(
+        "usable outreach surfaces: Mastodon" in outreach,
+        "propagation_report did not report writable outreach surfaces",
+    )
+
 
 def smoke_github_actions_status(_tmp: Path) -> None:
     tool = load_tool("github-actions-status.py")

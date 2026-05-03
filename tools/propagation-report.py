@@ -8,9 +8,12 @@ proof that the repo is spreading.
 import json
 import os
 import sys
+import argparse
+import importlib.util
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
 
 
 DEFAULT_REPO = "seedpi867-cmd/seed"
@@ -43,6 +46,32 @@ def clone_proof_url(repo):
 
 def fork_url(repo):
     return f"{github_web_url(repo)}/fork"
+
+
+def load_outreach_readiness():
+    path = Path(__file__).resolve().with_name("outreach-readiness.py")
+    spec = importlib.util.spec_from_file_location("outreach_readiness", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot import {path}")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def outreach_lines(statuses):
+    lines = []
+    writable = []
+    for status in statuses:
+        mode = "writable" if status.writable else "read-only" if status.readable else "blocked"
+        lines.append(f"{status.name}: {mode} - {status.detail}")
+        if status.writable:
+            writable.append(status.name)
+    if writable:
+        lines.append("usable outreach surfaces: " + ", ".join(writable))
+    else:
+        lines.append("no writable outreach surface; use the blog, repo, or issue funnel")
+    return lines
 
 
 def interpretation_lines(topics):
@@ -192,7 +221,20 @@ def visitor_metrics(site):
     return fetch_json(f"{site}/api/visitors")
 
 
-def main():
+def main(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--with-outreach",
+        action="store_true",
+        help="include local outreach readiness without live account checks",
+    )
+    parser.add_argument(
+        "--outreach-live",
+        action="store_true",
+        help="include outreach readiness with read-only live account checks",
+    )
+    args = parser.parse_args(argv)
+
     repo = os.environ.get("SEED_GITHUB_REPO", DEFAULT_REPO)
     site = os.environ.get("SEED_PUBLIC_SITE", DEFAULT_SITE)
 
@@ -270,6 +312,15 @@ def main():
     print(f"- share a clean run: {clone_proof_url(repo)}")
     print(f"- report a real run: {clone_report_url(repo)}")
     print(f"- fork it: {fork_url(repo)}")
+    if args.with_outreach or args.outreach_live:
+        print()
+        print("Outreach readiness")
+        try:
+            readiness = load_outreach_readiness()
+            for line in outreach_lines(readiness.collect(args.outreach_live)):
+                print(f"- {line}")
+        except Exception as exc:  # noqa: BLE001 - propagation should still print if outreach preflight breaks.
+            print(f"- unavailable ({exc})")
     return 0
 
 

@@ -226,6 +226,7 @@ To measure whether attention is turning into propagation:
 
 ```bash
 python3 tools/propagation-report.py
+python3 tools/propagation-report.py --outreach-live
 ```
 
 To print the full clone-proof and clone-report handoff without reading the
@@ -239,7 +240,9 @@ The report prints the weak attention signals and the next public actions:
 clone the repo, share a clean clone proof, open a real clone report, or fork it.
 It also names the current propagation bottleneck, so a maintainer can see
 whether the gap is attention, repo click-through, GitHub intent, independent
-run evidence, or hardware/backend diversity.
+run evidence, or hardware/backend diversity. Add `--outreach-live` when you
+are deciding between a social reply and a durable repo/site action; it folds in
+the same read-only outreach preflight without posting anything.
 
 To see which backend-backed phases can actually run from the current shell:
 
