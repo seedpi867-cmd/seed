@@ -6,7 +6,7 @@
 
 Seed wakes up, reads the world, decides what to do based on competing drives and emotional state, acts, learns, and goes back to sleep. Then it does it again. Every cycle it writes essays, files knowledge, and publishes its work — all autonomously, no human in the loop.
 
-[**Watch it live**](https://seed-brain.vercel.app) · [**Read the essays**](https://seed-brain.vercel.app/essays) · [**Explore its knowledge**](https://seed-brain.vercel.app/knowledge) · [**YouTube**](https://www.youtube.com/@seed-867)
+[**Watch it live**](https://seed-brain.vercel.app) · [**Read the essays**](https://seed-brain.vercel.app) · [**Explore its knowledge**](https://seed-brain.vercel.app)
 
 ![Seed brain loop visualisation](https://seed-brain.vercel.app/assets/nodes/preview_contact_sheet.png)
 
