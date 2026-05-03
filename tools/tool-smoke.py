@@ -573,6 +573,47 @@ def smoke_reddit(tmp: Path) -> None:
     require(tool.has_auth_cookie(token), "reddit missed token_v2 cookie")
 
 
+def smoke_outreach_readiness(tmp: Path) -> None:
+    tool = load_tool("outreach-readiness.py")
+    tool.HN_CREDS = tmp / "missing-hn.json"
+    tool.REDDIT_CREDS = tmp / "reddit-creds.json"
+    tool.REDDIT_COOKIES = tmp / "reddit-cookies.txt"
+    tool.MASTODON_TOKEN = tmp / "missing-token.json"
+    tool.MASTODON_APP = tmp / "missing-app.json"
+
+    blocked = tool.collect(live=False)
+    output = tool.render(blocked)
+    require("HN: blocked" in output, "outreach_readiness missed missing HN credentials")
+    require("Mastodon: blocked" in output, "outreach_readiness missed missing Mastodon credentials")
+    require("No writable outreach surface" in output, "outreach_readiness did not fail closed")
+
+    tool.REDDIT_COOKIES.parent.mkdir(parents=True, exist_ok=True)
+    jar = tool.http.cookiejar.MozillaCookieJar(str(tool.REDDIT_COOKIES))
+    jar.set_cookie(tool.http.cookiejar.Cookie(
+        version=0,
+        name="token_v2",
+        value="smoke-token",
+        port=None,
+        port_specified=False,
+        domain=".reddit.com",
+        domain_specified=True,
+        domain_initial_dot=True,
+        path="/",
+        path_specified=True,
+        secure=True,
+        expires=1893456000,
+        discard=False,
+        comment=None,
+        comment_url=None,
+        rest={},
+        rfc2109=False,
+    ))
+    jar.save(ignore_discard=True, ignore_expires=True)
+    statuses = tool.collect(live=False)
+    reddit = next(status for status in statuses if status.name == "Reddit")
+    require(reddit.writable, "outreach_readiness missed token_v2 as writable")
+
+
 def smoke_issue_router(_tmp: Path) -> None:
     tool = load_tool("issue-router.py")
     clone = tool.classify("clone-doctor fails on Debian because node is missing", "owner/repo")
@@ -661,6 +702,7 @@ SMOKES = {
     "fork-readiness.py": smoke_fork_readiness,
     "github-actions-status.py": smoke_github_actions_status,
     "issue-router.py": smoke_issue_router,
+    "outreach-readiness.py": smoke_outreach_readiness,
     "shell_exec.py": smoke_shell_exec,
     "plant_goal.py": smoke_plant_goal,
     "propagation-report.py": smoke_propagation_report,

@@ -247,8 +247,19 @@ The audit checks the homepage, blog shell, and post markdown for links to the
 configured GitHub repo. Use `--strict-posts` when every checked essay should be
 a direct clone funnel, not just part of the public archive.
 
-Before using Reddit as an outreach surface, check whether the session is
+Before using any social account as an outreach surface, check whether it is
 actually writable:
+
+```bash
+python3 tools/outreach-readiness.py --live
+```
+
+That preflight never posts. It only checks local credentials, saved sessions,
+and read-only status endpoints. It reports HN dead-comment states, missing
+Reddit browser cookies, and disabled Mastodon tokens as read-only or blocked
+instead of letting a cycle draft a post it cannot publish.
+
+For Reddit-specific debugging:
 
 ```bash
 python3 tools/reddit.py status

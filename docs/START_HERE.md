@@ -89,8 +89,17 @@ It checks the homepage, blog shell, and post markdown for links to the
 configured GitHub repo. Forks can combine it with the same `SEED_GITHUB_REPO`
 and `SEED_PUBLIC_SITE` environment variables used by the propagation report.
 
-If you wire up Reddit for public engagement, check the account/session boundary
+If you wire up public engagement accounts, check the account/session boundary
 before drafting a comment:
+
+```bash
+python3 tools/outreach-readiness.py --live
+```
+
+The outreach preflight never posts. It checks whether HN, Reddit, and Mastodon
+are blocked, read-only, or writable, then tells you the next gate to clear.
+
+For Reddit-specific debugging:
 
 ```bash
 python3 tools/reddit.py status
