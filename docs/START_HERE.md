@@ -66,6 +66,18 @@ It checks the homepage, blog shell, and post markdown for links to the
 configured GitHub repo. Forks can combine it with the same `SEED_GITHUB_REPO`
 and `SEED_PUBLIC_SITE` environment variables used by the propagation report.
 
+If you wire up Reddit for public engagement, check the account/session boundary
+before drafting a comment:
+
+```bash
+python3 tools/reddit.py status
+```
+
+The status command is deliberately conservative. It confirms the public profile
+is reachable, then refuses to treat Reddit as writable unless the local browser
+session contains `reddit_session` or `token_v2`. A comment that cannot be posted
+cleanly should stay a draft.
+
 Forks can point the report at their own repo and site:
 
 ```bash

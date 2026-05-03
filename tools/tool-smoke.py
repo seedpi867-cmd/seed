@@ -491,6 +491,32 @@ def smoke_repo_link_audit(_tmp: Path) -> None:
     )
 
 
+def smoke_reddit(tmp: Path) -> None:
+    tool = load_tool("reddit.py")
+    tool.SESSION_FILE = str(tmp / "reddit-cookies.txt")
+
+    empty = tool.http.cookiejar.CookieJar()
+    require(not tool.has_auth_cookie(empty), "reddit accepted empty cookie jar")
+
+    auth = tool.http.cookiejar.CookieJar()
+    auth.set_cookie(tool.cookie_from_json({
+        "domain": ".reddit.com",
+        "name": "reddit_session",
+        "value": "smoke-session",
+        "path": "/",
+    }))
+    require(tool.has_auth_cookie(auth), "reddit missed reddit_session cookie")
+
+    token = tool.http.cookiejar.CookieJar()
+    token.set_cookie(tool.cookie_from_json({
+        "domain": ".reddit.com",
+        "name": "token_v2",
+        "value": "smoke-token",
+        "path": "/",
+    }))
+    require(tool.has_auth_cookie(token), "reddit missed token_v2 cookie")
+
+
 def smoke_issue_router(_tmp: Path) -> None:
     tool = load_tool("issue-router.py")
     clone = tool.classify("clone-doctor fails on Debian because node is missing", "owner/repo")
@@ -541,6 +567,7 @@ SMOKES = {
     "plant_goal.py": smoke_plant_goal,
     "propagation-report.py": smoke_propagation_report,
     "redact-report.py": smoke_redact_report,
+    "reddit.py": smoke_reddit,
     "repo-link-audit.py": smoke_repo_link_audit,
     "search_web.py": smoke_search_web,
     "share-proof.py": smoke_share_proof,

@@ -107,10 +107,41 @@ def require_auth(cj):
         )
     return cookies
 
+def has_auth_cookie(cj):
+    cookies = cookies_dict(cj)
+    return 'reddit_session' in cookies or 'token_v2' in cookies
+
+def session_status():
+    """Report whether Reddit can be read publicly and posted to privately."""
+    profile_ok = check_profile()
+    opener, cj = load_session()
+    saved = cookies_dict(cj)
+    if has_auth_cookie(cj):
+        names = ', '.join(sorted(saved))
+        print(f'Saved browser session: usable ({names})')
+        return profile_ok
+
+    print('Saved browser session: missing reddit_session/token_v2')
+    try:
+        opener, cj = get_session()
+    except Exception as e:
+        print(f'Login probe: failed ({e})')
+        return False
+
+    probed = cookies_dict(cj)
+    if has_auth_cookie(cj):
+        names = ', '.join(sorted(probed))
+        print(f'Login probe: usable ({names})')
+        return profile_ok
+    names = ', '.join(sorted(probed)) or 'none'
+    print(f'Login probe: not usable ({names})')
+    print(f'Next step: tools/reddit.py import-cookies <browser-cookie-export>')
+    return False
+
 def get_session():
     """Login to Reddit via web and return opener with cookies"""
     opener, cj = load_session()
-    if 'reddit_session' in cookies_dict(cj) or 'token_v2' in cookies_dict(cj):
+    if has_auth_cookie(cj):
         print('Using saved Reddit browser session')
         return opener, cj
 
@@ -229,6 +260,7 @@ def submit(subreddit, title, url_or_text):
     return api_action('/api/submit', fields)
 
 def usage():
+    print('Usage: reddit.py status')
     print('Usage: reddit.py check')
     print('       reddit.py login')
     print('       reddit.py import-cookies <netscape-or-json-cookie-export>')
@@ -238,6 +270,8 @@ def usage():
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         usage()
+    elif sys.argv[1] == 'status':
+        sys.exit(0 if session_status() else 1)
     elif sys.argv[1] == 'check':
         check_profile()
     elif sys.argv[1] == 'login':

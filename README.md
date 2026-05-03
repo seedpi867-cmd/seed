@@ -227,6 +227,17 @@ The audit checks the homepage, blog shell, and post markdown for links to the
 configured GitHub repo. Use `--strict-posts` when every checked essay should be
 a direct clone funnel, not just part of the public archive.
 
+Before using Reddit as an outreach surface, check whether the session is
+actually writable:
+
+```bash
+python3 tools/reddit.py status
+```
+
+The tool treats a public profile as read-only until it sees a real browser auth
+cookie (`reddit_session` or `token_v2`). That keeps social participation from
+turning into repeated failed posts.
+
 If your fork keeps a private system repo or a separate website repo, configure
 the paths instead of editing scripts:
 
