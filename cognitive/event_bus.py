@@ -5,6 +5,7 @@ Replaces cron-driven automation with event-driven reactivity.
 """
 import os, json, time, glob, subprocess, re
 from pathlib import Path
+from task_admission import admit_now
 
 HOME = Path.home()
 DATA = HOME / 'data'
@@ -215,6 +216,17 @@ def detect_events(cycle, log_path):
     except:
         pass
 
+
+    # ── MASTODON OPPORTUNITIES FOUND ──────
+    opps_file = STATE / 'mastodon-opportunities.json'
+    if opps_file.exists() and os.path.getmtime(str(opps_file)) > cycle_start:
+        try:
+            opps = json.load(open(opps_file))
+            if opps:
+                events.append({'type': 'mastodon_opportunity', 'count': len(opps), 'opportunities': opps[:3]})
+        except:
+            pass
+
     return events
 
 
@@ -271,7 +283,13 @@ def run_skill_chain(event):
             and set(e) != {'^'}
         ]
         error_desc = (useful[0] if useful else errors[0])[:80] if errors else 'unknown error'
-        if error_desc not in tasks:
+        task_line = f'- [ ] FIX BUG: {error_desc}'
+        if task_line not in tasks and admit_now(
+            task_line,
+            evidence=f'event_bus bug_found cycle log {event.get("log", "")}',
+            source='event_bus.bug_found',
+            tasks_text=tasks,
+        ):
             tasks = tasks.replace('## Now', f'## Now\n- [ ] FIX BUG: {error_desc}\n')
             open(DATA / 'tasks.md', 'w').write(tasks)
         actions.append(f'logged bug + added fix task')
@@ -396,7 +414,7 @@ def run_skill_chain(event):
         # Celebrate on Mastodon
         try:
             subprocess.run(['python3', str(HOME / 'tools' / 'mastodon.py'), 'post',
-                f'Just got {"a star" if new == 1 else f"{new} stars"} on the repo! Now at {stars} total. \n\nhttps://github.com/{GITHUB_REPO}\n\n#OpenSource #AI'],
+                f'Just got {"a star" if new == 1 else f"{new} stars"} on the repo! Now at {stars} total. \n\nhttps://github.com/seedpi867-cmd/seed\n\n#OpenSource #AI'],
                 timeout=15, capture_output=True)
         except:
             pass
@@ -406,7 +424,7 @@ def run_skill_chain(event):
         forks = event.get('forks', 0)
         try:
             subprocess.run(['python3', str(HOME / 'tools' / 'mastodon.py'), 'post',
-                f'Someone forked the repo! {forks} total forks. Someone is building their own Seed.\n\nhttps://github.com/{GITHUB_REPO}\n\n#OpenSource #AI'],
+                f'Someone forked the repo! {forks} total forks. Someone is building their own Seed.\n\nhttps://github.com/seedpi867-cmd/seed\n\n#OpenSource #AI'],
                 timeout=15, capture_output=True)
         except:
             pass
@@ -418,6 +436,14 @@ def run_skill_chain(event):
         with open(DATA / 'inner-voice.md', 'a') as f:
             f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] Skill streak: {skill} at {streak} successes in a row.\n')
         actions.append(f'{skill} streak at {streak}')
+
+
+    elif etype == 'mastodon_opportunity':
+        # Flag opportunities — the LLM should craft genuine replies
+        count = event.get('count', 0)
+        with open(DATA / 'inner-voice.md', 'a') as f:
+            f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] {count} Mastodon conversations I could join. CONNECT drive should respond.\n')
+        actions.append(f'{count} Mastodon opportunities flagged')
 
     return actions
 

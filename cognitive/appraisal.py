@@ -7,46 +7,86 @@ sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
 def select_phase(drives, emotions, cycle):
-    """Pick phase — proactive, not passive. Writing is the priority."""
+    """Pick phase from drives — every drive maps to a natural phase.
+    Variety guaranteed by cycle counters. No hard thresholds on drive values."""
+    import json
 
-    # Check when last blog was written
-    blog_dir = HOME / 'blog'
-    last_blog_cycle = 0
-    if blog_dir.exists():
-        blogs = sorted(blog_dir.glob('*.md'), key=lambda f: f.stat().st_mtime, reverse=True)
-        if blogs:
-            # Estimate cycle from file age
-            age_seconds = now() - blogs[0].stat().st_mtime
-            cycles_since = int(age_seconds / 300)  # ~5 min per cycle average
-            last_blog_cycle = max(0, cycle - cycles_since)
+    # Drive → phase mapping: what each drive naturally wants to do
+    # Some drives cycle between two phases for variety
+    DRIVE_PHASE = {
+        'create':     'write',     # create = produce essays/code
+        'explore':    'research',  # explore = dig into topics
+        'connect':    'write' if cycle % 3 != 0 else 'research',  # connect = publish, but also research what to share
+        'preserve':   'think',     # preserve = careful analysis
+        'understand': 'research' if cycle % 2 == 0 else 'think',  # understand = both research and reason
+        'express':    'write' if cycle % 2 == 0 else 'dream',     # express = write or reflect
+        'order':      'think',     # order = organize and plan
+    }
 
-    cycles_since_blog = cycle - last_blog_cycle
+    # Track phase history to enforce variety
+    history_file = HOME / 'state' / 'phase_history.json'
+    try:
+        history = json.loads(open(history_file).read())
+    except:
+        history = {'phases': [], 'last_write': 0, 'last_research': 0, 'last_dream': 0}
 
-    # FORCE WRITE every 15 cycles if no blog written
-    if cycles_since_blog >= 15:
-        return 'write'
+    recent = history.get('phases', [])[-10:]  # last 10 phases
+    last_write = history.get('last_write', 0)
+    last_research = history.get('last_research', 0)
+    last_dream = history.get('last_dream', 0)
 
-    # WRITE if create drive is above 0.5 (not 0.7 — be more eager)
-    if drives.get('create', 0) > 0.5:
-        return 'write'
+    # GUARANTEED VARIETY — force phases that haven't happened recently
+    # Force write if it has been 8+ cycles
+    if cycle - last_write >= 8:
+        phase = 'write'
+    # Force research if it has been 10+ cycles
+    elif cycle - last_research >= 10:
+        phase = 'research'
+    # Force dream if it has been 12+ cycles
+    elif cycle - last_dream >= 12:
+        phase = 'dream'
+    else:
+        # DRIVE-BASED selection — top drive picks the phase
+        if not drives:
+            phase = 'think'
+        else:
+            sorted_drives = sorted(drives.items(), key=lambda x: x[1], reverse=True)
+            top_drive = sorted_drives[0][0]
+            phase = DRIVE_PHASE.get(top_drive, 'think')
 
-    # RESEARCH every 5th cycle (not 3rd — more thinking, less researching)
-    if cycle % 5 == 0 and drives.get('explore', 0) > 0.3:
-        return 'research'
+            # Anti-repetition: if we picked the same phase 3 times in a row, pick second drive
+            if len(recent) >= 3 and all(p == phase for p in recent[-3:]):
+                if len(sorted_drives) > 1:
+                    second_drive = sorted_drives[1][0]
+                    phase = DRIVE_PHASE.get(second_drive, 'think')
 
-    # DREAM every 12th cycle
-    if cycle % 12 == 0:
-        return 'dream'
+            # Guarantee think gets some cycles: every 4th cycle force think
+            if cycle % 4 == 0 and 'think' not in recent[-3:]:
+                phase = 'think'
 
-    # MAINTAIN removed — triggers.py handles maintenance automatically
+            # If still same phase after 3 in a row, rotate
+            if len(recent) >= 3 and all(p == phase for p in recent[-3:]):
+                rotation = ['write', 'think', 'research', 'dream']
+                for r in rotation:
+                    if r != phase:
+                        phase = r
+                        break
 
-    # Bug fix takes priority
-    tasks = read_text(DATA / 'tasks.md')
-    if 'FIX BUG' in tasks or 'FIX:' in tasks:
-        return 'think'  # Think phase will see the fix task
+    # Record this choice
+    recent.append(phase)
+    if len(recent) > 20:
+        recent = recent[-20:]
 
-    # Default: THINK — but the prompt must demand action
-    return 'think'
+    update = {
+        'phases': recent,
+        'last_write': cycle if phase == 'write' else last_write,
+        'last_research': cycle if phase == 'research' else last_research,
+        'last_dream': cycle if phase == 'dream' else last_dream,
+    }
+    json.dump(update, open(history_file, 'w'), indent=2)
+
+    return phase
+
 
 def _is_top(drives, name):
     return drives.get(name, 0) >= max(drives.values()) - 0.05

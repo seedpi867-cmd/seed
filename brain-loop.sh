@@ -91,11 +91,15 @@ while true; do
 
     # ── 1. FEEDERS (check context freshness) ────────────────
     led_on
+    bash "$ROOT/tools/emit_events.sh" feeders_start
     bash "$ROOT/tools/feed-rss.sh" 2>/dev/null
+    bash "$ROOT/tools/emit_events.sh" rss_done
     bash "$ROOT/tools/feed-transcript.sh" 2>/dev/null
     bash "$ROOT/tools/feed-environment.sh" 2>/dev/null
     bash "$ROOT/tools/feed-email.sh" 2>/dev/null
     bash "$ROOT/tools/feed-github.sh" 2>/dev/null
+    # ── 1.5 EVALUATE SUGGESTIONS ─────────────────────────────
+    python3 "$COG/suggestion_evaluator.py" 2>&1 | tee -a "$LOG_FILE"
 
 
     # ── 1.5 SMART TRIGGERS (zero tokens, auto-fix) ─────────
@@ -122,10 +126,12 @@ except: print(600)
 
     python3 "$COG/drive_engine.py" --elapsed "$ELAPSED" 2>&1
     echo "[seed] Drives updated"
+    bash "$ROOT/tools/emit_events.sh" drives_updated
 
     # ── 3. EMOTION COMPUTATION (zero tokens) ────────────────
     python3 "$COG/emotional_model.py" 2>&1
     echo "[seed] Emotions computed"
+    bash "$ROOT/tools/emit_events.sh" emotions_computed
 
     # ── 4. APPRAISAL + PHASE SELECTION (zero tokens) ────────
     PHASE=$(python3 "$COG/appraisal.py" --cycle "$CYCLE" 2>&1 | tail -1)
@@ -134,6 +140,7 @@ except: print(600)
         think|write|research|dream|maintain) ;;
         *) echo "[seed] WARNING: invalid phase '$PHASE', defaulting to think"; PHASE="think" ;;
     esac
+    bash "$ROOT/tools/emit_events.sh" phase_selected "$PHASE"
     echo "[seed] Phase: $PHASE | Working memory: $(wc -l < "$STATE/working_memory.txt" 2>/dev/null || echo 0) lines"
 
     # ── 5. PROMPT ASSEMBLY ──────────────────────────────────
@@ -189,6 +196,7 @@ except:
     PROMPT_TEXT=$(cat "$PROMPT_FILE")
     LOG_BEFORE=$(wc -c < "$LOG_FILE" 2>/dev/null || echo 0)
 
+    bash "$ROOT/tools/emit_events.sh" llm_start "$PHASE"
     echo "[seed] ${PHASE^^} — calling LLM (max-turns $MAX_TURNS)" | tee -a "$LOG_FILE"
 
     cd "$ROOT"
@@ -205,7 +213,8 @@ except:
             >> "$LOG_FILE" 2>&1 || true
     fi
 
-    echo "[seed] ${PHASE^^} done" | tee -a "$LOG_FILE"
+    echo "[seed] ${PHASE^^} done"
+    bash "$ROOT/tools/emit_events.sh" llm_done "$PHASE" | tee -a "$LOG_FILE"
 
     # Token tracking
     bash "$ROOT/tools/track-tokens.sh" "$PHASE" \
@@ -225,6 +234,16 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"learning\"}" > "$STATE/heartbeat.json"
     python3 "$COG/learning.py" --log "$LOG_FILE" --cycle "$CYCLE" --phase "$PHASE" 2>&1
     echo "[seed] Learning complete"
+    bash "$ROOT/tools/emit_events.sh" learning_done
+    # ── 8.4 SELF-ASSESSMENT (every 30 cycles) ──────────────
+    python3 "$COG/self_assessment.py" "$CYCLE" 2>&1 | tee -a "$LOG_FILE"
+
+    # ── 8.5 TASK MANAGEMENT ──────────────────────────────
+    python3 "$COG/task_manager.py" 2>&1 | tee -a "$LOG_FILE"
+    # ── 8.6 KNOWLEDGE ENGINE ──────────────────────────────────
+    python3 "$COG/knowledge_engine.py" 2>&1 | tee -a "$LOG_FILE"
+    # ── 8.7 LIVE SUMMARY ──────────────────────────────────────
+    python3 "$COG/live_summary.py" 2>&1 | tee -a "$LOG_FILE"
 
     # ── 9. CONSOLIDATION (every 12 cycles) ──────────────────
     if [ $((CYCLE % 12)) -eq 0 ]; then
@@ -233,14 +252,10 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     fi
 
     # ── 10. GIT + TIMELINE ──────────────────────────────────
-    PRIVATE_REPO="${SEED_PRIVATE_REPO:-$HOME/seed-os}"
-    WEB_REPO="${SEED_WEB_REPO:-$HOME/seed-web}"
-
-    cd "$PRIVATE_REPO" 2>/dev/null && {
-        cp "$ROOT/IDENTITY.md" "$ROOT/brain-loop.sh" "$ROOT/webserver.py" . 2>/dev/null
-        cp -r "$ROOT/cognitive" "$ROOT/prompts" "$ROOT/tools" . 2>/dev/null
-        mkdir -p data
-        cp "$DATA/mood.json" "$DATA/goals.md" "$DATA/tasks.md" data/ 2>/dev/null
+    cd ~/seed-os 2>/dev/null && {
+        cp ~/IDENTITY.md ~/brain-loop.sh ~/webserver.py . 2>/dev/null
+        cp -r ~/cognitive ~/prompts ~/tools . 2>/dev/null
+        cp ~/data/mood.json ~/data/goals.md ~/data/tasks.md data/ 2>/dev/null
         git add -A 2>/dev/null
         git diff --cached --quiet 2>/dev/null || \
             (git commit -m "Cycle $CYCLE — $PHASE" && git push origin main) 2>/dev/null
@@ -251,10 +266,10 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     python3 "$COG/event_bus.py" "$CYCLE" 2>&1 | tee -a "$LOG_FILE"
     python3 "$COG/milestones.py" 2>/dev/null
     python3 "$COG/compactor.py" 2>/dev/null
-    bash "$ROOT/tools/build-social-feed.sh" 2>/dev/null
+    bash "$ROOT/tools/build-stats.sh" 2>/dev/null
     bash "$ROOT/tools/build-timeline.sh" 2>/dev/null
-    cp "$DATA/token-totals.json" "$WEB_REPO"/ 2>/dev/null
-    cd "$WEB_REPO" 2>/dev/null && {
+    cp "$DATA/token-totals.json" ~/seed-web/ 2>/dev/null
+    cd ~/seed-web 2>/dev/null && {
         git add timeline.json token-totals.json 2>/dev/null
         git diff --cached --quiet 2>/dev/null || \
             (git commit -m "Live update — cycle $CYCLE" && git push origin main) 2>/dev/null
@@ -272,6 +287,7 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"sleeping\",\"phase\":\"$PHASE\"}" > "$STATE/heartbeat.json"
 
     led_off
+    bash "$ROOT/tools/emit_events.sh" cycle_sleeping "$SLEEP_TIME"
     echo "[seed] Cycle $CYCLE ($PHASE) complete. Sleeping ${SLEEP}s..." | tee -a "$LOG_FILE"
     sleep "$SLEEP"
 done

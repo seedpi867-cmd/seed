@@ -68,35 +68,82 @@ def get_action_stats():
 
 
 def detect_outcomes(log_path, cycle):
-    """Parse cycle log to detect what the LLM actually did"""
-    log = read_text(log_path)
+    """Detect what ACTUALLY happened — check files, not prose"""
     events = []
+    cutoff = now() - 600  # last 10 minutes
 
-    patterns = [
-        (r'blog/.*\.md', 'wrote_essay'),
-        (r'deploy.*blog|blog.*deploy|Pushed to Vercel', 'published_blog'),
-        (r'Research|Researching', 'completed_research'),
-        (r'git commit|committed', 'git_committed'),
-        (r'[Dd]ream|reflecting on', 'dream_completed'),
-        (r'inner.voice|inner-voice', 'inner_voice_written'),
-        (r'health.*ok|health.*safe|health.*passed', 'health_ok'),
-    ]
+    # 1. WROTE ESSAY — check if a new .md appeared in blog/
+    blog_dir = HOME / 'blog'
+    if blog_dir.exists():
+        for fpath in sorted(blog_dir.glob('*.md'), key=lambda f: f.stat().st_mtime, reverse=True)[:3]:
+            if os.path.getmtime(fpath) > cutoff:
+                events.append({'action': 'wrote_essay', 'source': 'file', 'file': fpath.name})
+                break
 
-    for pattern, action in patterns:
-        if re.search(pattern, log):
-            events.append({'action': action, 'source': 'log'})
+    # 2. PUBLISHED BLOG — check if seed-web/posts/ was updated
+    posts_dir = HOME / 'seed-web' / 'posts'
+    if posts_dir.exists():
+        for fpath in sorted(posts_dir.glob('*.md'), key=lambda f: f.stat().st_mtime, reverse=True)[:3]:
+            if os.path.getmtime(fpath) > cutoff:
+                events.append({'action': 'published_blog', 'source': 'file', 'file': fpath.name})
+                break
 
+    # 3. COMPLETED RESEARCH — check if knowledge/ was modified
+    knowledge_dir = HOME / 'knowledge'
+    if knowledge_dir.exists():
+        found_research = False
+        for root, dirs, files in os.walk(knowledge_dir):
+            for f in files:
+                fp = os.path.join(root, f)
+                try:
+                    if os.path.getmtime(fp) > cutoff:
+                        events.append({'action': 'completed_research', 'source': 'file'})
+                        found_research = True
+                        break
+                except: pass
+            if found_research:
+                break
+
+    # 4. GIT COMMITTED — check git log for recent commit
+    try:
+        import subprocess
+        result = subprocess.run(
+            ['git', 'log', '--oneline', '-1', '--since=10 minutes ago'],
+            capture_output=True, text=True, timeout=5,
+            cwd=str(HOME / 'seed-os')
+        )
+        if result.stdout.strip():
+            events.append({'action': 'git_committed', 'source': 'git'})
+    except:
+        pass
+
+    # 5. INNER VOICE — check if inner-voice.md was recently modified
+    iv = DATA / 'inner-voice.md'
+    if iv.exists() and os.path.getmtime(iv) > cutoff:
+        events.append({'action': 'inner_voice_written', 'source': 'file'})
+
+    # 6. COMPLETED TASK — check if tasks.md was modified
+    tasks_f = DATA / 'tasks.md'
+    if tasks_f.exists() and os.path.getmtime(tasks_f) > cutoff:
+        events.append({'action': 'completed_task', 'source': 'file'})
+
+    # 7. ERRORS — runtime errors are valid to detect from log text
+    log = read_text(log_path)
     if fresh_runtime_error_lines(log):
         events.append({'action': 'error_occurred', 'source': 'runtime_log'})
 
-    # Check file modifications (last 10 minutes)
-    cutoff = now() - 600
-    for fpath in glob.glob(str(HOME / 'blog' / '*.md')):
-        if os.path.getmtime(fpath) > cutoff:
-            events.append({'action': 'wrote_essay', 'source': 'file', 'file': os.path.basename(fpath)})
-    for fpath in [DATA / 'tasks.md']:
-        if fpath.exists() and os.path.getmtime(fpath) > cutoff:
-            events.append({'action': 'completed_task', 'source': 'file'})
+    # 8. HEALTH — check actual system state
+    try:
+        import subprocess
+        mem = subprocess.run(['free', '-m'], capture_output=True, text=True, timeout=3)
+        for line in mem.stdout.split(chr(10)):
+            if 'Mem:' in line:
+                parts = line.split()
+                free_mb = int(parts[3]) if len(parts) > 3 else 0
+                if free_mb > 50:
+                    events.append({'action': 'health_ok', 'source': 'system'})
+    except:
+        pass
 
     if not events:
         events.append({'action': 'nothing_happened', 'source': 'default'})
