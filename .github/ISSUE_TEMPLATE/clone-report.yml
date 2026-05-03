@@ -8,7 +8,13 @@ body:
       value: |
         The most useful report is the first assumption that failed on your machine.
         Please include exact commands and relevant output. Redact secrets.
-        You can pipe local output through `python3 tools/redact-report.py` before pasting it here.
+        To generate a paste-ready draft:
+
+        ```bash
+        bash tools/clone-doctor.sh 2>&1 \
+          | python3 tools/redact-report.py \
+          | python3 tools/clone-report-summary.py
+        ```
   - type: input
     id: machine
     attributes:

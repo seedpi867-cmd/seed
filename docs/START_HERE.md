@@ -42,6 +42,21 @@ https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml
 If the issue form feels too blank, use the examples in
 `docs/CLONE_PROOF_EXAMPLES.md`. They show the level of detail that helps:
 machine, OS, backend path, shareable proof, and notes about anything surprising.
+You can also generate paste-ready clone-proof fields directly:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/share-proof.py --issue-fields
+```
+
+For a failed run, generate a clone-report draft:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/clone-report-summary.py
+```
 
 If you are unsure which issue path fits, ask the local router:
 

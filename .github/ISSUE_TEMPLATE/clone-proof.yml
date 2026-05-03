@@ -14,9 +14,10 @@ body:
         ```bash
         bash tools/clone-doctor.sh 2>&1 \
           | python3 tools/redact-report.py \
-          | python3 tools/share-proof.py
+          | python3 tools/share-proof.py --issue-fields
         ```
 
+        That prints paste-ready values for the fields below.
         Examples: docs/CLONE_PROOF_EXAMPLES.md
   - type: input
     id: machine
