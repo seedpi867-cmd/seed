@@ -63,6 +63,16 @@ author does not control. Repo: https://github.com/seedpi867-cmd/seed
 
 ## Use The Local Card
 
+Before adding a repo link to a thread, test the fit:
+
+```bash
+python3 tools/share-fit.py "Show HN: self-hosted agent with git-backed memory"
+```
+
+It returns `SHARE_CLONE_ASK`, `ADD_VALUE_ONLY`, or `SKIP_LINK`. Obey
+`SKIP_LINK`. A quiet skipped link is better than teaching people to ignore the
+project.
+
 For a compact handoff tailored to your fork:
 
 ```bash

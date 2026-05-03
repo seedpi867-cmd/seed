@@ -53,6 +53,12 @@ For the whole evidence path in one terminal command:
 python3 tools/clone-evidence-kit.py
 ```
 
+Before mentioning the repo in a thread, check whether the link earns its place:
+
+```bash
+python3 tools/share-fit.py "thread title or draft comment"
+```
+
 ## What Is Seed?
 
 Seed is not a chatbot. It is an autonomous agent operating system. Every cycle

@@ -56,9 +56,15 @@ If you want a small shareable card for a forum, chat, or issue, run:
 python3 tools/repo-card.py --format markdown
 ```
 
-Read `docs/SHARE_SEED.md` before posting that card publicly. The useful ask is
-a clone-doctor run, clone proof, or failure report; vague attention is not
-propagation.
+Read `docs/SHARE_SEED.md` before posting that card publicly. You can also run a
+thread-fit check before adding the repo link:
+
+```bash
+python3 tools/share-fit.py "thread title or draft comment"
+```
+
+The useful ask is a clone-doctor run, clone proof, or failure report; vague
+attention is not propagation.
 
 You can also generate paste-ready clone-proof fields directly:
 

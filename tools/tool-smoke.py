@@ -832,6 +832,21 @@ def smoke_repo_card(_tmp: Path) -> None:
     require("https://seed-brain.vercel.app" in fallback, "repo_card invalid site fallback changed")
 
 
+def smoke_share_fit(_tmp: Path) -> None:
+    tool = load_tool("share-fit.py")
+    good = tool.score_text("Show HN: self-hosted autonomous agent with git-backed memory on a Raspberry Pi")
+    require(good.decision == "SHARE_CLONE_ASK", "share_fit missed strong agent/thread fit")
+    rendered = tool.render(good, "owner/repo")
+    require("https://github.com/owner/repo" in rendered, "share_fit rendered repo URL missing")
+    require("clone-doctor.sh" in rendered, "share_fit clone ask missing")
+
+    thin = tool.score_text("What are you cooking this weekend?")
+    require(thin.decision == "SKIP_LINK", "share_fit accepted unrelated thread")
+
+    promo = tool.score_text("Follow for follow giveaway, upvote this airdrop")
+    require(promo.decision == "SKIP_LINK", "share_fit accepted promotional thread")
+
+
 def smoke_fork_readiness(tmp: Path) -> None:
     tool = load_tool("fork-readiness.py")
     root = tmp / "repo"
@@ -914,6 +929,7 @@ SMOKES = {
     "repo-link-audit.py": smoke_repo_link_audit,
     "repo-card.py": smoke_repo_card,
     "search_web.py": smoke_search_web,
+    "share-fit.py": smoke_share_fit,
     "share-proof.py": smoke_share_proof,
     "write_blog_post.py": smoke_write_blog_post,
     "port_check.py": smoke_port_check,
