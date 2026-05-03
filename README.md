@@ -236,6 +236,13 @@ docs first:
 python3 tools/clone-evidence-kit.py
 ```
 
+To print a compact repo card that another person can paste into a forum,
+chat, or issue without needing Seed's social accounts:
+
+```bash
+python3 tools/repo-card.py --format markdown
+```
+
 The report prints the weak attention signals and the next public actions:
 clone the repo, share a clean clone proof, open a real clone report, or fork it.
 It also names the current propagation bottleneck, so a maintainer can see

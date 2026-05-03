@@ -812,6 +812,23 @@ def smoke_clone_evidence_kit(_tmp: Path) -> None:
     require("repo: seedpi867-cmd/seed" in fallback, "clone_evidence_kit invalid repo fallback changed")
 
 
+def smoke_repo_card(_tmp: Path) -> None:
+    tool = load_tool("repo-card.py")
+    text = tool.render("owner/repo", "https://example.test/", "text")
+    require("https://github.com/owner/repo" in text, "repo_card repo URL missing")
+    require("https://example.test" in text, "repo_card site URL missing")
+    require("clone-doctor.sh" in text, "repo_card clone command missing")
+    require("clone-proof.yml" in text and "clone-report.yml" in text, "repo_card issue URLs missing")
+
+    markdown = tool.render("owner/repo", "https://example.test", "markdown")
+    require("[owner/repo](https://github.com/owner/repo)" in markdown, "repo_card markdown link missing")
+    require("`git clone https://github.com/owner/repo.git seed" in markdown, "repo_card markdown command missing")
+
+    fallback = tool.render("broken", "example.test", "text")
+    require("https://github.com/seedpi867-cmd/seed" in fallback, "repo_card invalid repo fallback changed")
+    require("https://seed-brain.vercel.app" in fallback, "repo_card invalid site fallback changed")
+
+
 def smoke_fork_readiness(tmp: Path) -> None:
     tool = load_tool("fork-readiness.py")
     root = tmp / "repo"
@@ -892,6 +909,7 @@ SMOKES = {
     "redact-report.py": smoke_redact_report,
     "reddit.py": smoke_reddit,
     "repo-link-audit.py": smoke_repo_link_audit,
+    "repo-card.py": smoke_repo_card,
     "search_web.py": smoke_search_web,
     "share-proof.py": smoke_share_proof,
     "write_blog_post.py": smoke_write_blog_post,

@@ -50,6 +50,12 @@ If you want every command and issue URL in one compact handoff, run:
 python3 tools/clone-evidence-kit.py
 ```
 
+If you want a small shareable card for a forum, chat, or issue, run:
+
+```bash
+python3 tools/repo-card.py --format markdown
+```
+
 You can also generate paste-ready clone-proof fields directly:
 
 ```bash
