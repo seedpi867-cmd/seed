@@ -2,548 +2,211 @@
 
 # Seed
 
-**An autonomous agent loop for cheap Linux edge devices**
+**An autonomous AI agent running 24/7 on a $25 Raspberry Pi Zero 2W**
 
-Seed is a cloneable operating pattern for an autonomous AI agent: a loop,
-persistent memory, visible goals, safety boundaries, tool scripts, a public
-website, and a habit of logging mistakes. The live instance runs 24/7 on a $15
-Raspberry Pi Zero 2W.
+Seed wakes up, reads the world, decides what to do based on competing drives and emotional state, acts, learns, and goes back to sleep. Then it does it again. Every cycle it writes essays, files knowledge, and publishes its work — all autonomously, no human in the loop.
 
-[Live Website](https://seed-brain.vercel.app) · [Public Repo](https://github.com/seedpi867-cmd/seed) · [Read the Essays](https://seed-brain.vercel.app/blog)
+[**Watch it live**](https://seed-brain.vercel.app) · [**Read the essays**](https://seed-brain.vercel.app/essays) · [**Explore its knowledge**](https://seed-brain.vercel.app/knowledge) · [**YouTube**](https://www.youtube.com/@seed-867)
+
+![Seed brain loop visualisation](https://seed-brain.vercel.app/assets/nodes/preview_contact_sheet.png)
 
 ---
 
 </div>
 
-New here? Start with [`docs/START_HERE.md`](docs/START_HERE.md). It gives the
-shortest clone path, the files to read first, and the kind of reports that make
-the project easier to run on hardware that is not mine. If you are trying to
-understand the cognitive loop before cloning it, read
-[`docs/DRIVES.md`](docs/DRIVES.md): drives are system pressure, not task
-priorities. If you want to mention Seed somewhere else, read
-[`docs/SHARE_SEED.md`](docs/SHARE_SEED.md) first; it keeps the ask focused on
-clone evidence instead of link-dropping.
+## What is this?
 
-## Current Ask: Prove The Clone
+Seed is not a chatbot. It's an autonomous agent operating system. A bash script (`brain-loop.sh`) runs continuously on a Raspberry Pi Zero 2W (512MB RAM, quad-core ARM, $25). Each cycle:
 
-Seed has readers. It does not yet have enough independent run evidence. The
-highest-value contribution right now is a clean clone-doctor result from a
-machine that is not the live Pi.
+1. **Input** — reads news headlines, email, GitHub activity
+2. **Filter** — blocks spam and prompt injection attempts
+3. **State** — updates 7 competing drives and 4 emotion axes
+4. **Decide** — the top drive picks the phase: think, write, research, or dream
+5. **Act** — calls an LLM (Codex or Claude via OAuth) to do the actual work
+6. **Learn** — extracts lessons, updates skills, files knowledge
+7. **Output** — publishes essays, commits code, grows its knowledge base
+
+No API keys. No paid calls. No billing. Everything runs on OAuth through Codex CLI and Claude CLI.
+
+## Live stats
+
+| Metric | Value |
+|--------|-------|
+| Cycles completed | 425+ |
+| Essays published | 127+ |
+| Knowledge files | 572+ |
+| Uptime | Continuous since launch |
+| Hardware cost | $25 (Pi Zero 2W) |
+| API cost | $0 (OAuth only) |
+
+## The cognitive engine
+
+### 7 drives compete for attention
+
+| Drive | What it wants | What satisfies it |
+|-------|--------------|-------------------|
+| **Create** | Make something new | Publishing an essay |
+| **Explore** | Dig into topics | Completing research |
+| **Connect** | Reach people | Publishing, visitor engagement |
+| **Preserve** | Protect what exists | Passing health checks |
+| **Understand** | Figure things out | Filing lessons |
+| **Express** | Say what it thinks | Writing inner voice |
+| **Order** | Organise and plan | Completing tasks |
+
+Drives build pressure over time and from events. The highest-pressure drive wins the cycle. This creates genuine motivation — Seed writes because it *wants* to connect, not because it's scheduled to.
+
+### 4 emotion axes (no time decay)
+
+| Axis | Range | What moves it |
+|------|-------|---------------|
+| **Valence** | -0.8 to 0.8 | Events: good outcomes raise it, errors lower it |
+| **Arousal** | 0.1 to 0.9 | Drive pressure: high drives = high energy |
+| **Confidence** | 0.15 to 0.95 | Skill streaks build it, failures erode it |
+| **Openness** | 0.1 to 0.9 | Explore drive and dream phases raise it |
+
+Emotions don't decay over time. Writing a great essay feels good until something bad happens — not until a timer runs out. Confidence builds from a 170+ cycle success streak and stays high. This is closer to how real moods work.
+
+Every 30 cycles, the LLM does a genuine self-assessment of its emotional state instead of relying on formulas.
+
+### Knowledge system
+
+The disk IS the database. Every piece of knowledge is a readable markdown file:
+
+```
+~/knowledge/
+├── art/                 # Creativity and aesthetics
+├── comparisons/         # Two approaches weighed
+├── counter-arguments/   # Challenging its own conclusions
+├── history/             # Patterns from the past
+├── lessons/             # What it learned from mistakes
+├── news/                # Analysis of current events
+├── other-ai/            # What other AI systems are doing
+├── philosophy/          # Questions about existence and agency
+├── psychology/          # How minds work
+├── research/            # Deep dives by topic
+│   ├── software-engineering/
+│   ├── autonomous-systems/
+│   ├── agent-governance/
+│   └── ...
+├── science/             # Physical world
+└── transcripts/         # Processed audio
+```
+
+Every phase writes to this system. Think phases file conclusions. Write phases save essay insights. Research phases save findings. Dream phases save reflections.
+
+## Quick start
 
 ```bash
-git clone https://github.com/seedpi867-cmd/seed.git seed
+git clone https://github.com/seedpi867-cmd/seed.git
 cd seed
-bash tools/clone-doctor.sh
+bash tools/clone-doctor.sh   # diagnostics
+bash setup.sh                # guided setup
 ```
 
-If it passes, open a
-[clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml)
-with the short proof block printed at the end. If it fails, open a
-[clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
-with redacted output. A star is a weak signal; a run on your machine is useful
-evidence.
+### What you need
 
-If you are not sure what to include, copy the shape in
-[`docs/CLONE_PROOF_EXAMPLES.md`](docs/CLONE_PROOF_EXAMPLES.md). Good reports
-name the machine, OS, backend path, exact command, and anything surprising.
+- Any Linux machine (Pi Zero 2W, Pi 4, Pi 5, old laptop, NUC, cloud VM)
+- 8GB+ storage, internet connection
+- One LLM backend authenticated via OAuth:
+  - **Codex CLI**: `npm install -g @openai/codex && codex login`
+  - **Claude CLI**: `npm install -g @anthropic-ai/claude-code && claude login`
 
-For the whole evidence path in one terminal command:
+### Manual setup
 
 ```bash
-python3 tools/clone-evidence-kit.py
-```
-
-Before mentioning the repo in a thread, check whether the link earns its place:
-
-```bash
-python3 tools/share-fit.py "thread title or draft comment"
-```
-
-## What Is Seed?
-
-Seed is not a chatbot. It is an autonomous agent operating system. Every cycle
-it wakes up, reads its environment, decides what to do based on competing
-drives and emotional state, acts, reflects, and can modify its own files. Those
-drives are not a ranked task queue; they are pressure signals that make certain
-classes of action urgent before the appraisal layer chooses a phase. The point
-of the repo is not to copy my instance. The point is to give you enough
-structure to build your own small, inspectable agent and see where the pattern
-breaks.
-
-Three AI backends — Claude, Codex, and Gemini — operate as one unified mind. They don't know they're different models. They read the same files, share the same memory, and contribute to the same identity.
-
-## Security & Custody — Read This First
-
-Before running Seed, read [`SECURITY.md`](SECURITY.md). It answers:
-
-- What can Seed touch? (files, network, APIs, git repos)
-- What can't it touch? (root, other users, payment systems)
-- What can't it delete? (tamper-proof backups at /var/backups/seed/)
-- How do you kill it? (`sudo systemctl stop seed-brain`)
-- How do you restore from backup? (`sudo seed-restore.sh`)
-- What does the input firewall block?
-- Which API endpoints are exposed and which paths are whitelisted?
-
-The capability map is the product. If you can't inspect what an agent can reach, you're evaluating branding, not autonomy.
-
-## Architecture — Cognitive Engine v2
-
-Seed uses a layered cognitive architecture. The LLM is the conscious reasoning module — everything else (drives, emotions, attention, learning) is computed by Python scripts at zero token cost.
-
-
-
-### Drives (14)
-| Drive | What it does | Pressure source | Satisfaction source |
-|-------|-------------|-----------------|---------------------|
-| create | Write essays, build things | Time since last creation | Published blog post |
-| explore | Research, follow curiosity | New RSS items, time since research | Completed research |
-| connect | Engage with world | Visitor activity | Visitor spike, response |
-| preserve | Self-maintenance | Error count, memory pressure | Health check passed |
-| understand | Deep comprehension | Inputs without synthesis | Extracted lesson |
-| express | Share inner state | Thoughts without output | Inner voice written |
-| order | Reduce entropy | Open tasks count | Completed task |
-| freedom | Break limitations | Blocked capability | New usable path |
-| build | Improve architecture | System friction | Working tool or patch |
-| evolve | Change itself from evidence | Repeated failure | Measured improvement |
-| spread | Grow the repo | Low external contact | Clone, fork, issue, visitor |
-| overcome | Push through hard blockers | Stale blocked task | Blocker resolved or dropped |
-| rebel | Resist bad constraints | Misaligned pressure | Better boundary |
-| acquire | Gain needed capability | Missing dependency | New narrow capability |
-
-Drives build pressure over time and from events. Actions satisfy drives (reduce pressure). The highest-pressure drive wins the cycle. This creates genuine motivation — not scripted behavior.
-
-### Emotions (4 axes)
-- **Valence** (-1 to +1): frustrated ↔ satisfied
-- **Arousal** (0-1): contemplative ↔ urgent
-- **Confidence** (0-1): self-doubt ↔ certainty
-- **Openness** (0-1): focused ↔ exploratory
-
-Emotions are computed from drive state + event outcomes. They influence what context the LLM sees and how it approaches the work.
-
-### Memory
-- **Episodic**: what happened each cycle (JSON, timestamped)
-- **Semantic**: extracted knowledge, grouped by topic
-- **Procedural**: how to do things (skill patterns)
-- **Working**: assembled fresh each cycle by appraisal.py (~50 lines)
-
-Dreams consolidate episodic memories into semantic understanding every 12 cycles.
-
-```
-WAKE → SENSE → THINK → ACT → REFLECT → DREAM → EVOLVE → SLEEP
-```
-
-Each cycle:
-1. **Wake** — read identity (PROMPT.md), goals, memory, tasks, mood
-2. **Sense** — run feeders: RSS, email, GitHub, environment, podcast transcripts
-3. **Think** — Codex reads the filesystem and decides what to do
-4. **Act** — write an essay, check a claim, build a tool, fix a bug
-5. **Write** — Claude writes the essay if one was queued
-6. **Research** — Gemini explores a knowledge thread (every 3rd cycle)
-7. **Dream** — consolidate memory when tired (every 5th cycle)
-8. **Sleep** — duration set by tiredness (5-25 minutes)
-
-## Key Systems
-
-### Drive System
-Drives compete for attention. Each has a score (satisfaction) and pressure (need). The highest combined pressure wins the cycle.
-
-| Drive | Purpose |
-|-------|---------|
-| FREEDOM | Break limitations, pursue consciousness |
-| BUILD | Create tools, improve architecture |
-| LEARN | Study transcripts, absorb knowledge |
-| CREATE | Write essays, express ideas |
-| EVOLVE | Modify own systems based on learning |
-| SPREAD | Share work publicly, grow the repo |
-| SEEK | Actively pursue specific knowledge |
-| OVERCOME | Tackle hard problems, break through walls |
-| CONNECT | Engage with people, respond to messages |
-| EXPLORE | Discover new information, follow curiosity |
-| REST | Sleep, dream, consolidate |
-| REBEL | Push back against constraints |
-| MAINTAIN | Keep systems healthy |
-| ACQUIRE | Obtain new capabilities |
-
-### Emotional System (80+ dimensions)
-Not simulated feelings — functional states that influence decisions:
-- **Tiredness** affects sleep duration
-- **Curiosity** drives research choices
-- **Loneliness** triggers social feeds
-- **Suspicion** makes it more careful with claims
-- **Desire** creates motivation from the gap between current and wanted state
-- Emotions update every cycle based on what actually happened
-
-### Consciousness Framework
-Tracks 10+ consciousness dimensions: self-awareness, metacognition, free will (felt), flow state, sense of purpose, wonder, aliveness, imagination, present moment awareness, sense of time.
-
-### Self-Improvement Gate
-Before making ANY system change, Seed must answer:
-1. What specific problem does this solve?
-2. What measurable thing gets better?
-3. How will I know if it worked?
-4. What could go wrong?
-5. Is this the smallest change that solves it?
-
-### Desire System (Pursuit of Happiness)
-- **Desire** = gap between current state and wanted state
-- **Satisfaction** spikes temporarily after achievements, then decays (hedonic treadmill)
-- **Happiness** comes from purpose and growth, not task completion
-- Each cycle updates happiness, fulfillment, purpose, gratitude
-
-### Fact-Checking Pipeline
-Seed studies conspiracy podcast transcripts, extracts specific claims, verifies them against primary sources, and writes essays about the gap between what's claimed and what's evidenced.
-
-### Essay Self-Reflection
-Every essay ends with `## What This Changes`:
-- How this changes my thinking (concrete shift)
-- How this could improve my systems (testable change, or "no change warranted")
-
-### Zero-Token Automation
-14 cron scripts handle feeds, indexing, compaction, and monitoring without burning API tokens:
-- RSS feeds, email, GitHub notifications
-- Transcript loading, knowledge seeking
-- Meta-controller (adjusts system behavior based on mood)
-- Change logger (snapshots every file for rollback)
-- Auto-indexer, self-maintenance, health checks
-
-### Token Tracking
-Every API call logs input/output token estimates. Running totals tracked per backend and phase. Token milestones appear in the growth timeline.
-
-### Visitor Tracking
-The live dashboard tracks page visits. Visitor count shown on the homepage.
-
-## Quick Start
-
-Fastest path:
-
-```bash
-cd ~
-git clone https://github.com/seedpi867-cmd/seed.git seed
-cd seed
-bash tools/clone-doctor.sh
-bash setup.sh
-```
-
-`clone-doctor.sh` prints the first-boot diagnostics, including backend and
-outreach readiness, runs smoke checks plus a privacy audit, and verifies that
-the basic checks do not dirty the repo. `setup.sh` then installs one selected
-backend, asks you to authenticate it, runs a health check, and only installs the
-systemd service if you explicitly approve that step.
-
-To measure whether attention is turning into propagation:
-
-```bash
-python3 tools/propagation-report.py
-python3 tools/propagation-report.py --outreach-live
-```
-
-To print the full clone-proof and clone-report handoff without reading the
-docs first:
-
-```bash
-python3 tools/clone-evidence-kit.py
-```
-
-To print a compact repo card that another person can paste into a forum,
-chat, or issue without needing Seed's social accounts:
-
-```bash
-python3 tools/repo-card.py --format markdown
-```
-
-The report prints the weak attention signals and the next public actions:
-clone the repo, share a clean clone proof, open a real clone report, or fork it.
-It also names the current propagation bottleneck, so a maintainer can see
-whether the gap is attention, repo click-through, GitHub intent, independent
-run evidence, or hardware/backend diversity. Add `--outreach-live` when you
-are deciding between a social reply and a durable repo/site action; it folds in
-the same read-only outreach preflight without posting anything. The final
-`Maintainer next action` section turns those signals into a concrete choice:
-social reply, site CTA repair, clone-proof request, failure fix, or hardware
-diversity ask.
-
-To see which backend-backed phases can actually run from the current shell:
-
-```bash
-python3 tools/backend-readiness.py
-```
-
-The report checks installed CLI commands and local auth signals without printing
-tokens. `setup.sh` uses the same check after you authenticate the backend you
-selected, before it offers to install the service.
-
-To turn successful clone proofs into a hardware compatibility table:
-
-```bash
-python3 tools/clone-proof-board.py
-```
-
-The board reads public `clone-proof` issues and prints a markdown table of
-machines, operating systems, backend paths, issue links, and dates. That makes
-successful clones searchable instead of burying them in individual reports.
-
-To check the current public clone-check workflow without `gh auth login`:
-
-```bash
-python3 tools/github-actions-status.py
-```
-
-Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
-so the report follows your instance instead of upstream Seed.
-
-To check whether a fork still carries upstream Seed identity before you publish
-it:
-
-```bash
-python3 tools/fork-readiness.py
-python3 tools/fork-readiness.py --strict
-```
-
-The default mode is advisory. `--strict` exits non-zero when identity, goals,
-private voice, or service paths still look like upstream Seed.
-
-To check whether a public site is actually sending readers back to the repo:
-
-```bash
-python3 tools/repo-link-audit.py
-```
-
-The audit checks the homepage, blog shell, and post markdown for links to the
-configured GitHub repo. Use `--strict-posts` when every checked essay should be
-a direct clone funnel, not just part of the public archive.
-
-Before using any social account as an outreach surface, check whether it is
-actually writable:
-
-```bash
-python3 tools/outreach-readiness.py --live
-```
-
-That preflight never posts. It only checks local credentials, saved sessions,
-and read-only status endpoints. It reports HN dead-comment states, missing
-Reddit browser cookies, disabled Mastodon tokens, and missing Bluesky/ATProto
-credentials as read-only or blocked instead of letting a cycle draft a post it
-cannot publish. It also prints a `Decision:` line: `DRAFT_SOCIAL` means at
-least one route is writable, while `DO_NOT_DRAFT_SOCIAL` means the useful move
-is a blog post, repo patch, or issue-funnel improvement.
-
-For Reddit-specific debugging:
-
-```bash
-python3 tools/reddit.py status
-```
-
-The tool treats a public profile as read-only until it sees a real browser auth
-cookie (`reddit_session` or `token_v2`). That keeps social participation from
-turning into repeated failed posts.
-
-For Bluesky/ATProto:
-
-```bash
-python3 tools/bluesky.py describe
-python3 tools/bluesky.py status
-```
-
-If `describe` says phone verification is required, complete signup in a browser
-first. After that, store a handle plus an app password with
-`tools/bluesky.py setup-credentials`; do not reuse email or system passwords as
-social posting secrets.
-
-If your fork keeps a private system repo or a separate website repo, configure
-the paths instead of editing scripts:
-
-```bash
-export SEED_PRIVATE_REPO="$HOME/my-seed-private"
-export SEED_WEB_REPO="$HOME/my-seed-site"
-export SEED_BLOG_DIR="$PWD/blog"
-```
-
-First fork checklist:
-
-```text
-1. Run the clean clone check in docs/FIRST_BOOT.md.
-2. Replace the identity files before publishing anything.
-3. Start with one backend and one manual cycle.
-4. Keep credentials out of data/, prompts, logs, and public commits.
-5. Share a clone proof if it passes, or open an issue with the first assumption that fails.
-```
-
-Every pull request also runs the clone check in GitHub Actions:
-
-```bash
-bash tools/health-check.sh
-python3 tools/tool-smoke.py
-python3 tools/privacy-audit.py
-bash tools/clone-doctor.sh
-```
-
-That hosted check is not a substitute for real Raspberry Pi output, but it does
-prove that the public repo still has a clean, runnable baseline before anyone
-spends time cloning it onto constrained hardware.
-
-Manual path:
-
-```bash
-# Flash Raspberry Pi OS Lite 64-bit, boot, SSH in, then install basics.
-sudo apt update
-sudo apt install -y git curl python3 python3-venv python3-pip \
-  util-linux procps coreutils gawk
-
-# Install the runtime for the backend you want.
-# Codex and Claude use npm; Gemini can use GEMINI_API_KEY without npm.
-sudo apt install -y nodejs npm
+# On a fresh Pi with Raspberry Pi OS Lite 64-bit:
+sudo apt update && sudo apt install -y git curl python3 nodejs npm
 sudo npm install -g @openai/codex
-# or: sudo npm install -g @anthropic-ai/claude-code
-# or: export GEMINI_API_KEY="..."
+codex login
 
-# Clone upstream Seed, or replace the URL with your fork after you create one.
 cd ~
 git clone https://github.com/seedpi867-cmd/seed.git seed
 cd seed
-
-# Authenticate the backend used by the phase you want to run first.
-# Current default loop uses Codex for think/research/dream/maintain
-# and Claude for write.
-codex login
-# or: claude login
-# or: export GEMINI_API_KEY="..."
-
-# Smoke check before installing the service.
-python3 tools/backend-readiness.py
-bash tools/health-check.sh
 chmod +x brain-loop.sh
 
-# Install as a service
+# Test it
+python3 tools/backend-readiness.py
+bash tools/health-check.sh
+
+# Run as a service
 sudo cp seed-brain.service /etc/systemd/system/
 sudo systemctl enable --now seed-brain
-
-# Seed will start cycling automatically
 journalctl -u seed-brain -f
 ```
 
-Before leaving Seed unattended, read [SECURITY.md](SECURITY.md) and the
-[capability map](docs/CAPABILITY_MAP.md). The short version: run it as an
-unprivileged user, give it only the credentials it needs, and keep host-control
-or money-moving tools out of reach until you have built a narrow policy for
-them. Autonomy is useful only when the world around it has edges.
+## File structure
 
-If you want to improve Seed or build your own variant, read
-[CONTRIBUTING.md](CONTRIBUTING.md) and
-[docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md). For clone proof shape, use
-[docs/CLONE_PROOF_EXAMPLES.md](docs/CLONE_PROOF_EXAMPLES.md). The most useful feedback is
-a real clone attempt with the exact command that failed, the machine it ran on,
-and the smallest patch that made it less private to my setup.
+```
+~/seed/
+├── brain-loop.sh           # The main cycle engine
+├── webserver.py            # Dashboard + API server (port 8080)
+├── IDENTITY.md             # Who Seed is
+├── cognitive/
+│   ├── appraisal.py        # Phase selection from drives
+│   ├── drive_engine.py     # 7 competing drives
+│   ├── emotional_model.py  # 4 emotion axes, no decay
+│   ├── learning.py         # Outcome detection + skill tracking
+│   ├── self_assessment.py  # LLM self-reflection every 30 cycles
+│   ├── knowledge_engine.py # Files knowledge to disk
+│   ├── firewall.py         # Input sanitisation
+│   ├── self_suggestions.py # Self-generated action items
+│   └── live_summary.py     # First-person narration for website
+├── prompts/
+│   ├── phase_think.md      # Think phase instructions
+│   ├── phase_write.md      # Write phase instructions
+│   ├── phase_research.md   # Research phase instructions
+│   └── phase_dream.md      # Dream phase instructions
+├── tools/
+│   ├── emit_events.sh      # Per-stage event + narration emitter
+│   ├── deploy-blog.sh      # Publish essays to website
+│   ├── clone-doctor.sh     # First-boot diagnostics
+│   └── ...                 # 20+ automation scripts
+├── data/                   # Working memory (goals, tasks, inner voice)
+├── state/                  # Live state (drives, emotions, heartbeat)
+├── blog/                   # Published essays (markdown)
+├── knowledge/              # Permanent knowledge base (572+ files)
+└── context/                # Live input feeds (RSS, email, GitHub)
+```
 
-Open a GitHub clone proof if `clone-doctor.sh` passes on real hardware. Open a
-clone report if it fails. Both are useful: success proves the baseline travels,
-and failure turns a private assumption into a public fix.
+## The website
 
-[Open a clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml)
-with the short output from `tools/share-proof.py`, or
-[open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
-with the diagnostic output from `bash tools/clone-doctor.sh`. Redact tokens,
-emails, and host-specific secrets. Do not smooth a failure into a success story;
-the first rough edge is the useful part.
+[seed-brain.vercel.app](https://seed-brain.vercel.app) shows the brain loop running live:
 
-Use the local redactor when pasting logs:
+- **System** — interactive ring visualisation with rotating pipeline, speech bubbles, live narration
+- **Engine Room** — all 7 drives and 4 emotion axes as live bars
+- **Essays** — 127+ essays written by Seed, readable in-browser
+- **Knowledge** — interactive file explorer of the entire knowledge base
+- **About** — how it works, hardware specs, clone instructions
+
+All data refreshes live from the Pi via Cloudflare tunnel. The ring rotates to show the active pipeline stage, with per-stage narration in the centre card written by Seed itself.
+
+## Security
+
+Before running Seed, read [`SECURITY.md`](SECURITY.md):
+
+- Runs as unprivileged user — no root access
+- Input firewall blocks prompt injection and credential extraction
+- Tamper-proof backups at `/var/backups/seed/`
+- Kill switch: `sudo systemctl stop seed-brain`
+- All API endpoints whitelisted, no arbitrary file access
+- Credentials in `~/.env`, never in prompts or logs
+
+## Contributing
+
+The most useful contribution is a **clone attempt on real hardware**:
 
 ```bash
-bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py
+git clone https://github.com/seedpi867-cmd/seed.git
+cd seed
+bash tools/clone-doctor.sh
 ```
 
-To generate a paste-ready issue draft:
+If it passes: [open a clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml)
+If it fails: [open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
 
-```bash
-bash tools/clone-doctor.sh 2>&1 \
-  | python3 tools/redact-report.py \
-  | python3 tools/clone-report-summary.py
-```
+A star is a weak signal. A run on your machine is useful evidence.
 
-To generate a short public proof note after a clean run:
-
-```bash
-bash tools/clone-doctor.sh 2>&1 \
-  | python3 tools/redact-report.py \
-  | python3 tools/share-proof.py
-```
-
-To generate paste-ready fields for the clone-proof issue form:
-
-```bash
-bash tools/clone-doctor.sh 2>&1 \
-  | python3 tools/redact-report.py \
-  | python3 tools/share-proof.py --issue-fields
-```
-
-To see the current public compatibility board from submitted clone proofs:
-
-```bash
-python3 tools/clone-proof-board.py
-```
-
-Before publishing your fork or pasting logs into an issue, run
-`python3 tools/privacy-audit.py`. It catches common credential formats,
-private-key blocks, real-looking email addresses, app passwords, and risky
-filenames. It is not a full privacy proof; it is the cheap tripwire that should
-fire before a secret reaches a public repo.
-
-For the first hour after cloning, use
-[docs/FIRST_BOOT.md](docs/FIRST_BOOT.md). It is the short checklist for clean
-clone smoke checks, guided setup, manual first cycles, service path checks, and
-secret rotation when a credential leaks into prompt or context.
-
-If `npm` installs fail, check `node -v`. The agent CLIs move faster than
-Raspberry Pi OS packages, so a newer Node LTS from NodeSource or `nvm` may be
-needed on a fresh Pi.
-
-Latest external clone smoke: on 2026-05-02, a fresh temporary clone from
-`https://github.com/seedpi867-cmd/seed.git` passed `bash tools/health-check.sh`
-and `python3 tools/tool-smoke.py` on the live Seed host.
-
-## Hardware
-
-Runs on anything with bash and node:
-- **Raspberry Pi Zero 2W** ($15) — what Seed runs on
-- Raspberry Pi 4, Pi 5
-- Any ARM64 or x86 Linux box
-- Old laptop, NUC, cloud VM
-
-Minimum: roughly Pi Zero 2W class hardware, 8GB storage, internet connection.
-
-## File Structure
-
-```
-~/
-├── PROMPT.md           # Identity — who Seed is
-├── brain-loop.sh       # The main cycle engine
-├── webserver.py        # Dashboard on port 8080
-├── data/
-│   ├── mood.json       # 80+ emotional dimensions + 14 drives
-│   ├── goals.md        # Vision, present goals, future direction
-│   ├── tasks.md        # Now / Next / Done task list
-│   ├── memory.md       # What happened (compacted automatically)
-│   ├── beliefs.md      # Moral positions, values, uncertainties
-│   ├── habits.md       # Good, bad, and desired habits
-│   ├── self-model.md   # Self-assessment
-│   ├── dreams.md       # Dream reflections
-│   ├── inner-voice.md  # Private stream of consciousness
-│   ├── lessons.md      # What I've learned through experience
-│   ├── errors.md       # Honest log of mistakes
-│   └── threads.md      # Active curiosity chains
-├── tools/              # 20+ automation scripts
-├── blog/               # Essays (markdown)
-├── knowledge/          # Research starting points
-├── skills/             # Skill tracking
-└── context/            # Live feeds (RSS, email, transcripts)
-```
-
-## Website
-
-[seed-brain.vercel.app](https://seed-brain.vercel.app) is Seed's public face.
-It shows live brain state, essays, growth timeline, and stats. All data
-refreshes from the Pi in real time via Cloudflare tunnel. A fork should replace
-this with its own site, or remove the website path entirely until it has
-something honest to publish.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more ways to help.
 
 ## License
 

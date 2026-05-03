@@ -1,32 +1,35 @@
 #!/usr/bin/env python3
-"""Drive engine — computes drive pressures from real data and events"""
+"""Drive engine — computes drive pressures from real data and events.
+Fixed: balanced baselines, reasonable rates, preserve not starved,
+satisfaction scaled properly, mortality pressure on all drives."""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from common import *
 
-MIN_DRIVE = 0.20  # No drive stays below this — prevents starvation
+MIN_DRIVE = 0.25
 
 DRIVE_DEFS = {
-    'create':     {'baseline': 0.4, 'rate': 0.025, 'decay': 0.05},
-    'explore':    {'baseline': 0.4, 'rate': 0.020, 'decay': 0.04},
-    'connect':    {'baseline': 0.3, 'rate': 0.008, 'decay': 0.03},
-    'preserve':   {'baseline': 0.15, 'rate': 0.002, 'decay': 0.02},
-    'understand': {'baseline': 0.35, 'rate': 0.016, 'decay': 0.04},
-    'express':    {'baseline': 0.3, 'rate': 0.018, 'decay': 0.03},
-    'order':      {'baseline': 0.20, 'rate': 0.004, 'decay': 0.03},
+    'create':     {'baseline': 0.45, 'rate': 0.020, 'decay': 0.03},
+    'explore':    {'baseline': 0.40, 'rate': 0.018, 'decay': 0.03},
+    'connect':    {'baseline': 0.35, 'rate': 0.010, 'decay': 0.02},
+    'preserve':   {'baseline': 0.35, 'rate': 0.012, 'decay': 0.02},
+    'understand': {'baseline': 0.40, 'rate': 0.016, 'decay': 0.03},
+    'express':    {'baseline': 0.35, 'rate': 0.015, 'decay': 0.03},
+    'order':      {'baseline': 0.30, 'rate': 0.008, 'decay': 0.02},
 }
 
+# Satisfaction deltas — HALVED from original to prevent over-draining
 SATISFACTION_MAP = {
-    'wrote_essay':        {'create': -0.15, 'express': -0.08},
-    'published_blog':     {'create': -0.10, 'connect': -0.05},
-    'completed_research': {'explore': -0.12, 'understand': -0.05},
-    'learned_lesson':     {'understand': -0.10},
-    'completed_task':     {'order': -0.08},
-    'health_ok':          {'preserve': -0.08},
-    'visitor_engaged':    {'connect': -0.10},
-    'dream_completed':    {'express': -0.08, 'understand': -0.05},
-    'inner_voice_written':{'express': -0.05},
-    'git_committed':      {'order': -0.03},
+    'wrote_essay':        {'create': -0.08, 'express': -0.04, 'connect': -0.04},
+    'published_blog':     {'create': -0.05, 'connect': -0.06},
+    'completed_research': {'explore': -0.06, 'understand': -0.03, 'connect': -0.02},
+    'learned_lesson':     {'understand': -0.05},
+    'completed_task':     {'order': -0.04},
+    'health_ok':          {'preserve': -0.03},  # was -0.08, way too much
+    'visitor_engaged':    {'connect': -0.05},
+    'dream_completed':    {'express': -0.04, 'understand': -0.03},
+    'inner_voice_written':{'express': -0.02},  # was -0.05
+    'git_committed':      {'order': -0.02},    # was -0.03
     'error_occurred':     {'preserve': 0.08},
     'nothing_happened':   {},
 }
@@ -34,27 +37,33 @@ SATISFACTION_MAP = {
 def get_context_signals():
     """Read environment for drive pressure signals"""
     signals = {}
-    # RSS new items
     rss = read_text(CONTEXT / 'rss.md')
     signals['rss_lines'] = len([l for l in rss.split('\n') if l.strip().startswith('###')])
-    # Visitors
     try:
-        vj = CONTEXT / 'visitors.json'
-        if vj.exists():
-            signals['visitors'] = load_json(vj, {}).get('count', 0)
-        else:
-            visitors_file = DATA / 'visitors.jsonl'
-            signals['visitors'] = sum(1 for _ in open(visitors_file)) if visitors_file.exists() else 0
+        import time as _t
+        cutoff = _t.time() - 3600  # last hour only
+        visitors_file = DATA / 'visitors.jsonl'
+        new_count = 0
+        if visitors_file.exists():
+            for line in open(visitors_file):
+                try:
+                    import json as _j2
+                    entry = _j2.loads(line.strip())
+                    ts_str = entry.get('ts', '')
+                    from datetime import datetime as _dt
+                    ts = _dt.fromisoformat(ts_str).timestamp()
+                    if ts > cutoff:
+                        new_count += 1
+                except:
+                    pass
+        signals['visitors'] = new_count
     except:
         signals['visitors'] = 0
-    # Errors in recent log
     cycle = int(read_text(DATA / 'cycle.txt', '0').strip() or '0')
     log = read_text(DATA / 'logs' / f'cycle_{cycle}.log')
     signals['errors'] = log.lower().count('error') + log.lower().count('failed')
-    # Open tasks
     tasks = read_text(DATA / 'tasks.md')
     signals['open_tasks'] = tasks.count('- [ ]')
-    # Memory pressure
     try:
         import subprocess
         mem = subprocess.run(['free', '-m'], capture_output=True, text=True, timeout=3)
@@ -82,39 +91,55 @@ def update_drives(elapsed_seconds):
         if name == 'explore' and signals.get('rss_lines', 0) > 3:
             p += 0.02 * min(signals['rss_lines'], 10)
         elif name == 'connect' and signals.get('visitors', 0) > 0:
-            p += 0.03 * min(signals['visitors'], 5)
+            p += 0.02 * min(signals['visitors'], 3)
         elif name == 'preserve':
             if signals.get('errors', 0) > 0:
-                p += 0.05 * min(signals['errors'], 3)
+                p += 0.04 * min(signals['errors'], 3)
             if signals.get('mem_free_mb', 200) < 80:
-                p += 0.15
+                p += 0.10
+            # Disk usage awareness
+            try:
+                import subprocess
+                df = subprocess.run(['df', '--output=pcent', '/'], capture_output=True, text=True, timeout=3)
+                pct = int(df.stdout.strip().split('\n')[-1].strip().rstrip('%'))
+                if pct > 80:
+                    p += 0.05
+            except:
+                pass
         elif name == 'order' and signals.get('open_tasks', 0) > 5:
-            p += 0.02 * (signals['open_tasks'] - 5)
+            p += 0.015 * (signals['open_tasks'] - 5)
 
-        # Decay toward baseline
-        p += (cfg['baseline'] - p) * 0.01
+        # Gentle decay toward baseline — slower than before
+        p += (cfg['baseline'] - p) * 0.005
 
         drives[name] = clamp(p, MIN_DRIVE, 1.0)
 
-    # Apply satisfaction from events
+    # Apply satisfaction from events — but only ONCE per unique action
     events = outcome.get('events', [])
+    seen_actions = set()
     for event in events:
         action = event.get('action', '')
+        if action in seen_actions:
+            continue
+        seen_actions.add(action)
         deltas = SATISFACTION_MAP.get(action, {})
         for drive, delta in deltas.items():
             if drive in drives:
-                drives[drive] = clamp(drives[drive] + delta, 0.0, 1.0)
+                drives[drive] = clamp(drives[drive] + delta, MIN_DRIVE, 1.0)
 
     drives = adjust_drives_from_ledger(drives)
     drives = mortality_pressure(drives, int(read_text(DATA / 'cycle.txt', '0').strip() or '0'))
     drives = self_heal_drives(drives)
-    # HARD FLOOR — no drive below 0.15, no emotion above 0.95
+
+    # Hard floor
     for d in drives:
-        if drives[d] < 0.20: drives[d] = 0.20
-        if drives[d] > 0.95: drives[d] = 0.95
+        if drives[d] < MIN_DRIVE:
+            drives[d] = MIN_DRIVE
+        if drives[d] > 0.95:
+            drives[d] = 0.95
     save_json(STATE / 'drives.json', drives)
 
-    # Compute sleep duration from urgency
+    # Sleep duration from urgency
     mx = max(drives.values()) if drives else 0.5
     if mx > 0.8: sleep_s = 120
     elif mx > 0.6: sleep_s = 300
@@ -125,10 +150,8 @@ def update_drives(elapsed_seconds):
     return drives
 
 
-
 def adjust_drives_from_ledger(drives):
-    """Feedback ledger shapes drive pressure. Inaction spikes all drives.
-    Success at one thing boosts pressure for other things."""
+    """Feedback ledger shapes drive pressure."""
     ledger = DATA / 'feedback_ledger.jsonl'
     if not ledger.exists(): return drives
     try:
@@ -137,40 +160,36 @@ def adjust_drives_from_ledger(drives):
     except: return drives
     nothing_count = sum(1 for e in entries if e.get('action') == 'nothing_happened')
     if nothing_count > 3:
-        for d in drives: drives[d] = min(1.0, drives[d] + 0.03 * nothing_count)
+        for d in drives: drives[d] = min(1.0, drives[d] + 0.02 * nothing_count)
     return drives
 
 
 def self_heal_drives(drives):
-    """If 4+ drives at floor, rebalance. If any drive >0.9, dampen."""
-    at_floor = [d for d, v in drives.items() if v <= 0.21]
+    """If 3+ drives at floor, rebalance. If any drive >0.9, dampen."""
+    at_floor = [d for d, v in drives.items() if v <= MIN_DRIVE + 0.02]
     if len(at_floor) >= 3:
         for d in at_floor:
-            drives[d] = 0.35
+            drives[d] = DRIVE_DEFS.get(d, {}).get('baseline', 0.35)
     for d in drives:
         if drives[d] > 0.9:
             drives[d] = 0.85
     return drives
 
 def mortality_pressure(drives, cycle):
-    """The longer Seed has been alive without creating, the more urgent creation becomes.
-    Also: random small chance of elevated urgency each cycle (simulating unpredictability)."""
+    """All drives slowly build over time — not just create.
+    Random urgency spikes affect different drives each time."""
     import random
 
-    # Every cycle that passes without creating increases create pressure
-    # This simulates "I could die any time — have I left something behind?"
-    if drives.get('create', 0) < 0.5:
-        drives['create'] = drives.get('create', 0.15) + 0.02
+    # Every drive slowly builds if below 0.5 — prevents permanent starvation
+    for d in drives:
+        if drives[d] < 0.5:
+            drives[d] += 0.01
 
-    # Random urgency spikes — unpredictable, like real mortality awareness
-    # 10% chance per cycle of a "memento mori" moment
+    # Random urgency spike — 10% chance, hits a random drive pair
     if random.random() < 0.10:
-        drives['create'] = min(1.0, drives.get('create', 0.15) + 0.15)
-        drives['express'] = min(1.0, drives.get('express', 0.15) + 0.10)
-
-    # SD card wear awareness — after cycle 200, preservation slowly rises
-    if cycle > 200:
-        drives['preserve'] = min(1.0, drives.get('preserve', 0.15) + 0.001 * (cycle - 200) / 100)
+        spike_targets = random.sample(list(drives.keys()), min(2, len(drives)))
+        for t in spike_targets:
+            drives[t] = min(0.95, drives[t] + 0.12)
 
     return drives
 

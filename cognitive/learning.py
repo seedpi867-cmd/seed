@@ -70,7 +70,13 @@ def get_action_stats():
 def detect_outcomes(log_path, cycle):
     """Detect what ACTUALLY happened — check files, not prose"""
     events = []
-    cutoff = now() - 600  # last 10 minutes
+    # Use cycle.json started_at as cutoff — set once at cycle start, never changes
+    try:
+        import json as _j
+        _cj = _j.loads(open(STATE / "cycle.json").read())
+        cutoff = _cj.get("started_at", now() - 600)
+    except:
+        cutoff = now() - 600  # fallback to 10 min
 
     # 1. WROTE ESSAY — check if a new .md appeared in blog/
     blog_dir = HOME / 'blog'
@@ -288,6 +294,14 @@ def run_learning(log_path, cycle, phase):
 
     # 1. Detect what happened
     events = detect_outcomes(log_path, cycle)
+
+    # 1.5 Emit output events for detected outcomes
+    import subprocess
+    for event in events:
+        if event.get("action") == "wrote_essay":
+            fname = event.get("file", "new essay")
+            title = fname.replace(".md", "").replace("-", " ")
+            subprocess.run(["bash", str(HOME / "tools" / "emit_events.sh"), "essay_written", title], timeout=5, capture_output=True)
 
     # 2. Update drives from outcomes
     drives = update_from_outcomes(events)

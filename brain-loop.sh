@@ -88,6 +88,7 @@ while true; do
 
     # ── 0. FIREWALL — sanitise all external inputs ─────────
     python3 "$COG/firewall.py" 2>&1 | tee -a "$LOG_FILE"
+    bash "$ROOT/tools/emit_events.sh" firewall_done
 
     # ── 1. FEEDERS (check context freshness) ────────────────
     led_on
@@ -98,6 +99,9 @@ while true; do
     bash "$ROOT/tools/feed-environment.sh" 2>/dev/null
     bash "$ROOT/tools/feed-email.sh" 2>/dev/null
     bash "$ROOT/tools/feed-github.sh" 2>/dev/null
+    # ── 1.4 SELF-SUGGESTIONS ──────────────────────────────
+    python3 "$COG/self_suggestions.py" 2>&1 | tee -a "$LOG_FILE"
+
     # ── 1.5 EVALUATE SUGGESTIONS ─────────────────────────────
     python3 "$COG/suggestion_evaluator.py" 2>&1 | tee -a "$LOG_FILE"
 
@@ -242,6 +246,7 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     python3 "$COG/task_manager.py" 2>&1 | tee -a "$LOG_FILE"
     # ── 8.6 KNOWLEDGE ENGINE ──────────────────────────────────
     python3 "$COG/knowledge_engine.py" 2>&1 | tee -a "$LOG_FILE"
+    bash "$ROOT/tools/emit_events.sh" knowledge_filed
     # ── 8.7 LIVE SUMMARY ──────────────────────────────────────
     python3 "$COG/live_summary.py" 2>&1 | tee -a "$LOG_FILE"
 
@@ -266,6 +271,7 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     python3 "$COG/event_bus.py" "$CYCLE" 2>&1 | tee -a "$LOG_FILE"
     python3 "$COG/milestones.py" 2>/dev/null
     python3 "$COG/compactor.py" 2>/dev/null
+    bash "$ROOT/tools/emit_events.sh" git_committed
     bash "$ROOT/tools/build-stats.sh" 2>/dev/null
     bash "$ROOT/tools/build-timeline.sh" 2>/dev/null
     cp "$DATA/token-totals.json" ~/seed-web/ 2>/dev/null

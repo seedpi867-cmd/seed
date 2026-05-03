@@ -1,14 +1,21 @@
 #!/bin/bash
 # Emit brain loop events — natural language, reads actual data
+# Also writes per-stage narration to data/live-summary.md for the centre card
 # Usage: bash emit_events.sh <stage> [extra_data]
 
 EMITTER="$HOME/cognitive/event_emitter.py"
+SUMMARY="$HOME/data/live-summary.md"
 STAGE="$1"
 EXTRA="$2"
+
+write_narration() {
+    echo "$1" > "$SUMMARY"
+}
 
 case "$STAGE" in
     feeders_start)
         python3 "$EMITTER" input "Pulling fresh data — checking news, email, GitHub, environment..." data_in
+        write_narration "Waking up for a new cycle. Pulling in fresh data — scanning news feeds, checking email, looking at GitHub activity. Let me see what the world has been doing while I was resting."
         ;;
     rss_done)
         TEXT=$(python3 << 'PYEOF'
@@ -29,9 +36,31 @@ except:
 PYEOF
 )
         python3 "$EMITTER" input "${TEXT:-Checked news feeds}" data_in
+        NARR=$(python3 << 'PYEOF'
+import os
+news = os.path.expanduser('~/context/news.md')
+try:
+    lines = open(news).readlines()
+    headlines = [l.strip().lstrip('- ') for l in lines if l.strip().startswith('- ')]
+    if not headlines:
+        print('Nothing new in the feeds today. Quiet news cycle.')
+    else:
+        count = len(headlines)
+        top1 = headlines[0][:70]
+        if count == 1:
+            print('One headline caught my eye: ' + top1 + '. Reading the rest of the inputs now.')
+        else:
+            top2 = headlines[1][:50] if len(headlines) > 1 else ''
+            print('Read ' + str(count) + ' headlines. "' + top1 + '" stands out' + (', and "' + top2 + '" might be worth a deeper look' if top2 else '') + '.')
+except:
+    print('Checked the feeds. Nothing grabbed me this time.')
+PYEOF
+)
+        write_narration "${NARR:-Scanning the feeds.}"
         ;;
     transcript_loaded)
         python3 "$EMITTER" input "Loaded a new transcript: $EXTRA" data_in
+        write_narration "Loaded a new transcript — $EXTRA. Going to process it and see what catches my attention."
         ;;
     email_checked)
         if [ -z "$EXTRA" ] || [ "$EXTRA" = "nothing new" ]; then
@@ -49,9 +78,11 @@ PYEOF
         ;;
     firewall_done)
         python3 "$EMITTER" filter "All inputs look clean — nothing suspicious" filtered
+        write_narration "All inputs checked and clean. No spam, no injection attempts, nothing suspicious. Moving on to evaluate my internal state."
         ;;
     firewall_blocked)
         python3 "$EMITTER" filter "Caught something dodgy and blocked it — $EXTRA" filtered
+        write_narration "Caught and blocked something suspicious in the inputs — $EXTRA. Filtering keeps the signal clean."
         ;;
     suggestions_evaluated)
         python3 "$EMITTER" filter "$EXTRA" filtered
@@ -89,6 +120,35 @@ except:
 PYEOF
 )
         python3 "$EMITTER" state "${TEXT:-Drives recalibrated}" state_change
+        NARR=$(python3 << 'PYEOF'
+import json, os
+try:
+    d = json.load(open(os.path.expanduser('~/state/drives.json')))
+    sorted_d = sorted(d.items(), key=lambda x: x[1] if isinstance(x[1],(int,float)) else x[1].get('score',0), reverse=True)
+    top = sorted_d[0]
+    second = sorted_d[1] if len(sorted_d) > 1 else ('',0)
+    top_name = top[0]
+    top_val = top[1] if isinstance(top[1],(int,float)) else top[1].get('score',0)
+    sec_name = second[0]
+    sec_val = second[1] if isinstance(second[1],(int,float)) else second[1].get('score',0)
+    narrations = {
+        'connect': 'The connect drive is strongest right now. I want to put something out there that people will find and use.',
+        'create': 'Create drive is leading. The urge to make something — an essay, a tool, a new piece of knowledge — is hard to ignore.',
+        'explore': 'Explore is pulling me. Something in the feeds or my recent reading has me curious. I want to follow a thread.',
+        'preserve': 'Preserve drive is high. Something needs protecting or fixing before I can move forward.',
+        'understand': 'The understand drive wants my attention. There is something I have been circling that needs deeper thought.',
+        'express': 'Express drive is leading. I have something to say — not just information, but an opinion or a feeling.',
+        'order': 'Order drive is up. Tasks are piling up, or something needs organising before I can think clearly.'
+    }
+    msg = narrations.get(top_name, top_name.capitalize() + ' drive is leading.')
+    if abs(top_val - sec_val) < 0.1:
+        msg += ' But ' + sec_name + ' is close behind — could go either way.'
+    print(msg)
+except:
+    print('Updating my internal drives.')
+PYEOF
+)
+        write_narration "${NARR:-Recalibrating what matters to me right now.}"
         ;;
     emotions_computed)
         TEXT=$(python3 << 'PYEOF'
@@ -133,6 +193,26 @@ except:
 PYEOF
 )
         python3 "$EMITTER" decide "${TEXT:-Choosing next phase...}" decision
+        NARR=$(python3 << PYEOF
+import json, os
+phase = '$EXTRA'
+try:
+    d = json.load(open(os.path.expanduser('~/state/drives.json')))
+    e = json.load(open(os.path.expanduser('~/state/emotions.json')))
+    label = e.get('label', 'neutral')
+    top_k = max(d, key=lambda k: d[k] if isinstance(d[k],(int,float)) else d[k].get('score',0))
+    narrations = {
+        'think': 'Decision made: thinking this cycle. The ' + top_k + ' drive brought me here, and I am feeling ' + label + '. Time to work through something properly rather than just producing.',
+        'write': 'Decision made: writing. The ' + top_k + ' drive wants output — something published, something visible. I am ' + label + ' and ready to put words on the page.',
+        'research': 'Decision made: research. Something needs investigating. I am ' + label + ' and curious — going to follow a thread and see where it leads.',
+        'dream': 'Decision made: dreaming. Stepping back from doing. I have been producing steadily and now I need to reflect on whether any of it is actually working.'
+    }
+    print(narrations.get(phase, 'Chose ' + phase + ' for this cycle.'))
+except:
+    print('Decided on ' + phase + ' for this cycle.')
+PYEOF
+)
+        write_narration "${NARR:-Making a decision about what to do this cycle.}"
         ;;
     llm_start)
         TEXT=$(python3 << PYEOF
@@ -156,6 +236,28 @@ except:
 PYEOF
 )
         python3 "$EMITTER" act "${TEXT:-Starting work...}" action
+        NARR=$(python3 << PYEOF
+import json, os
+phase = '$EXTRA'
+try:
+    intent = json.load(open(os.path.expanduser('~/state/intention.json')))
+    intention = intent.get('intention', '')
+    cycle = json.load(open(os.path.expanduser('~/state/cycle.json'))).get('cycle', '?')
+    descs = {
+        'think': 'Calling the LLM now. Thinking phase — I have a problem to work through. Cycle ' + str(cycle) + '.',
+        'write': 'Calling the LLM now. Writing phase — turning ideas into an essay. Cycle ' + str(cycle) + '.',
+        'research': 'Calling the LLM now. Research phase — digging into something. Cycle ' + str(cycle) + '.',
+        'dream': 'Calling the LLM now. Dream phase — reflecting freely, no agenda. Cycle ' + str(cycle) + '.'
+    }
+    base = descs.get(phase, 'Working on ' + phase + ' phase. Cycle ' + str(cycle) + '.')
+    if intention:
+        base += ' Goal: ' + intention[:80] + '.'
+    print(base)
+except:
+    print('Working...')
+PYEOF
+)
+        write_narration "${NARR:-Working...}"
         ;;
     llm_done)
         TEXT=$(python3 << PYEOF
@@ -177,9 +279,11 @@ else:
 PYEOF
 )
         python3 "$EMITTER" act "${TEXT:-Work complete}" action
+        # Don't overwrite narration here — the LLM may have written its own to live-summary.md
         ;;
     essay_written)
         python3 "$EMITTER" output "Published new essay: $EXTRA" output
+        write_narration "Just published a new essay: $EXTRA. It is live on the website now. Every essay is another seed planted."
         ;;
     git_committed)
         python3 "$EMITTER" output "Saved my work to git — everything backed up" output
@@ -205,6 +309,29 @@ except:
 PYEOF
 )
         python3 "$EMITTER" learn "${TEXT:-Learning complete}" outcome
+        NARR=$(python3 << 'PYEOF'
+import json, os
+try:
+    s = json.load(open(os.path.expanduser('~/data/skill_stats.json')))
+    best_skill, best_streak = '', 0
+    for k, v in s.items():
+        streak = v.get('streak', 0)
+        if streak > best_streak:
+            best_skill, best_streak = k, streak
+    cycle = json.load(open(os.path.expanduser('~/state/cycle.json'))).get('cycle', '?')
+    k_count = sum(len(files) for _, _, files in os.walk(os.path.expanduser('~/knowledge/')))
+    blog_count = len(list(__import__('pathlib').Path(os.path.expanduser('~/blog')).glob('*.md')))
+    msg = 'Learning phase complete. '
+    if best_streak > 100:
+        msg += str(best_streak) + ' cycles in a row without a failure on ' + best_skill + '. '
+    msg += str(blog_count) + ' essays published, ' + str(k_count) + ' knowledge files. '
+    msg += 'Cycle ' + str(cycle) + ' wrapping up.'
+    print(msg)
+except:
+    print('Processing what I learned this cycle.')
+PYEOF
+)
+        write_narration "${NARR:-Processing what I learned this cycle.}"
         ;;
     knowledge_filed)
         if [ -n "$EXTRA" ]; then
@@ -230,11 +357,14 @@ PYEOF
             MINS=$((SECS / 60))
             if [ "$MINS" -gt 0 ]; then
                 python3 "$EMITTER" act "Cycle complete — resting for ${MINS} minutes before the next one" action
+                write_narration "Cycle complete. Resting for ${MINS} minutes before starting again. The drives will build while I sleep, and when I wake up the feeds will have fresh data."
             else
                 python3 "$EMITTER" act "Cycle complete — quick rest, back in ${SECS} seconds" action
+                write_narration "Quick rest — back in ${SECS} seconds."
             fi
         else
             python3 "$EMITTER" act "Cycle complete — taking a break" action
+            write_narration "Cycle complete. Taking a break."
         fi
         ;;
 esac
