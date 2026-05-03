@@ -372,7 +372,7 @@ def smoke_share_proof(_tmp: Path) -> None:
         "Seed clone doctor",
         "== shareable proof ==",
         "I cloned https://github.com/seedpi867-cmd/seed on Debian GNU/Linux 12 (bookworm) (armv7l); tools/clone-doctor.sh passed health check, tool smoke, privacy audit, and left the git tree clean.",
-        "Clone report: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml",
+        "Clone proof: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml",
     ])
     note = tool.build_note(raw, "owner/repo", 500)
     require(
@@ -380,8 +380,8 @@ def smoke_share_proof(_tmp: Path) -> None:
         "share_proof did not rewrite proof for the target repo",
     )
     require(
-        "https://github.com/owner/repo/issues/new?template=clone-report.yml" in note,
-        "share_proof omitted clone report URL",
+        "https://github.com/owner/repo/issues/new?template=clone-proof.yml" in note,
+        "share_proof omitted clone proof URL",
     )
     short = tool.build_note(raw, "owner/repo", 120)
     require(len(short) <= 120, "share_proof ignored max length")
@@ -429,6 +429,10 @@ def smoke_propagation_report(_tmp: Path) -> None:
     require(
         tool.clone_report_url("owner/repo") == "https://github.com/owner/repo/issues/new?template=clone-report.yml",
         "propagation_report clone report URL changed",
+    )
+    require(
+        tool.clone_proof_url("owner/repo") == "https://github.com/owner/repo/issues/new?template=clone-proof.yml",
+        "propagation_report clone proof URL changed",
     )
     require(
         tool.fork_url("owner/repo") == "https://github.com/owner/repo/fork",
@@ -522,6 +526,10 @@ def smoke_issue_router(_tmp: Path) -> None:
     clone = tool.classify("clone-doctor fails on Debian because node is missing", "owner/repo")
     require(clone.name == "clone report", "issue_router missed clone report")
     require("clone-report.yml" in clone.url, "issue_router clone URL mismatch")
+
+    proof = tool.classify("clone-doctor passed on Raspberry Pi OS clean run", "owner/repo")
+    require(proof.name == "clone proof", "issue_router missed clone proof")
+    require("clone-proof.yml" in proof.url, "issue_router proof URL mismatch")
 
     capability = tool.classify("OAuth token boundary for publish tool is unclear", "owner/repo")
     require(capability.name == "capability review", "issue_router missed capability review")

@@ -13,8 +13,8 @@ def github_web_url(repo):
     return f"https://github.com/{repo}"
 
 
-def clone_report_url(repo):
-    return f"{github_web_url(repo)}/issues/new?template=clone-report.yml"
+def clone_proof_url(repo):
+    return f"{github_web_url(repo)}/issues/new?template=clone-proof.yml"
 
 
 def extract_proof(text):
@@ -39,19 +39,19 @@ def build_note(text, repo, max_length):
     if not proof:
         return ""
     note = compact_proof(proof, repo)
-    report = clone_report_url(repo)
-    full = f"{note}\nClone report: {report}"
+    proof_url = clone_proof_url(repo)
+    full = f"{note}\nClone proof: {proof_url}"
     if len(full) <= max_length:
         return full
 
-    shorter = f"{note}\nReport: {report}"
+    shorter = f"{note}\nProof: {proof_url}"
     if len(shorter) <= max_length:
         return shorter
 
-    suffix = f"\nReport: {report}"
+    suffix = f"\nProof: {proof_url}"
     budget = max_length - len(suffix) - 4
     if budget < 40:
-        return f"Clone report: {report}"
+        return f"Clone proof: {proof_url}"
     return f"{note[:budget].rstrip()}...{suffix}"
 
 

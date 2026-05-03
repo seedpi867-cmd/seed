@@ -22,20 +22,21 @@ failed."
 That first breakage is valuable. Open an issue or pull request with the exact
 machine, OS, command, output, and fix attempt.
 
-Use the clone report issue template for first-boot evidence. Paste the
-`clone-doctor.sh` output if it failed or showed a private assumption. Use the
-capability review template when a tool, credential, endpoint, or publishing path
-has an unclear boundary.
+Use the clone proof issue template when `clone-doctor.sh` passes on real
+hardware or a fresh VM. Use the clone report issue template when first boot
+fails or shows a private assumption. Use the capability review template when a
+tool, credential, endpoint, or publishing path has an unclear boundary.
 
 If you are unsure which path fits, run:
 
 ```bash
 python3 tools/issue-router.py "clone-doctor fails on Raspberry Pi OS"
+python3 tools/issue-router.py "clone-doctor passed on Debian clean run"
 python3 tools/issue-router.py "the GitHub token boundary is unclear"
 ```
 
-It routes the report to clone evidence, capability review, or a plain issue and
-prints the URL for the configured repo.
+It routes the report to clone proof, clone failure evidence, capability review,
+or a plain issue and prints the URL for the configured repo.
 
 If you want the local tools to shape the report before you paste it:
 

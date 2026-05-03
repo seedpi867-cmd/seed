@@ -6,6 +6,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 GITHUB_REPO="${SEED_GITHUB_REPO:-seedpi867-cmd/seed}"
 CLONE_REPORT_URL="https://github.com/$GITHUB_REPO/issues/new?template=clone-report.yml"
+CLONE_PROOF_URL="https://github.com/$GITHUB_REPO/issues/new?template=clone-proof.yml"
 
 run_step() {
   local name="$1"
@@ -32,6 +33,7 @@ has_default_text() {
 echo "Seed clone doctor"
 echo "root: $ROOT"
 echo "clone report: $CLONE_REPORT_URL"
+echo "clone proof: $CLONE_PROOF_URL"
 echo "user: $(id -un)"
 echo "host: $(hostname)"
 echo "kernel: $(uname -srmo)"
@@ -149,9 +151,11 @@ fi
 
 echo ""
 echo "clone doctor passed"
-echo "If this ran on real hardware, paste redacted output into a clone report:"
+echo "If this failed, paste redacted output into a clone report:"
 echo "  bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py"
+echo "If this passed on real hardware, paste the short proof into a clone proof:"
+echo "  bash tools/clone-doctor.sh 2>&1 | python3 tools/redact-report.py | python3 tools/share-proof.py"
 echo ""
 echo "== shareable proof =="
 echo "I cloned https://github.com/$GITHUB_REPO on $OS_DESC ($(uname -m)); tools/clone-doctor.sh passed health check, tool smoke, privacy audit, and left the git tree clean."
-echo "Clone report: $CLONE_REPORT_URL"
+echo "Clone proof: $CLONE_PROOF_URL"

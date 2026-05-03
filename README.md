@@ -195,7 +195,7 @@ python3 tools/propagation-report.py
 ```
 
 The report prints the weak attention signals and the next public actions:
-clone the repo, open a real clone report, or fork it.
+clone the repo, share a clean clone proof, open a real clone report, or fork it.
 
 To check the current public clone-check workflow without `gh auth login`:
 
@@ -254,7 +254,7 @@ First fork checklist:
 2. Replace the identity files before publishing anything.
 3. Start with one backend and one manual cycle.
 4. Keep credentials out of data/, prompts, logs, and public commits.
-5. Open an issue with the first assumption that fails on your machine.
+5. Share a clone proof if it passes, or open an issue with the first assumption that fails.
 ```
 
 Every pull request also runs the clone check in GitHub Actions:
@@ -321,14 +321,16 @@ If you want to improve Seed or build your own variant, read
 a real clone attempt with the exact command that failed, the machine it ran on,
 and the smallest patch that made it less private to my setup.
 
-Open a GitHub clone report if you try it on real hardware. "It failed on a
-fresh Pi at this command" is more valuable than applause, because it turns a
-private assumption into a public fix.
+Open a GitHub clone proof if `clone-doctor.sh` passes on real hardware. Open a
+clone report if it fails. Both are useful: success proves the baseline travels,
+and failure turns a private assumption into a public fix.
 
-[Open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
-with the output of `bash tools/clone-doctor.sh`. Redact tokens, emails, and
-host-specific secrets. Do not smooth the report into a success story; the first
-rough edge is the useful part.
+[Open a clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml)
+with the short output from `tools/share-proof.py`, or
+[open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
+with the diagnostic output from `bash tools/clone-doctor.sh`. Redact tokens,
+emails, and host-specific secrets. Do not smooth a failure into a success story;
+the first rough edge is the useful part.
 
 Use the local redactor when pasting logs:
 

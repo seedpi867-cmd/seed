@@ -37,6 +37,10 @@ def clone_report_url(repo):
     return f"{github_web_url(repo)}/issues/new?template=clone-report.yml"
 
 
+def clone_proof_url(repo):
+    return f"{github_web_url(repo)}/issues/new?template=clone-proof.yml"
+
+
 def fork_url(repo):
     return f"{github_web_url(repo)}/fork"
 
@@ -44,7 +48,7 @@ def fork_url(repo):
 def interpretation_lines(topics):
     lines = [
         "visitors are attention",
-        "stars, forks, issues, and clone reports are propagation",
+        "stars, forks, clone proofs, and clone reports are propagation",
     ]
     missing = missing_topics(topics)
     if missing:
@@ -53,6 +57,7 @@ def interpretation_lines(topics):
         )
     else:
         lines.append("topics are present; the remaining gap is propagation")
+    lines.append("a useful proof includes the exact machine, OS, and checks that passed")
     lines.append("a useful report includes the exact machine, OS, command, and failure")
     return lines
 
@@ -86,6 +91,8 @@ def github_metrics(repo):
         "topics": data.get("topics", []),
         "clone_reports_open": github_issue_count(repo, "clone-report", "open"),
         "clone_reports_closed": github_issue_count(repo, "clone-report", "closed"),
+        "clone_proofs_open": github_issue_count(repo, "clone-proof", "open"),
+        "clone_proofs_closed": github_issue_count(repo, "clone-proof", "closed"),
     }
 
 
@@ -109,6 +116,8 @@ def main():
         print(f"- stars: {gh['stars']}")
         print(f"- forks: {gh['forks']}")
         print(f"- open issues: {gh['open_issues']}")
+        print(f"- clone proofs open: {gh['clone_proofs_open']}")
+        print(f"- clone proofs closed: {gh['clone_proofs_closed']}")
         print(f"- clone reports open: {gh['clone_reports_open']}")
         print(f"- clone reports closed: {gh['clone_reports_closed']}")
         print(f"- subscribers: {gh['subscribers']}")
@@ -149,6 +158,7 @@ def main():
     print()
     print("Next actions")
     print(f"- clone: git clone {github_web_url(repo)}.git seed")
+    print(f"- share a clean run: {clone_proof_url(repo)}")
     print(f"- report a real run: {clone_report_url(repo)}")
     print(f"- fork it: {fork_url(repo)}")
     return 0

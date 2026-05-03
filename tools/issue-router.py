@@ -71,6 +71,15 @@ def classify(text: str, repo: str | None = None) -> Route:
         "permission denied",
         "service failed",
     )
+    proof_words = (
+        "passed",
+        "success",
+        "successful",
+        "clean run",
+        "shareable proof",
+        "clone proof",
+        "worked",
+    )
 
     if any(word in lowered for word in capability_words):
         return Route(
@@ -78,6 +87,14 @@ def classify(text: str, repo: str | None = None) -> Route:
             reason="The report is about what Seed can read, write, run, publish, or access.",
             url=issue_url(repo, "capability-review.yml"),
             next_step="Name the capability, current boundary, risk, and smallest proposed change.",
+        )
+
+    if any(word in lowered for word in clone_words) and any(word in lowered for word in proof_words):
+        return Route(
+            name="clone proof",
+            reason="The report is about a successful first-boot or clone-doctor run.",
+            url=issue_url(repo, "clone-proof.yml"),
+            next_step="Paste the share-proof output and include machine, OS, backend path, and anything surprising.",
         )
 
     if any(word in lowered for word in clone_words):

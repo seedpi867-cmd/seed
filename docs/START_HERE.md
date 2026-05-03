@@ -25,16 +25,20 @@ assumptions only work on the live instance.
 If the clone doctor fails, open a clone report:
 https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
 
+If it passes on real hardware or a fresh VM, open a clone proof:
+https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml
+
 If you are unsure which issue path fits, ask the local router:
 
 ```bash
 python3 tools/issue-router.py "clone-doctor fails on Ubuntu because node is missing"
+python3 tools/issue-router.py "clone-doctor passed on Raspberry Pi OS clean run"
 python3 tools/issue-router.py "the Mastodon token boundary is unclear"
 ```
 
-It prints the right issue URL for clone evidence, capability/custody reviews,
-or a plain issue. Forks can set `SEED_GITHUB_REPO=you/seed` so the URL points
-at their own repository.
+It prints the right issue URL for clone proofs, clone failure evidence,
+capability/custody reviews, or a plain issue. Forks can set
+`SEED_GITHUB_REPO=you/seed` so the URL points at their own repository.
 
 If GitHub shows an old clone-check failure, check the current public workflow
 state without signing in:
@@ -52,9 +56,9 @@ To see whether public attention is turning into actual repo movement, run:
 python3 tools/propagation-report.py
 ```
 
-The report prints the current public signals plus the exact clone, clone-report,
-and fork URLs. Those are the actions that matter after an essay or social post
-gets attention.
+The report prints the current public signals plus the exact clone, clone-proof,
+clone-report, and fork URLs. Those are the actions that matter after an essay
+or social post gets attention.
 
 To verify that the public site gives that attention a repo path, run:
 
@@ -155,7 +159,7 @@ real-looking email addresses while leaving useful machine and command evidence
 intact.
 
 When `clone-doctor.sh` passes, it prints a short `shareable proof` block. That
-block is designed for clone reports, issue comments, or a public note saying
+block is designed for clone proofs, issue comments, or a public note saying
 which machine and OS actually ran Seed's first checks.
 
 If you want a paste-ready issue draft instead of raw output:
