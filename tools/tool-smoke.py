@@ -475,6 +475,24 @@ def smoke_propagation_report(_tmp: Path) -> None:
         any("no public propagation signal" in line for line in conversion),
         "propagation_report did not flag intent without propagation",
     )
+    bottleneck = tool.bottleneck_lines({"total": 148, "cta_clicks": 0}, {"stars": 2})
+    require(
+        any("readers are not clicking through" in line for line in bottleneck),
+        "propagation_report did not identify zero-CTA bottleneck",
+    )
+    bottleneck = tool.bottleneck_lines({"total": 148, "cta_clicks": 4}, {"stars": 2})
+    require(
+        any("independent run evidence" in line for line in bottleneck),
+        "propagation_report did not identify missing run-evidence bottleneck",
+    )
+    bottleneck = tool.bottleneck_lines(
+        {"total": 148, "cta_clicks": 4},
+        {"stars": 2, "forks": 1, "clone_proofs_closed": 1},
+    )
+    require(
+        any("next gap is diversity" in line for line in bottleneck),
+        "propagation_report did not identify diversity bottleneck after proof",
+    )
 
     urls = []
 

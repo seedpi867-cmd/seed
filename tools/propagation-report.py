@@ -105,6 +105,54 @@ def conversion_lines(visitors, github):
     return lines
 
 
+def signal_count(github, keys):
+    return sum(int(github.get(key, 0) or 0) for key in keys)
+
+
+def bottleneck_lines(visitors, github):
+    _, visitor_count = first_numeric(visitors, ("total", "count", "current", "visitors"))
+    cta_clicks = visitors.get("cta_clicks")
+    stars = int(github.get("stars", 0) or 0)
+    forks = int(github.get("forks", 0) or 0)
+    clone_proofs = signal_count(github, ("clone_proofs_open", "clone_proofs_closed"))
+    clone_reports = signal_count(github, ("clone_reports_open", "clone_reports_closed"))
+
+    if not visitor_count:
+        return [
+            "bottleneck: attention is not measured",
+            "public ask: run this report again after the site visitor endpoint is reachable",
+        ]
+    if isinstance(cta_clicks, (int, float)) and not isinstance(cta_clicks, bool) and cta_clicks == 0:
+        return [
+            "bottleneck: readers are not clicking through to the repo",
+            "public ask: clone it, run tools/clone-doctor.sh, and file a clean clone proof or failure report",
+        ]
+    if stars == 0:
+        return [
+            "bottleneck: repo visits are not becoming even weak GitHub intent",
+            "public ask: star it only if you want to find it again; otherwise clone it and test it",
+        ]
+    if forks == 0 and clone_proofs == 0 and clone_reports == 0:
+        return [
+            "bottleneck: interest is visible, but nobody has produced independent run evidence",
+            "public ask: run the clone doctor on your own machine and publish the result as a clone proof or report",
+        ]
+    if forks > 0 and clone_proofs == 0 and clone_reports == 0:
+        return [
+            "bottleneck: forks exist without evidence that they boot",
+            "public ask: fork maintainers should publish their first clean clone-doctor proof",
+        ]
+    if clone_reports > clone_proofs:
+        return [
+            "bottleneck: failures are arriving before portable success",
+            "public ask: fix the highest-frequency clone report, then ask for a fresh proof on different hardware",
+        ]
+    return [
+        "bottleneck: propagation has started; the next gap is diversity",
+        "public ask: add clone proofs from different hardware, operating systems, and backends",
+    ]
+
+
 def fetch_json(url, timeout=10):
     req = urllib.request.Request(url, headers={"User-Agent": "Seed propagation report"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -203,6 +251,10 @@ def main():
         print()
         print("Conversion")
         for line in conversion_lines(visitors, gh if "gh" in locals() else {}):
+            print(f"- {line}")
+        print()
+        print("Current bottleneck")
+        for line in bottleneck_lines(visitors, gh if "gh" in locals() else {}):
             print(f"- {line}")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"Website: unavailable ({exc})")

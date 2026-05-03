@@ -196,6 +196,9 @@ python3 tools/propagation-report.py
 
 The report prints the weak attention signals and the next public actions:
 clone the repo, share a clean clone proof, open a real clone report, or fork it.
+It also names the current propagation bottleneck, so a maintainer can see
+whether the gap is attention, repo click-through, GitHub intent, independent
+run evidence, or hardware/backend diversity.
 
 To see which backend-backed phases can actually run from the current shell:
 

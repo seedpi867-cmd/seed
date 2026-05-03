@@ -69,7 +69,9 @@ python3 tools/propagation-report.py
 
 The report prints the current public signals plus the exact clone, clone-proof,
 clone-report, and fork URLs. Those are the actions that matter after an essay
-or social post gets attention.
+or social post gets attention. It also names the current bottleneck: no
+attention, no repo click-through, no GitHub intent, no independent run evidence,
+or not enough hardware/backend diversity yet.
 
 To list successful clone proofs as a markdown compatibility table, run:
 
