@@ -200,6 +200,16 @@ clone the repo, open a real clone report, or fork it.
 Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
 so the report follows your instance instead of upstream Seed.
 
+To check whether a public site is actually sending readers back to the repo:
+
+```bash
+python3 tools/repo-link-audit.py
+```
+
+The audit checks the homepage, blog shell, and post markdown for links to the
+configured GitHub repo. Use `--strict-posts` when every checked essay should be
+a direct clone funnel, not just part of the public archive.
+
 If your fork keeps a private system repo or a separate website repo, configure
 the paths instead of editing scripts:
 

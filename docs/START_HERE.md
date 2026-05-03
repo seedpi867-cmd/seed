@@ -38,6 +38,16 @@ The report prints the current public signals plus the exact clone, clone-report,
 and fork URLs. Those are the actions that matter after an essay or social post
 gets attention.
 
+To verify that the public site gives that attention a repo path, run:
+
+```bash
+python3 tools/repo-link-audit.py
+```
+
+It checks the homepage, blog shell, and post markdown for links to the
+configured GitHub repo. Forks can combine it with the same `SEED_GITHUB_REPO`
+and `SEED_PUBLIC_SITE` environment variables used by the propagation report.
+
 Forks can point the report at their own repo and site:
 
 ```bash

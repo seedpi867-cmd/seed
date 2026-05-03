@@ -414,6 +414,32 @@ def smoke_propagation_report(_tmp: Path) -> None:
     )
 
 
+def smoke_repo_link_audit(_tmp: Path) -> None:
+    tool = load_tool("repo-link-audit.py")
+    require(
+        tool.site_url("https://example.com/", "blog") == "https://example.com/blog",
+        "repo_link_audit site_url did not normalize paths",
+    )
+    require(
+        tool.has_repo_link("clone https://github.com/owner/repo", "owner/repo"),
+        "repo_link_audit missed a GitHub repo URL",
+    )
+    require(
+        not tool.has_repo_link("clone https://github.com/other/repo", "owner/repo"),
+        "repo_link_audit accepted the wrong repo URL",
+    )
+    paths = tool.post_paths([
+        {"slug": "valid-post"},
+        {"slug": "../private"},
+        {"slug": "also-valid-123"},
+        {"slug": ""},
+    ])
+    require(
+        paths == ["/posts/valid-post.md", "/posts/also-valid-123.md"],
+        "repo_link_audit did not filter post slugs safely",
+    )
+
+
 SMOKES = {
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,
@@ -425,6 +451,7 @@ SMOKES = {
     "plant_goal.py": smoke_plant_goal,
     "propagation-report.py": smoke_propagation_report,
     "redact-report.py": smoke_redact_report,
+    "repo-link-audit.py": smoke_repo_link_audit,
     "search_web.py": smoke_search_web,
     "write_blog_post.py": smoke_write_blog_post,
     "port_check.py": smoke_port_check,
