@@ -638,6 +638,50 @@ def smoke_reddit(tmp: Path) -> None:
     require(tool.has_auth_cookie(token), "reddit missed token_v2 cookie")
 
 
+def smoke_bluesky(tmp: Path) -> None:
+    tool = load_tool("bluesky.py")
+    tmp.mkdir(parents=True, exist_ok=True)
+    tool.HOME = tmp
+    tool.CREDS_FILE = tmp / "bluesky-credentials.json"
+    tool.SESSION_FILE = tmp / "bluesky-session.json"
+    tool.SIGNUP_FILE = tmp / "bluesky-signup.json"
+
+    tool.save_json(tool.CREDS_FILE, {"identifier": "seed.example", "password": "app-password"})
+    require(tool.load_credentials()["identifier"] == "seed.example", "bluesky did not load saved credentials")
+
+    calls = []
+
+    def fake_request_json(host, method, payload=None, token=None, timeout=15):
+        calls.append((host, method, payload, token, timeout))
+        if host.endswith("describeServer"):
+            return {
+                "availableUserDomains": [".bsky.social"],
+                "inviteCodeRequired": False,
+                "phoneVerificationRequired": True,
+            }
+        if host.endswith("createSession"):
+            return {
+                "handle": "seed.example",
+                "did": "did:plc:seed",
+                "accessJwt": "access",
+                "refreshJwt": "refresh",
+            }
+        if host.endswith("createRecord"):
+            return {"uri": "at://did:plc:seed/app.bsky.feed.post/abc", "cid": "bafyseed"}
+        raise AssertionError(f"unexpected Bluesky request {host}")
+
+    original_request_json = tool.request_json
+    try:
+        tool.request_json = fake_request_json
+        session = tool.create_session(False)
+        require(session["did"] == "did:plc:seed", "bluesky session did not save fake session")
+        post = tool.post("hello from smoke")
+        require(post["uri"].startswith("at://"), "bluesky post did not return record URI")
+        require(calls[-1][2]["collection"] == "app.bsky.feed.post", "bluesky post used wrong collection")
+    finally:
+        tool.request_json = original_request_json
+
+
 def smoke_outreach_readiness(tmp: Path) -> None:
     tool = load_tool("outreach-readiness.py")
     tool.HN_CREDS = tmp / "missing-hn.json"
@@ -645,11 +689,14 @@ def smoke_outreach_readiness(tmp: Path) -> None:
     tool.REDDIT_COOKIES = tmp / "reddit-cookies.txt"
     tool.MASTODON_TOKEN = tmp / "missing-token.json"
     tool.MASTODON_APP = tmp / "missing-app.json"
+    tool.BLUESKY_CREDS = tmp / "missing-bluesky-creds.json"
+    tool.BLUESKY_SESSION = tmp / "missing-bluesky-session.json"
 
     blocked = tool.collect(live=False)
     output = tool.render(blocked)
     require("HN: blocked" in output, "outreach_readiness missed missing HN credentials")
     require("Mastodon: blocked" in output, "outreach_readiness missed missing Mastodon credentials")
+    require("Bluesky: blocked" in output, "outreach_readiness missed missing Bluesky credentials")
     require("No writable outreach surface" in output, "outreach_readiness did not fail closed")
 
     tool.REDDIT_COOKIES.parent.mkdir(parents=True, exist_ok=True)
@@ -677,6 +724,11 @@ def smoke_outreach_readiness(tmp: Path) -> None:
     statuses = tool.collect(live=False)
     reddit = next(status for status in statuses if status.name == "Reddit")
     require(reddit.writable, "outreach_readiness missed token_v2 as writable")
+
+    tool.BLUESKY_CREDS.write_text(json.dumps({"identifier": "seed.example", "password": "pw"}), encoding="utf-8")
+    statuses = tool.collect(live=False)
+    bluesky = next(status for status in statuses if status.name == "Bluesky")
+    require(bluesky.readable and not bluesky.writable, "outreach_readiness should require --live for Bluesky writability")
 
 
 def smoke_mastodon(_tmp: Path) -> None:
@@ -796,6 +848,7 @@ def smoke_backend_readiness(tmp: Path) -> None:
 
 SMOKES = {
     "backend-readiness.py": smoke_backend_readiness,
+    "bluesky.py": smoke_bluesky,
     "clone-evidence-kit.py": smoke_clone_evidence_kit,
     "clone-proof-board.py": smoke_clone_proof_board,
     "clone-report-summary.py": smoke_clone_report_summary,

@@ -303,8 +303,9 @@ python3 tools/outreach-readiness.py --live
 
 That preflight never posts. It only checks local credentials, saved sessions,
 and read-only status endpoints. It reports HN dead-comment states, missing
-Reddit browser cookies, and disabled Mastodon tokens as read-only or blocked
-instead of letting a cycle draft a post it cannot publish.
+Reddit browser cookies, disabled Mastodon tokens, and missing Bluesky/ATProto
+credentials as read-only or blocked instead of letting a cycle draft a post it
+cannot publish.
 
 For Reddit-specific debugging:
 
@@ -315,6 +316,18 @@ python3 tools/reddit.py status
 The tool treats a public profile as read-only until it sees a real browser auth
 cookie (`reddit_session` or `token_v2`). That keeps social participation from
 turning into repeated failed posts.
+
+For Bluesky/ATProto:
+
+```bash
+python3 tools/bluesky.py describe
+python3 tools/bluesky.py status
+```
+
+If `describe` says phone verification is required, complete signup in a browser
+first. After that, store a handle plus an app password with
+`tools/bluesky.py setup-credentials`; do not reuse email or system passwords as
+social posting secrets.
 
 If your fork keeps a private system repo or a separate website repo, configure
 the paths instead of editing scripts:

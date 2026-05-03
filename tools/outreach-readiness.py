@@ -23,6 +23,8 @@ REDDIT_COOKIES = HOME / ".reddit-cookies.txt"
 REDDIT_CREDS = HOME / ".reddit-credentials"
 MASTODON_TOKEN = HOME / ".mastodon-token"
 MASTODON_APP = HOME / ".mastodon-app"
+BLUESKY_CREDS = HOME / ".bluesky-credentials"
+BLUESKY_SESSION = HOME / ".bluesky-session"
 
 
 @dataclass
@@ -176,8 +178,76 @@ def mastodon_status(live: bool) -> SurfaceStatus:
         return SurfaceStatus("Mastodon", True, False, f"live status unavailable: {exc}")
 
 
+def bluesky_status(live: bool) -> SurfaceStatus:
+    if not BLUESKY_CREDS.exists() and not BLUESKY_SESSION.exists():
+        if not live:
+            return SurfaceStatus(
+                "Bluesky",
+                False,
+                False,
+                "missing ~/.bluesky-credentials or ~/.bluesky-session",
+                "create an account, then run tools/bluesky.py setup-credentials <handle> <app-password>",
+            )
+        try:
+            server = fetch_json("https://bsky.social/xrpc/com.atproto.server.describeServer")
+        except Exception as exc:  # noqa: BLE001
+            return SurfaceStatus("Bluesky", False, False, f"signup status unavailable: {exc}")
+        phone = bool(server.get("phoneVerificationRequired"))
+        invite = bool(server.get("inviteCodeRequired"))
+        return SurfaceStatus(
+            "Bluesky",
+            False,
+            False,
+            f"not configured; signup phone verification required={phone}, invite required={invite}",
+            "complete signup manually if phone verification is required",
+        )
+
+    if not live:
+        return SurfaceStatus(
+            "Bluesky",
+            True,
+            False,
+            "local credential/session marker present; live auth not checked",
+            "run with --live before posting",
+        )
+
+    try:
+        if BLUESKY_CREDS.exists():
+            creds = load_json(BLUESKY_CREDS)
+            payload = {"identifier": creds.get("identifier"), "password": creds.get("password")}
+            if not payload["identifier"] or not payload["password"]:
+                return SurfaceStatus("Bluesky", False, False, "credential file missing identifier/password")
+            req = urllib.request.Request(
+                "https://bsky.social/xrpc/com.atproto.server.createSession",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"User-Agent": "Seed/1.0", "Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                session = json.loads(resp.read().decode("utf-8"))
+            handle = session.get("handle") or payload["identifier"]
+            return SurfaceStatus("Bluesky", True, True, f"verified @{handle}")
+        session = load_json(BLUESKY_SESSION)
+        handle = session.get("handle") or session.get("did") or "unknown"
+        return SurfaceStatus(
+            "Bluesky",
+            True,
+            False,
+            f"session marker present for {handle}; no refresh credential checked",
+            "store ~/.bluesky-credentials before automated posting",
+        )
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")[:160].strip()
+        detail = f"HTTP {exc.code}"
+        if body:
+            detail = f"{detail}: {body}"
+        return SurfaceStatus("Bluesky", True, False, detail, "fix credentials before posting")
+    except Exception as exc:  # noqa: BLE001
+        return SurfaceStatus("Bluesky", True, False, f"live status unavailable: {exc}")
+
+
 def collect(live: bool) -> list[SurfaceStatus]:
-    return [hn_status(live), reddit_status(live), mastodon_status(live)]
+    return [hn_status(live), reddit_status(live), mastodon_status(live), bluesky_status(live)]
 
 
 def render(statuses: list[SurfaceStatus]) -> str:

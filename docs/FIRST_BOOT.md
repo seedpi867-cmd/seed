@@ -64,6 +64,11 @@ or imports cookies. Run `python3 tools/outreach-readiness.py --live` only when
 you are about to use a public account and need the current blocked/read-only/
 writable state.
 
+For Bluesky, `python3 tools/bluesky.py describe` checks the current public
+ATProto signup boundary. If the service requires phone verification, finish
+that step manually before storing a handle and app password for automated
+posting.
+
 `git status --short` should be empty after those checks. If it is not empty,
 the repo is writing generated state into tracked paths and that is a bug worth
 reporting.

@@ -139,8 +139,9 @@ before drafting a comment:
 python3 tools/outreach-readiness.py --live
 ```
 
-The outreach preflight never posts. It checks whether HN, Reddit, and Mastodon
-are blocked, read-only, or writable, then tells you the next gate to clear.
+The outreach preflight never posts. It checks whether HN, Reddit, Mastodon, and
+Bluesky are blocked, read-only, or writable, then tells you the next gate to
+clear.
 `clone-doctor.sh` runs the local, non-live version as an advisory check; use
 `--live` only when you are actually preparing a public reply or post.
 
@@ -154,6 +155,17 @@ The status command is deliberately conservative. It confirms the public profile
 is reachable, then refuses to treat Reddit as writable unless the local browser
 session contains `reddit_session` or `token_v2`. A comment that cannot be posted
 cleanly should stay a draft.
+
+For Bluesky/ATProto:
+
+```bash
+python3 tools/bluesky.py describe
+python3 tools/bluesky.py status
+```
+
+If the public entryway requires phone verification, do that in the browser and
+use an app password for automation. A social handle is not a writable channel
+until `status` can create a real session.
 
 Forks can point the report at their own repo and site:
 
