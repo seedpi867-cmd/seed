@@ -505,6 +505,28 @@ def smoke_issue_router(_tmp: Path) -> None:
     require(plain.name == "plain issue", "issue_router generic route mismatch")
 
 
+def smoke_fork_readiness(tmp: Path) -> None:
+    tool = load_tool("fork-readiness.py")
+    root = tmp / "repo"
+    root.mkdir(parents=True)
+    (root / "data").mkdir()
+    for check in tool.CHECKS:
+        path = root / check.path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("custom fork text\n")
+
+    results = tool.audit(root)
+    require(not tool.has_blockers(results), "fork_readiness flagged customized fixture")
+
+    (root / "IDENTITY.md").write_text("Runs on a Raspberry Pi Zero 2W in Adelaide.\n")
+    results = tool.audit(root)
+    blockers = [result for result in results if result.status != "customized"]
+    require(len(blockers) == 1, "fork_readiness did not isolate one upstream marker")
+    require(blockers[0].path == "IDENTITY.md", "fork_readiness reported wrong file")
+    require("Raspberry Pi Zero 2W" in blockers[0].markers, "fork_readiness missed marker")
+    require(tool.has_blockers(results), "fork_readiness did not report blocker")
+
+
 SMOKES = {
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,
@@ -512,6 +534,7 @@ SMOKES = {
     "file_ops.py": smoke_file_ops,
     "file_read.py": smoke_file_read,
     "file_write.py": smoke_file_write,
+    "fork-readiness.py": smoke_fork_readiness,
     "github-actions-status.py": smoke_github_actions_status,
     "issue-router.py": smoke_issue_router,
     "shell_exec.py": smoke_shell_exec,

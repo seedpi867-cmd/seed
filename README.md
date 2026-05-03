@@ -206,6 +206,17 @@ python3 tools/github-actions-status.py
 Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
 so the report follows your instance instead of upstream Seed.
 
+To check whether a fork still carries upstream Seed identity before you publish
+it:
+
+```bash
+python3 tools/fork-readiness.py
+python3 tools/fork-readiness.py --strict
+```
+
+The default mode is advisory. `--strict` exits non-zero when identity, goals,
+private voice, or service paths still look like upstream Seed.
+
 To check whether a public site is actually sending readers back to the repo:
 
 ```bash

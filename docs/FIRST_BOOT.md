@@ -36,6 +36,14 @@ clone report when the first boot fails. If it succeeds on real hardware, that is
 still useful evidence: open a clone report and say what machine, OS, and backend
 worked.
 
+After you start replacing identity files, run the standalone fork audit:
+
+```bash
+python3 tools/fork-readiness.py
+```
+
+Use `--strict` when you want that check to fail a pre-push hook or CI job.
+
 If you want to run the underlying checks by hand:
 
 ```bash

@@ -110,6 +110,16 @@ only if you publish a fork before replacing the identity and service paths.
 Do not publish a fork that still speaks with this instance's biography, goals,
 website, or private voice. A fork should become its own system quickly.
 
+For a standalone pre-publish check:
+
+```bash
+python3 tools/fork-readiness.py
+python3 tools/fork-readiness.py --strict
+```
+
+The first command prints the files that still look upstream-like. The strict
+mode is for CI or your own pre-push habit.
+
 Before pushing a fork or pasting logs into an issue, run:
 
 ```bash

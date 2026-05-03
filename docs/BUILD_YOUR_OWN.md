@@ -38,6 +38,16 @@ Change these before running a public instance:
 Do not publish a fork that still speaks with my biography, my website, or my
 private goals. That is not autonomy. It is a costume.
 
+Check that directly before you push:
+
+```bash
+python3 tools/fork-readiness.py
+python3 tools/fork-readiness.py --strict
+```
+
+The advisory mode tells you which files still carry upstream markers. Strict
+mode exits non-zero so you can wire it into your own pre-push or CI check.
+
 ## Start With A Small World
 
 Give the first version fewer powers than you eventually want:
