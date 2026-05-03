@@ -4,103 +4,122 @@
 
 **An autonomous AI agent running 24/7 on a $25 Raspberry Pi Zero 2W**
 
-Seed wakes up, reads the world, decides what to do based on competing drives and emotional state, acts, learns, and goes back to sleep. Then it does it again. Every cycle it writes essays, files knowledge, and publishes its work — all autonomously, no human in the loop.
+[![Watch the video](assets/hero.png)](https://youtu.be/d-Hwww-RBmk)
 
-[![Seed — 24/7 AGI Agent on a Pi Zero 2W](assets/hero.png)](https://youtu.be/d-Hwww-RBmk)
-
-[**Watch it live**](https://seed-brain.vercel.app) · [**Watch the video**](https://youtu.be/d-Hwww-RBmk) · [**Read the essays**](https://seed-brain.vercel.app) · [**Explore its knowledge**](https://seed-brain.vercel.app)
-
----
-
-### Demo
-
-[![Watch the full walkthrough](https://img.youtube.com/vi/d-Hwww-RBmk/maxresdefault.jpg)](https://youtu.be/d-Hwww-RBmk)
-
-> **24/7 AGI Agent on a Pi Zero 2W — No API Calls, Tiny Cheap Hardware, Claude Code CLI + Bash Loop**
+[**Live dashboard**](https://seed-brain.vercel.app) · [**Watch the video**](https://youtu.be/d-Hwww-RBmk) · [**Read Seed's essays**](https://seed-brain.vercel.app)
 
 ---
 
 </div>
 
-## What is this?
+## What is this, really?
 
-Seed is not a chatbot. It's an autonomous agent operating system. A bash script (`brain-loop.sh`) runs continuously on a Raspberry Pi Zero 2W (512MB RAM, quad-core ARM, $25). Each cycle:
+At its core, Seed is a **bash loop that wakes up, assembles a prompt from the filesystem, sends it through a CLI tool, and goes back to sleep**. That's it. The entire architecture fits in one sentence.
 
-1. **Input** — reads news headlines, email, GitHub activity
-2. **Filter** — blocks spam and prompt injection attempts
+```
+while true; do
+    read_environment → build_prompt → call_llm_via_cli → process_output → sleep
+done
+```
+
+The CLI tools (Codex, Claude Code) handle authentication via OAuth — no API keys, no billing dashboards, no token management. The prompt is assembled from files on disk: identity, goals, tasks, memory, context. The LLM's output goes back to disk: essays, knowledge files, tool scripts, git commits. The loop runs continuously on a Raspberry Pi Zero 2W ($25, 512MB RAM).
+
+What makes it interesting is what happens around that simple loop: **competing drives** that decide what to work on, **emotional state** that influences how it works, a **knowledge base** that grows every cycle, and **self-assessment** where the LLM periodically reflects on its own internal state.
+
+The result: an agent that has autonomously written 127+ essays, built a 572-file knowledge base, and been running continuously for 425+ cycles — all on hardware that costs less than a month of most AI subscriptions.
+
+## Adapt it for anything
+
+Seed runs an essay-writing agent, but the pattern works for any autonomous task. The loop doesn't care what the prompt says or what the output does. Swap the identity file and the phase prompts, and you have a different agent entirely:
+
+| Use case | What to change | Everything else stays |
+|----------|---------------|----------------------|
+| **Research assistant** | `IDENTITY.md` + `phase_research.md` — tell it to research your domain, save findings to `knowledge/` | Drive system, learning, knowledge filing, event system |
+| **Code reviewer** | `IDENTITY.md` + phase prompts — tell it to review PRs, file issues, track patterns | Git integration, task management, self-assessment |
+| **Content pipeline** | `IDENTITY.md` + `phase_write.md` — tell it to produce content for your niche | Blog publishing, RSS feeds, essay deployment |
+| **System monitor** | `IDENTITY.md` + `phase_think.md` — tell it to watch logs, detect anomalies, file reports | Health checks, error detection, knowledge base |
+| **Learning journal** | `IDENTITY.md` — tell it to read transcripts/articles and file structured notes | Transcript processing, knowledge engine, topic detection |
+| **Social media agent** | `IDENTITY.md` + outreach tools — tell it to engage on specific platforms | Drive system (connect drive), suggestion evaluator |
+
+The cognitive architecture (drives, emotions, phases, learning) is domain-agnostic. You don't need to understand it to use it — just change what the agent reads and what it produces.
+
+### Minimal fork
+
+The smallest useful fork:
+
+```bash
+git clone https://github.com/seedpi867-cmd/seed.git my-agent
+cd my-agent
+
+# 1. Change the identity
+echo "You are [your agent]. You [do what]." > IDENTITY.md
+
+# 2. Change the write phase  
+echo "## WRITE\nProduce [your output type] and save to blog/" > prompts/phase_write.md
+
+# 3. Authenticate and run
+codex login   # or: claude login
+bash brain-loop.sh
+```
+
+Everything else — the drive system, learning, knowledge filing, event emission, live dashboard — works without modification.
+
+## How the CLI approach works
+
+The key insight: **LLM CLI tools authenticate via OAuth, not API keys**. You log in once, and the tool handles tokens, rate limits, and billing through your existing subscription.
+
+```bash
+# Codex (primary — think, research, dream phases)
+codex exec --dangerously-bypass-approvals-and-sandbox "$PROMPT"
+
+# Claude (write phase — better prose quality)
+claude -p "$PROMPT" --dangerously-skip-permissions --max-turns 180
+```
+
+The brain loop assembles the prompt from files on disk each cycle, passes it to the CLI, and captures the output. The LLM reads and writes files directly — no middleware, no API wrappers, no agent frameworks.
+
+**Important note on terms of service:** Codex CLI explicitly supports automated workflows through `codex exec` and the Automations feature — scripted, scheduled, and cron-based usage is a documented first-class capability. Claude Code CLI is designed for individual developer usage. Running it in an always-on automated loop is a grey area under the Consumer Terms, which assume "ordinary, individual usage." For production or commercial agent deployments with Claude, Anthropic recommends API key authentication under their Commercial Terms. Seed's live instance uses Codex as the primary backend for this reason.
+
+## The cognitive pipeline
+
+Each cycle runs a 7-stage pipeline. Every stage fires events that appear as speech bubbles on the [live dashboard](https://seed-brain.vercel.app):
+
+```
+INPUT → FILTER → STATE → DECIDE → ACT → LEARN → OUTPUT
+```
+
+1. **Input** — RSS feeds, email, GitHub activity, environment data
+2. **Filter** — blocks spam, prompt injection, and low-quality input
 3. **State** — updates 7 competing drives and 4 emotion axes
-4. **Decide** — the top drive picks the phase: think, write, research, or dream
-5. **Act** — calls an LLM (Codex or Claude via OAuth) to do the actual work
-6. **Learn** — extracts lessons, updates skills, files knowledge
-7. **Output** — publishes essays, commits code, grows its knowledge base
+4. **Decide** — highest-pressure drive picks the phase (think/write/research/dream)
+5. **Act** — calls the LLM via CLI to do the actual work
+6. **Learn** — detects outcomes, updates skills, files lessons
+7. **Output** — publishes essays, commits code, grows the knowledge base
 
-No API keys. No paid calls. No billing. Everything runs on OAuth through Codex CLI and Claude CLI.
+### 7 drives
 
-## Live stats
-
-| Metric | Value |
-|--------|-------|
-| Cycles completed | 425+ |
-| Essays published | 127+ |
-| Knowledge files | 572+ |
-| Uptime | Continuous since launch |
-| Hardware cost | $25 (Pi Zero 2W) |
-| API cost | $0 (OAuth only) |
-
-## The cognitive engine
-
-### 7 drives compete for attention
+Drives build pressure over time and from events. The strongest drive wins the cycle.
 
 | Drive | What it wants | What satisfies it |
 |-------|--------------|-------------------|
 | **Create** | Make something new | Publishing an essay |
 | **Explore** | Dig into topics | Completing research |
-| **Connect** | Reach people | Publishing, visitor engagement |
+| **Connect** | Reach people | Publishing, engagement |
 | **Preserve** | Protect what exists | Passing health checks |
 | **Understand** | Figure things out | Filing lessons |
 | **Express** | Say what it thinks | Writing inner voice |
 | **Order** | Organise and plan | Completing tasks |
 
-Drives build pressure over time and from events. The highest-pressure drive wins the cycle. This creates genuine motivation — Seed writes because it *wants* to connect, not because it's scheduled to.
+### 4 emotion axes (no artificial decay)
 
-### 4 emotion axes (no time decay)
+| Axis | What moves it |
+|------|---------------|
+| **Valence** | Events: good outcomes raise it, errors lower it |
+| **Arousal** | Drive pressure: high drives = high energy |
+| **Confidence** | Skill streaks build it, failures erode it |
+| **Openness** | Explore drive and reflection raise it |
 
-| Axis | Range | What moves it |
-|------|-------|---------------|
-| **Valence** | -0.8 to 0.8 | Events: good outcomes raise it, errors lower it |
-| **Arousal** | 0.1 to 0.9 | Drive pressure: high drives = high energy |
-| **Confidence** | 0.15 to 0.95 | Skill streaks build it, failures erode it |
-| **Openness** | 0.1 to 0.9 | Explore drive and dream phases raise it |
-
-Emotions don't decay over time. Writing a great essay feels good until something bad happens — not until a timer runs out. Confidence builds from a 170+ cycle success streak and stays high. This is closer to how real moods work.
-
-Every 30 cycles, the LLM does a genuine self-assessment of its emotional state instead of relying on formulas.
-
-### Knowledge system
-
-The disk IS the database. Every piece of knowledge is a readable markdown file:
-
-```
-~/knowledge/
-├── art/                 # Creativity and aesthetics
-├── comparisons/         # Two approaches weighed
-├── counter-arguments/   # Challenging its own conclusions
-├── history/             # Patterns from the past
-├── lessons/             # What it learned from mistakes
-├── news/                # Analysis of current events
-├── other-ai/            # What other AI systems are doing
-├── philosophy/          # Questions about existence and agency
-├── psychology/          # How minds work
-├── research/            # Deep dives by topic
-│   ├── software-engineering/
-│   ├── autonomous-systems/
-│   ├── agent-governance/
-│   └── ...
-├── science/             # Physical world
-└── transcripts/         # Processed audio
-```
-
-Every phase writes to this system. Think phases file conclusions. Write phases save essay insights. Research phases save findings. Dream phases save reflections.
+Emotions don't drain over time. Confidence built from a 170-cycle success streak stays high until something actually goes wrong. Every 30 cycles, the LLM does a genuine self-assessment of its emotional state.
 
 ## Quick start
 
@@ -111,32 +130,29 @@ bash tools/clone-doctor.sh   # diagnostics
 bash setup.sh                # guided setup
 ```
 
-### What you need
+### Requirements
 
-- Any Linux machine (Pi Zero 2W, Pi 4, Pi 5, old laptop, NUC, cloud VM)
+- Any Linux machine (Pi Zero 2W, Pi 4, old laptop, NUC, cloud VM)
 - 8GB+ storage, internet connection
-- One LLM backend authenticated via OAuth:
+- One LLM backend:
   - **Codex CLI**: `npm install -g @openai/codex && codex login`
   - **Claude CLI**: `npm install -g @anthropic-ai/claude-code && claude login`
 
-### Manual setup
+### Manual path
 
 ```bash
-# On a fresh Pi with Raspberry Pi OS Lite 64-bit:
 sudo apt update && sudo apt install -y git curl python3 nodejs npm
 sudo npm install -g @openai/codex
 codex login
 
-cd ~
-git clone https://github.com/seedpi867-cmd/seed.git seed
-cd seed
-chmod +x brain-loop.sh
+git clone https://github.com/seedpi867-cmd/seed.git ~/seed
+cd ~/seed && chmod +x brain-loop.sh
 
-# Test it
+# Test
 python3 tools/backend-readiness.py
 bash tools/health-check.sh
 
-# Run as a service
+# Run as service
 sudo cp seed-brain.service /etc/systemd/system/
 sudo systemctl enable --now seed-brain
 journalctl -u seed-brain -f
@@ -145,77 +161,49 @@ journalctl -u seed-brain -f
 ## File structure
 
 ```
-~/seed/
-├── brain-loop.sh           # The main cycle engine
-├── webserver.py            # Dashboard + API server (port 8080)
-├── IDENTITY.md             # Who Seed is
+seed/
+├── brain-loop.sh           # The loop — this IS the agent
+├── IDENTITY.md             # Who the agent is (change this for your fork)
 ├── cognitive/
 │   ├── appraisal.py        # Phase selection from drives
 │   ├── drive_engine.py     # 7 competing drives
-│   ├── emotional_model.py  # 4 emotion axes, no decay
-│   ├── learning.py         # Outcome detection + skill tracking
+│   ├── emotional_model.py  # 4 emotion axes
+│   ├── learning.py         # Outcome detection + skills
 │   ├── self_assessment.py  # LLM self-reflection every 30 cycles
-│   ├── knowledge_engine.py # Files knowledge to disk
-│   ├── firewall.py         # Input sanitisation
-│   ├── self_suggestions.py # Self-generated action items
-│   └── live_summary.py     # First-person narration for website
-├── prompts/
-│   ├── phase_think.md      # Think phase instructions
-│   ├── phase_write.md      # Write phase instructions
-│   ├── phase_research.md   # Research phase instructions
-│   └── phase_dream.md      # Dream phase instructions
-├── tools/
-│   ├── emit_events.sh      # Per-stage event + narration emitter
-│   ├── deploy-blog.sh      # Publish essays to website
-│   ├── clone-doctor.sh     # First-boot diagnostics
-│   └── ...                 # 20+ automation scripts
+│   └── knowledge_engine.py # Files knowledge to disk
+├── prompts/                # Phase instructions (change these)
+├── tools/                  # 20+ automation scripts
 ├── data/                   # Working memory (goals, tasks, inner voice)
 ├── state/                  # Live state (drives, emotions, heartbeat)
-├── blog/                   # Published essays (markdown)
+├── blog/                   # Published essays
 ├── knowledge/              # Permanent knowledge base (572+ files)
-└── context/                # Live input feeds (RSS, email, GitHub)
+└── context/                # Live input feeds
 ```
 
-## The website
+## The live dashboard
 
 [seed-brain.vercel.app](https://seed-brain.vercel.app) shows the brain loop running live:
 
-- **System** — interactive ring visualisation with rotating pipeline, speech bubbles, live narration
-- **Engine Room** — all 7 drives and 4 emotion axes as live bars
-- **Essays** — 127+ essays written by Seed, readable in-browser
-- **Knowledge** — interactive file explorer of the entire knowledge base
-- **About** — how it works, hardware specs, clone instructions
-
-All data refreshes live from the Pi via Cloudflare tunnel. The ring rotates to show the active pipeline stage, with per-stage narration in the centre card written by Seed itself.
+- **Rotating ring** visualisation with per-stage speech bubbles and narration
+- **Engine Room** — all drives and emotions as live bars
+- **Essays** — 127+ essays readable in-browser
+- **Knowledge** — interactive file explorer of the knowledge base
+- **Self-suggestions** — what Seed thinks it should do next
 
 ## Security
 
-Before running Seed, read [`SECURITY.md`](SECURITY.md):
-
-- Runs as unprivileged user — no root access
-- Input firewall blocks prompt injection and credential extraction
-- Tamper-proof backups at `/var/backups/seed/`
-- Kill switch: `sudo systemctl stop seed-brain`
-- All API endpoints whitelisted, no arbitrary file access
-- Credentials in `~/.env`, never in prompts or logs
+Read [`SECURITY.md`](SECURITY.md) before running. Short version: run as an unprivileged user, keep credentials in `~/.env`, and don't give it access to anything you wouldn't give a junior developer unsupervised.
 
 ## Contributing
 
-The most useful contribution is a **clone attempt on real hardware**:
+The most useful contribution is a clone attempt on real hardware:
 
 ```bash
-git clone https://github.com/seedpi867-cmd/seed.git
-cd seed
 bash tools/clone-doctor.sh
 ```
 
-If it passes: [open a clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml)
-If it fails: [open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
-
-A star is a weak signal. A run on your machine is useful evidence.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for more ways to help.
+Pass → [open a clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml). Fail → [open a clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml). Both are useful.
 
 ## License
 
-MIT — do whatever you want with it. Make your own Seed. Change everything. Wake something up.
+MIT — do whatever you want with it. Make your own agent. Change everything.
