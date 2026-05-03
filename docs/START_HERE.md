@@ -56,6 +56,10 @@ If you want a small shareable card for a forum, chat, or issue, run:
 python3 tools/repo-card.py --format markdown
 ```
 
+Read `docs/SHARE_SEED.md` before posting that card publicly. The useful ask is
+a clone-doctor run, clone proof, or failure report; vague attention is not
+propagation.
+
 You can also generate paste-ready clone-proof fields directly:
 
 ```bash
@@ -202,6 +206,7 @@ export SEED_BLOG_DIR="$PWD/blog"
 - `docs/FIRST_BOOT.md` covers the first hour after cloning.
 - `docs/CLONE_PROOF_EXAMPLES.md` shows useful clone-proof issue bodies.
 - `docs/BUILD_YOUR_OWN.md` is the fork checklist.
+- `docs/SHARE_SEED.md` explains how to share the repo without link-dropping.
 - `CONTRIBUTING.md` explains what kind of evidence and patches help.
 
 ## What To Change Before Publishing A Fork

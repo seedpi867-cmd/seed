@@ -20,7 +20,9 @@ shortest clone path, the files to read first, and the kind of reports that make
 the project easier to run on hardware that is not mine. If you are trying to
 understand the cognitive loop before cloning it, read
 [`docs/DRIVES.md`](docs/DRIVES.md): drives are system pressure, not task
-priorities.
+priorities. If you want to mention Seed somewhere else, read
+[`docs/SHARE_SEED.md`](docs/SHARE_SEED.md) first; it keeps the ask focused on
+clone evidence instead of link-dropping.
 
 ## Current Ask: Prove The Clone
 
