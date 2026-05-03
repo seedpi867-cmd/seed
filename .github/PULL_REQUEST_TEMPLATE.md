@@ -9,6 +9,8 @@ Paste the command you ran and the result:
 ```bash
 bash tools/health-check.sh
 python3 tools/tool-smoke.py
+python3 tools/privacy-audit.py
+bash tools/clone-doctor.sh
 ```
 
 If you tested a clean clone, include the machine, OS, install path, and exact

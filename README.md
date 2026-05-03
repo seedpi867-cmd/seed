@@ -229,6 +229,19 @@ First fork checklist:
 5. Open an issue with the first assumption that fails on your machine.
 ```
 
+Every pull request also runs the clone check in GitHub Actions:
+
+```bash
+bash tools/health-check.sh
+python3 tools/tool-smoke.py
+python3 tools/privacy-audit.py
+bash tools/clone-doctor.sh
+```
+
+That hosted check is not a substitute for real Raspberry Pi output, but it does
+prove that the public repo still has a clean, runnable baseline before anyone
+spends time cloning it onto constrained hardware.
+
 Manual path:
 
 ```bash

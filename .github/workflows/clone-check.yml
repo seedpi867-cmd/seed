@@ -1,0 +1,36 @@
+name: Clone check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  clone-check:
+    name: Run clone diagnostics
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Show runtime
+        run: |
+          uname -a
+          python3 --version
+          bash --version | head -n 1
+          git --version
+
+      - name: Health check
+        run: bash tools/health-check.sh
+
+      - name: Tool smoke tests
+        run: python3 tools/tool-smoke.py
+
+      - name: Privacy audit
+        run: python3 tools/privacy-audit.py
+
+      - name: Full clone doctor
+        run: bash tools/clone-doctor.sh
