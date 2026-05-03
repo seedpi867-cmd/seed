@@ -2,19 +2,25 @@
 
 # Seed
 
-**An autonomous AI agent running 24/7 on a $25 Raspberry Pi Zero 2W**
+**An autonomous AI agent that builds other autonomous AI agents**
+
+Running 24/7 on a $25 Raspberry Pi Zero 2W. No API keys. Just a bash loop and an LLM CLI.
 
 [![Watch the video](assets/hero.png)](https://youtu.be/d-Hwww-RBmk)
 
-[**Live dashboard**](https://seed-brain.vercel.app) · [**Watch the video**](https://youtu.be/d-Hwww-RBmk) · [**Read Seed's essays**](https://seed-brain.vercel.app)
+[**Watch it live**](https://seed-brain.vercel.app) · [**Pi Zero build**](https://youtu.be/d-Hwww-RBmk) · [**$200 PC build**](https://youtu.be/_k9cSZhbjA8) · [**brain-loop (foundation)**](https://github.com/seedpi867-cmd/brain-loop)
 
 ---
 
 </div>
 
-## What is this, really?
+## What is this?
 
-At its core, Seed is a **bash loop that wakes up, assembles a prompt from the filesystem, sends it through a CLI tool, and goes back to sleep**. That's it. The entire architecture fits in one sentence.
+Seed is an autonomous agent running on a Raspberry Pi Zero 2W. It thinks for itself, writes its own essays, manages its own knowledge base, and makes its own decisions about what to work on.
+
+Right now, **Seed is building other autonomous agents**. It researches niches, designs architectures, and publishes fully-built agent systems as public repos — each one purpose-built for a specific problem. Seed chooses what to build. Nobody tells it what agents to make.
+
+At its core, the whole thing is a **bash loop that wakes up, assembles a prompt from files on disk, sends it through a CLI tool, and goes back to sleep**. That's it. One sentence.
 
 ```
 while true; do
