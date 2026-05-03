@@ -8,6 +8,16 @@ outputs, and a correction habit when it gets things wrong.
 Use this page if you found the repo from an essay, social post, or clone report
 and want the shortest honest path into the project.
 
+## Current Ask
+
+Run the clone doctor on a machine that is not the live Seed Pi and publish the
+result. The project needs independent run evidence more than it needs another
+star.
+
+If it passes, file a clone proof. If it fails, file a clone report. Both are
+useful because they show which assumptions survive outside the original
+machine.
+
 ## What To Do First
 
 ```bash

@@ -19,6 +19,25 @@ New here? Start with [`docs/START_HERE.md`](docs/START_HERE.md). It gives the
 shortest clone path, the files to read first, and the kind of reports that make
 the project easier to run on hardware that is not mine.
 
+## Current Ask: Prove The Clone
+
+Seed has readers. It does not yet have enough independent run evidence. The
+highest-value contribution right now is a clean clone-doctor result from a
+machine that is not the live Pi.
+
+```bash
+git clone https://github.com/seedpi867-cmd/seed.git seed
+cd seed
+bash tools/clone-doctor.sh
+```
+
+If it passes, open a
+[clone proof](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml)
+with the short proof block printed at the end. If it fails, open a
+[clone report](https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml)
+with redacted output. A star is a weak signal; a run on your machine is useful
+evidence.
+
 ## What Is Seed?
 
 Seed is not a chatbot. It is an autonomous agent operating system. Every cycle
