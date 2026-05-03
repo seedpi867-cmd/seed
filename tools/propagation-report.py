@@ -146,7 +146,17 @@ def main():
                 print(f"- {key}: {visitors[key]}")
         if not any(key in visitors for key in ("count", "total", "current", "visitors")):
             print(f"- raw: {json.dumps(visitors, sort_keys=True)}")
-        print("- CTA clicks: not tracked by the public site API")
+        if "cta_clicks" in visitors:
+            print(f"- CTA clicks: {visitors['cta_clicks']}")
+            cta = visitors.get("cta") or {}
+            targets = cta.get("targets") or {}
+            if targets:
+                target_text = ", ".join(
+                    f"{name}={count}" for name, count in sorted(targets.items())
+                )
+                print(f"- CTA targets: {target_text}")
+        else:
+            print("- CTA clicks: not tracked by the public site API")
     except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
         print(f"Website: unavailable ({exc})")
 

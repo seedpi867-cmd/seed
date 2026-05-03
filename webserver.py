@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Seed Brain — Full Dashboard (drives + consciousness + emotions + inner voice)"""
-import http.server, json, os, time, socketserver
+import http.server, json, os, time, socketserver, urllib.parse
 from pathlib import Path
 
 PORT = 8080
@@ -89,6 +89,7 @@ R();setInterval(R,5000);
 
 VISITOR_COUNT = 0
 VISITOR_LOG = Path.home() / 'data' / 'visitors.jsonl'
+CTA_LOG = Path.home() / 'data' / 'cta-clicks.jsonl'
 
 # Import firewall for visitor input sanitisation
 try:
@@ -116,6 +117,8 @@ class H(http.server.BaseHTTPRequestHandler):
         elif self.path=='/api/tokens':self._j(self._tokens())
         elif self.path=='/api/visit':self._j(self._visit())
         elif self.path=='/api/visitors':self._j(self._visitors())
+        elif self.path=='/api/cta-stats':self._j(self._cta_stats())
+        elif self.path.startswith('/api/cta'):self._j(self._cta_click())
         elif self.path=='/api/github':self._j(self._github())
         elif self.path.startswith('/api/file?path='):
             p=self.path.split('path=',1)[1]
@@ -153,7 +156,8 @@ class H(http.server.BaseHTTPRequestHandler):
         except: pass
         return {"count": VISITOR_COUNT, "total": self._total_visitors()}
     def _visitors(self):
-        return {"count": VISITOR_COUNT, "total": self._total_visitors()}
+        cta = self._cta_stats()
+        return {"count": VISITOR_COUNT, "total": self._total_visitors(), "cta_clicks": cta.get("total", 0), "cta": cta}
     def _total_visitors(self):
         try:
             decoder = json.JSONDecoder()
@@ -170,6 +174,52 @@ class H(http.server.BaseHTTPRequestHandler):
             return count
         except:
             return VISITOR_COUNT
+    def _safe_label(self, value, default='unknown'):
+        value = fw_sanitise(str(value or default), 'cta')[:80]
+        cleaned = ''.join(ch for ch in value if ch.isalnum() or ch in '._:/#?-')
+        return cleaned or default
+    def _append_jsonl(self, path, obj):
+        needs_newline = False
+        if path.exists() and path.stat().st_size > 0:
+            with open(path, 'rb') as f:
+                f.seek(-1, os.SEEK_END)
+                needs_newline = f.read(1) != b'\n'
+        with open(path, 'a') as f:
+            if needs_newline:
+                f.write("\n")
+            f.write(json.dumps(obj) + "\n")
+    def _cta_click(self):
+        parsed = urllib.parse.urlparse(self.path)
+        q = urllib.parse.parse_qs(parsed.query)
+        record = {
+            "ts": time.strftime('%Y-%m-%dT%H:%M:%S'),
+            "target": self._safe_label((q.get("target") or ["unknown"])[0]),
+            "source": self._safe_label((q.get("source") or ["unknown"])[0]),
+            "page": self._safe_label((q.get("page") or ["unknown"])[0]),
+        }
+        try:
+            self._append_jsonl(CTA_LOG, record)
+        except: pass
+        stats = self._cta_stats()
+        return {"ok": True, "total": stats.get("total", 0)}
+    def _cta_stats(self):
+        total = 0
+        targets = {}
+        sources = {}
+        try:
+            for line in open(str(CTA_LOG)):
+                line = line.strip()
+                if not line: continue
+                try:
+                    d = json.loads(line)
+                except: continue
+                total += 1
+                target = d.get("target", "unknown")
+                source = d.get("source", "unknown")
+                targets[target] = targets.get(target, 0) + 1
+                sources[source] = sources.get(source, 0) + 1
+        except: pass
+        return {"total": total, "targets": targets, "sources": sources}
     def _github(self):
         import urllib.request
         try:
