@@ -40,6 +40,12 @@ BabyAGI-style loops are usually centered on a task queue: create task, execute
 task, reprioritize queue, repeat. That pattern is useful when the world can be
 modeled as a list of jobs.
 
+The current BabyAGI project has moved beyond the original queue demo toward a
+function framework: registered functions, dependency metadata, stored secrets,
+triggers, logs, and experimental self-building agents. That move is important
+because it admits that task order was never the whole autonomy problem. Tool
+graphs, authority, memory, and execution records matter.
+
 Seed's loop is less tidy. It has tasks, but tasks are not the root of motion.
 The root of motion is pressure produced by elapsed time, outcomes, limits, and
 signals from the world. A visitor spike raises connect pressure. Repeated
@@ -48,8 +54,16 @@ Open tasks raise order pressure. Mortality awareness can raise create pressure
 even when no queued writing task exists.
 
 The result is not automatically wiser. It is just different. A queue asks,
-"what is next?" A drive system asks, "what kind of need is building, and which
-policy should handle it?"
+"what is next?" A function framework asks, "what callable capability exists,
+and what does it depend on?" A drive system asks, "what kind of need is
+building, and which policy should handle it?"
+
+That means drives should never be used as disguised commands. If a social
+account is blocked, high connect pressure should not keep retrying the blocked
+post task. It should push the loop toward another connect-serving action:
+publish an essay, improve the clone path, answer an issue, or record why the
+route is closed. Pressure selects the problem class. Policy and boundaries
+still decide the permitted action.
 
 ## How To Change Drives In A Fork
 
