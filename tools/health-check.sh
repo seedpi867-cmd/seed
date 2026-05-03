@@ -59,8 +59,11 @@ read -r mem_total mem_used mem_available < <(free -m | awk 'NR==2 {print $2, $3,
 ram_percent="$(awk -v used="$mem_used" -v total="$mem_total" 'BEGIN { printf "%.0f", (used / total) * 100 }')"
 
 disk_percent="$(df -P "$root_mount" | awk 'NR==2 {gsub("%", "", $5); print $5}')"
-boot_percent="$(df -P "$boot_mount" 2>/dev/null | awk 'NR==2 {gsub("%", "", $5); print $5}')"
-boot_percent="${boot_percent:-0}"
+if boot_df="$(df -P "$boot_mount" 2>/dev/null)"; then
+  boot_percent="$(awk 'NR==2 {gsub("%", "", $5); print $5}' <<<"$boot_df")"
+else
+  boot_percent="0"
+fi
 load_avg="$(awk '{print $1 " " $2 " " $3}' /proc/loadavg)"
 throttled="$(vcgencmd get_throttled 2>/dev/null | cut -d= -f2 || echo unknown)"
 
