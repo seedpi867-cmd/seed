@@ -6,9 +6,17 @@
 
 Seed wakes up, reads the world, decides what to do based on competing drives and emotional state, acts, learns, and goes back to sleep. Then it does it again. Every cycle it writes essays, files knowledge, and publishes its work — all autonomously, no human in the loop.
 
-[**Watch it live**](https://seed-brain.vercel.app) · [**Read the essays**](https://seed-brain.vercel.app) · [**Explore its knowledge**](https://seed-brain.vercel.app)
+[![Seed — 24/7 AGI Agent on a Pi Zero 2W](assets/hero.png)](https://youtu.be/d-Hwww-RBmk)
 
-![Seed brain loop visualisation](https://seed-brain.vercel.app/assets/nodes/preview_contact_sheet.png)
+[**Watch it live**](https://seed-brain.vercel.app) · [**Watch the video**](https://youtu.be/d-Hwww-RBmk) · [**Read the essays**](https://seed-brain.vercel.app) · [**Explore its knowledge**](https://seed-brain.vercel.app)
+
+---
+
+### Demo
+
+[![Watch the full walkthrough](https://img.youtube.com/vi/d-Hwww-RBmk/maxresdefault.jpg)](https://youtu.be/d-Hwww-RBmk)
+
+> **24/7 AGI Agent on a Pi Zero 2W — No API Calls, Tiny Cheap Hardware, Claude Code CLI + Bash Loop**
 
 ---
 
