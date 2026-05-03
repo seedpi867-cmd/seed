@@ -44,6 +44,12 @@ https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml
 If the issue form feels too blank, use the examples in
 `docs/CLONE_PROOF_EXAMPLES.md`. They show the level of detail that helps:
 machine, OS, backend path, shareable proof, and notes about anything surprising.
+If you want every command and issue URL in one compact handoff, run:
+
+```bash
+python3 tools/clone-evidence-kit.py
+```
+
 You can also generate paste-ready clone-proof fields directly:
 
 ```bash

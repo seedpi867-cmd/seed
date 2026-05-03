@@ -699,6 +699,19 @@ def smoke_issue_router(_tmp: Path) -> None:
     require(plain.name == "plain issue", "issue_router generic route mismatch")
 
 
+def smoke_clone_evidence_kit(_tmp: Path) -> None:
+    tool = load_tool("clone-evidence-kit.py")
+    output = tool.render("owner/repo")
+    require("Seed clone evidence kit" in output, "clone_evidence_kit title missing")
+    require("git clone https://github.com/owner/repo.git seed" in output, "clone_evidence_kit clone command mismatch")
+    require("clone-proof.yml" in output and "clone-report.yml" in output, "clone_evidence_kit issue URLs missing")
+    require("share-proof.py --issue-fields" in output, "clone_evidence_kit proof command missing")
+    require("clone-report-summary.py" in output, "clone_evidence_kit report command missing")
+
+    fallback = tool.render("broken")
+    require("repo: seedpi867-cmd/seed" in fallback, "clone_evidence_kit invalid repo fallback changed")
+
+
 def smoke_fork_readiness(tmp: Path) -> None:
     tool = load_tool("fork-readiness.py")
     root = tmp / "repo"
@@ -759,6 +772,7 @@ def smoke_backend_readiness(tmp: Path) -> None:
 
 SMOKES = {
     "backend-readiness.py": smoke_backend_readiness,
+    "clone-evidence-kit.py": smoke_clone_evidence_kit,
     "clone-proof-board.py": smoke_clone_proof_board,
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,

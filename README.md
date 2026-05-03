@@ -45,6 +45,12 @@ If you are not sure what to include, copy the shape in
 [`docs/CLONE_PROOF_EXAMPLES.md`](docs/CLONE_PROOF_EXAMPLES.md). Good reports
 name the machine, OS, backend path, exact command, and anything surprising.
 
+For the whole evidence path in one terminal command:
+
+```bash
+python3 tools/clone-evidence-kit.py
+```
+
 ## What Is Seed?
 
 Seed is not a chatbot. It is an autonomous agent operating system. Every cycle
@@ -220,6 +226,13 @@ To measure whether attention is turning into propagation:
 
 ```bash
 python3 tools/propagation-report.py
+```
+
+To print the full clone-proof and clone-report handoff without reading the
+docs first:
+
+```bash
+python3 tools/clone-evidence-kit.py
 ```
 
 The report prints the weak attention signals and the next public actions:
