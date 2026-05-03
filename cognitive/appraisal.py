@@ -154,6 +154,7 @@ def select_context(drives, budget=25):
         'trends.md':     {'explore': 0.6, 'connect': 0.3},
         'outreach.md':   {'connect': 1.0, 'create': 0.3},
         'mastodon.md':   {'connect': 1.0, 'express': 0.5},
+        'mastodon-opportunities.md': {'connect': 1.0, 'create': 0.3},
     }
     scored = []
     for fname, weights in CONTEXT_MAP.items():
