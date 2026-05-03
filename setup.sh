@@ -9,6 +9,8 @@ echo "  │     SEED — First Boot Setup     │"
 echo "  └─────────────────────────────────┘"
 echo ""
 
+REQUIRED_BACKEND=""
+
 echo "Choose one AI backend to install:"
 echo "  1) Codex   (used by think/research/dream/maintain phases)"
 echo "  2) Claude  (used by write phase)"
@@ -26,6 +28,7 @@ case "${BACKEND:-1}" in
         fi
         echo "Installing Codex CLI..."
         sudo npm install -g @openai/codex
+        REQUIRED_BACKEND="codex"
         ;;
     2)
         if ! command -v npm >/dev/null 2>&1; then
@@ -35,9 +38,11 @@ case "${BACKEND:-1}" in
         fi
         echo "Installing Claude Code..."
         sudo npm install -g @anthropic-ai/claude-code
+        REQUIRED_BACKEND="claude"
         ;;
     3)
         echo "Gemini uses GEMINI_API_KEY. Add it to your shell or service environment."
+        REQUIRED_BACKEND="gemini"
         ;;
     4)
         echo "Skipping backend install."
@@ -55,6 +60,12 @@ echo "  Claude:  claude login"
 echo "  Gemini:  export GEMINI_API_KEY=your_key_here"
 echo ""
 read -r -p "Press enter after authenticating, or Ctrl-C to stop here..."
+
+if [ -n "$REQUIRED_BACKEND" ]; then
+    echo ""
+    echo "Checking backend readiness..."
+    python3 "$ROOT/tools/backend-readiness.py" --require "$REQUIRED_BACKEND"
+fi
 
 chmod +x "$ROOT/brain-loop.sh"
 

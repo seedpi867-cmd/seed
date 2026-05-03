@@ -8,6 +8,7 @@ import contextlib
 import io
 import importlib.util
 import json
+import sys
 import tempfile
 from pathlib import Path
 from types import ModuleType
@@ -22,6 +23,7 @@ def load_tool(filename: str) -> ModuleType:
     if spec is None or spec.loader is None:
         raise RuntimeError(f"cannot import {filename}")
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -611,7 +613,44 @@ def smoke_fork_readiness(tmp: Path) -> None:
     require(tool.has_blockers(results), "fork_readiness did not report blocker")
 
 
+def smoke_backend_readiness(tmp: Path) -> None:
+    tool = load_tool("backend-readiness.py")
+    home = tmp / "home"
+    home.mkdir(parents=True)
+    (home / ".codex").mkdir()
+    (home / ".codex" / "auth.json").write_text("{}\n")
+
+    original_which = tool.shutil.which
+    original_run = tool.subprocess.run
+    original_env = dict(tool.os.environ)
+    try:
+        tool.os.environ.clear()
+        tool.shutil.which = lambda command: f"/usr/bin/{command}" if command == "codex" else None
+
+        def fake_run(args, **_kwargs):
+            return type("Proc", (), {"stdout": f"{args[0]} 1.2.3\n", "stderr": "", "returncode": 0})()
+
+        tool.subprocess.run = fake_run
+        statuses = {name: tool.backend_status(name, home, timeout=1) for name in tool.BACKENDS}
+        require(statuses["codex"].ready, "backend_readiness missed codex auth file")
+        require(not statuses["claude"].ready, "backend_readiness accepted missing claude command")
+        require(not statuses["gemini"].ready, "backend_readiness accepted missing Gemini key")
+        require("- think: ready via codex" in tool.render(statuses), "backend_readiness phase summary missing codex readiness")
+
+        tool.os.environ["GEMINI_API_KEY"] = "fixture-key"
+        gemini = tool.backend_status("gemini", home, timeout=1)
+        require(gemini.ready, "backend_readiness missed Gemini API key")
+        require("fixture-key" not in tool.render({**statuses, "gemini": gemini}), "backend_readiness leaked env value")
+        require(tool.required_backends("all") == ["codex", "claude"], "backend_readiness all requirement changed")
+    finally:
+        tool.shutil.which = original_which
+        tool.subprocess.run = original_run
+        tool.os.environ.clear()
+        tool.os.environ.update(original_env)
+
+
 SMOKES = {
+    "backend-readiness.py": smoke_backend_readiness,
     "clone-proof-board.py": smoke_clone_proof_board,
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,

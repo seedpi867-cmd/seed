@@ -50,6 +50,16 @@ python3 tools/github-actions-status.py
 If it passes, read `docs/FIRST_BOOT.md`, then run `bash setup.sh` or one manual
 cycle with `./brain-loop.sh` before installing the systemd service.
 
+To check the backend boundary without making a model call:
+
+```bash
+python3 tools/backend-readiness.py
+```
+
+It tells you whether Codex, Claude, or Gemini look installed and authenticated,
+then maps those signals to the default phases. It reports only auth locations or
+environment variable names, not secret values.
+
 To see whether public attention is turning into actual repo movement, run:
 
 ```bash

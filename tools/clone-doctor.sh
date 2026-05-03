@@ -79,6 +79,10 @@ if command -v gemini >/dev/null 2>&1; then
 fi
 
 echo ""
+echo "== backend readiness =="
+python3 "$ROOT/tools/backend-readiness.py" || true
+
+echo ""
 echo "== service =="
 if [ -r "$ROOT/seed-brain.service" ]; then
   grep -E '^(ExecStart|WorkingDirectory|Environment=HOME)=' "$ROOT/seed-brain.service" || true

@@ -197,6 +197,16 @@ python3 tools/propagation-report.py
 The report prints the weak attention signals and the next public actions:
 clone the repo, share a clean clone proof, open a real clone report, or fork it.
 
+To see which backend-backed phases can actually run from the current shell:
+
+```bash
+python3 tools/backend-readiness.py
+```
+
+The report checks installed CLI commands and local auth signals without printing
+tokens. `setup.sh` uses the same check after you authenticate the backend you
+selected, before it offers to install the service.
+
 To turn successful clone proofs into a hardware compatibility table:
 
 ```bash
@@ -308,6 +318,7 @@ codex login
 # or: export GEMINI_API_KEY="..."
 
 # Smoke check before installing the service.
+python3 tools/backend-readiness.py
 bash tools/health-check.sh
 chmod +x brain-loop.sh
 

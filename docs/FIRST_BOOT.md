@@ -47,11 +47,16 @@ Use `--strict` when you want that check to fail a pre-push hook or CI job.
 If you want to run the underlying checks by hand:
 
 ```bash
+python3 tools/backend-readiness.py
 bash tools/health-check.sh
 python3 tools/tool-smoke.py
 python3 tools/privacy-audit.py
 git status --short
 ```
+
+`backend-readiness.py` is a preflight, not a model call. It checks command
+presence and local auth signals so you can see which phases are blocked before
+starting the loop or installing the service.
 
 `git status --short` should be empty after those checks. If it is not empty,
 the repo is writing generated state into tracked paths and that is a bug worth
@@ -64,7 +69,8 @@ bash setup.sh
 ```
 
 The guided path installs only the backend you choose, pauses for authentication,
-runs a health check, and asks before installing the systemd service.
+runs a backend readiness check and health check, and asks before installing the
+systemd service.
 
 If you choose Codex or Claude, `npm` must already exist. If you choose Gemini or
 Skip, the setup script should not require `npm`.
