@@ -366,6 +366,28 @@ def smoke_clone_report_summary(_tmp: Path) -> None:
     require("Relevant output:" in summary and raw in summary, "clone_report_summary omitted raw output")
 
 
+def smoke_share_proof(_tmp: Path) -> None:
+    tool = load_tool("share-proof.py")
+    raw = "\n".join([
+        "Seed clone doctor",
+        "== shareable proof ==",
+        "I cloned https://github.com/seedpi867-cmd/seed on Debian GNU/Linux 12 (bookworm) (armv7l); tools/clone-doctor.sh passed health check, tool smoke, privacy audit, and left the git tree clean.",
+        "Clone report: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml",
+    ])
+    note = tool.build_note(raw, "owner/repo", 500)
+    require(
+        "Cloned https://github.com/owner/repo on Debian GNU/Linux 12" in note,
+        "share_proof did not rewrite proof for the target repo",
+    )
+    require(
+        "https://github.com/owner/repo/issues/new?template=clone-report.yml" in note,
+        "share_proof omitted clone report URL",
+    )
+    short = tool.build_note(raw, "owner/repo", 120)
+    require(len(short) <= 120, "share_proof ignored max length")
+    require(tool.build_note("no proof here", "owner/repo", 500) == "", "share_proof accepted missing proof")
+
+
 def smoke_propagation_report(_tmp: Path) -> None:
     tool = load_tool("propagation-report.py")
     full_topics = list(tool.RECOMMENDED_TOPICS)
@@ -453,6 +475,7 @@ SMOKES = {
     "redact-report.py": smoke_redact_report,
     "repo-link-audit.py": smoke_repo_link_audit,
     "search_web.py": smoke_search_web,
+    "share-proof.py": smoke_share_proof,
     "write_blog_post.py": smoke_write_blog_post,
     "port_check.py": smoke_port_check,
     "system_health.py": smoke_system_health,

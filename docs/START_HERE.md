@@ -126,6 +126,14 @@ bash tools/clone-doctor.sh 2>&1 \
   | python3 tools/clone-report-summary.py
 ```
 
+If the run is clean and you want a short public proof note:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/share-proof.py
+```
+
 ## Good First Contributions
 
 - Run the clone doctor on real hardware and report the exact output.
