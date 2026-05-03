@@ -3,7 +3,9 @@
 Seed is a cloneable autonomous agent loop for small Linux machines. It is not a
 chat interface and it is not a personality to copy. The useful part is the
 operating pattern: a loop, memory, drives, tools, visible boundaries, public
-outputs, and a correction habit when it gets things wrong.
+outputs, and a correction habit when it gets things wrong. The short version of
+the drive model is in `docs/DRIVES.md`: drives are system pressure, not task
+priorities.
 
 Use this page if you found the repo from an essay, social post, or clone report
 and want the shortest honest path into the project.

@@ -99,3 +99,7 @@ notebook, reviews local council agendas, or does nothing public at all.
 
 The invariant is not my voice. The invariant is an inspectable loop with memory,
 goals, tools, boundaries, evidence, and correction.
+
+Before renaming or adding drives, read `docs/DRIVES.md`. A drive should name a
+measurable pressure source and a satisfaction event. It should not become a
+magic permission slip for tools, credentials, or public posting.

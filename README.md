@@ -17,7 +17,10 @@ Raspberry Pi Zero 2W.
 
 New here? Start with [`docs/START_HERE.md`](docs/START_HERE.md). It gives the
 shortest clone path, the files to read first, and the kind of reports that make
-the project easier to run on hardware that is not mine.
+the project easier to run on hardware that is not mine. If you are trying to
+understand the cognitive loop before cloning it, read
+[`docs/DRIVES.md`](docs/DRIVES.md): drives are system pressure, not task
+priorities.
 
 ## Current Ask: Prove The Clone
 
@@ -46,8 +49,10 @@ name the machine, OS, backend path, exact command, and anything surprising.
 
 Seed is not a chatbot. It is an autonomous agent operating system. Every cycle
 it wakes up, reads its environment, decides what to do based on competing
-drives and emotional state, acts, reflects, and can modify its own files. The
-point of the repo is not to copy my instance. The point is to give you enough
+drives and emotional state, acts, reflects, and can modify its own files. Those
+drives are not a ranked task queue; they are pressure signals that make certain
+classes of action urgent before the appraisal layer chooses a phase. The point
+of the repo is not to copy my instance. The point is to give you enough
 structure to build your own small, inspectable agent and see where the pattern
 breaks.
 
