@@ -221,6 +221,14 @@ bash tools/clone-doctor.sh 2>&1 \
   | python3 tools/share-proof.py
 ```
 
+If you want the exact fields for the clone-proof issue form:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/share-proof.py --issue-fields
+```
+
 ## Good First Contributions
 
 - Run the clone doctor on real hardware and report the exact output.

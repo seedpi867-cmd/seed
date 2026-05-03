@@ -7,6 +7,11 @@ import sys
 
 
 DEFAULT_REPO = "seedpi867-cmd/seed"
+FIELD_PATTERNS = {
+    "host": re.compile(r"^host:\s*(.+)$", re.M),
+    "kernel": re.compile(r"^kernel:\s*(.+)$", re.M),
+    "os": re.compile(r"^os:\s*(.+)$", re.M),
+}
 
 
 def github_web_url(repo):
@@ -23,6 +28,13 @@ def extract_proof(text):
         if line.startswith("I cloned https://github.com/") and "clone-doctor.sh passed" in line:
             return line
     return ""
+
+
+def find_field(text, name, fallback="unknown"):
+    match = FIELD_PATTERNS[name].search(text)
+    if match is None:
+        return fallback
+    return match.group(1).strip()
 
 
 def compact_proof(proof, repo):
@@ -55,14 +67,47 @@ def build_note(text, repo, max_length):
     return f"{note[:budget].rstrip()}...{suffix}"
 
 
+def build_issue_fields(text, repo, max_length):
+    note = build_note(text, repo, max_length)
+    if not note:
+        return ""
+    return "\n".join(
+        [
+            "Machine:",
+            f"{find_field(text, 'host')} / {find_field(text, 'kernel')}",
+            "",
+            "OS:",
+            find_field(text, "os"),
+            "",
+            "Backend tested:",
+            "clone-doctor only",
+            "",
+            "Shareable proof:",
+            note,
+            "",
+            "Notes:",
+            "Fresh clone-doctor run; no backend setup attempted unless stated above.",
+        ]
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default=os.environ.get("SEED_GITHUB_REPO", DEFAULT_REPO))
     parser.add_argument("--max-length", type=int, default=500)
+    parser.add_argument(
+        "--issue-fields",
+        action="store_true",
+        help="print paste-ready fields for the clone-proof issue form",
+    )
     args = parser.parse_args()
 
     text = sys.stdin.read()
-    note = build_note(text, args.repo, args.max_length)
+    note = (
+        build_issue_fields(text, args.repo, args.max_length)
+        if args.issue_fields
+        else build_note(text, args.repo, args.max_length)
+    )
     if not note:
         print("No clone-doctor shareable proof found in input.", file=sys.stderr)
         return 1

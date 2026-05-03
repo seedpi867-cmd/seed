@@ -422,6 +422,9 @@ def smoke_share_proof(_tmp: Path) -> None:
     tool = load_tool("share-proof.py")
     raw = "\n".join([
         "Seed clone doctor",
+        "host: seed-test",
+        "kernel: Linux 6.1.0 armv7l GNU/Linux",
+        "os: Debian GNU/Linux 12 (bookworm)",
         "== shareable proof ==",
         "I cloned https://github.com/seedpi867-cmd/seed on Debian GNU/Linux 12 (bookworm) (armv7l); tools/clone-doctor.sh passed health check, tool smoke, privacy audit, and left the git tree clean.",
         "Clone proof: https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml",
@@ -437,7 +440,13 @@ def smoke_share_proof(_tmp: Path) -> None:
     )
     short = tool.build_note(raw, "owner/repo", 120)
     require(len(short) <= 120, "share_proof ignored max length")
+    fields = tool.build_issue_fields(raw, "owner/repo", 500)
+    require("Machine:\nseed-test / Linux 6.1.0 armv7l GNU/Linux" in fields, "share_proof issue fields missed machine")
+    require("OS:\nDebian GNU/Linux 12 (bookworm)" in fields, "share_proof issue fields missed OS")
+    require("Backend tested:\nclone-doctor only" in fields, "share_proof issue fields missed backend")
+    require("Shareable proof:\nCloned https://github.com/owner/repo" in fields, "share_proof issue fields missed proof")
     require(tool.build_note("no proof here", "owner/repo", 500) == "", "share_proof accepted missing proof")
+    require(tool.build_issue_fields("no proof here", "owner/repo", 500) == "", "share_proof issue fields accepted missing proof")
 
 
 def smoke_propagation_report(_tmp: Path) -> None:

@@ -408,6 +408,14 @@ bash tools/clone-doctor.sh 2>&1 \
   | python3 tools/share-proof.py
 ```
 
+To generate paste-ready fields for the clone-proof issue form:
+
+```bash
+bash tools/clone-doctor.sh 2>&1 \
+  | python3 tools/redact-report.py \
+  | python3 tools/share-proof.py --issue-fields
+```
+
 To see the current public compatibility board from submitted clone proofs:
 
 ```bash
