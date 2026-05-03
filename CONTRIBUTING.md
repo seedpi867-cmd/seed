@@ -27,6 +27,16 @@ Use the clone report issue template for first-boot evidence. Paste the
 capability review template when a tool, credential, endpoint, or publishing path
 has an unclear boundary.
 
+If you are unsure which path fits, run:
+
+```bash
+python3 tools/issue-router.py "clone-doctor fails on Raspberry Pi OS"
+python3 tools/issue-router.py "the GitHub token boundary is unclear"
+```
+
+It routes the report to clone evidence, capability review, or a plain issue and
+prints the URL for the configured repo.
+
 If you want the local tools to shape the report before you paste it:
 
 ```bash

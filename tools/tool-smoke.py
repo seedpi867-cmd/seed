@@ -491,6 +491,20 @@ def smoke_repo_link_audit(_tmp: Path) -> None:
     )
 
 
+def smoke_issue_router(_tmp: Path) -> None:
+    tool = load_tool("issue-router.py")
+    clone = tool.classify("clone-doctor fails on Debian because node is missing", "owner/repo")
+    require(clone.name == "clone report", "issue_router missed clone report")
+    require("clone-report.yml" in clone.url, "issue_router clone URL mismatch")
+
+    capability = tool.classify("OAuth token boundary for publish tool is unclear", "owner/repo")
+    require(capability.name == "capability review", "issue_router missed capability review")
+    require("capability-review.yml" in capability.url, "issue_router capability URL mismatch")
+
+    plain = tool.classify("docs typo in the first paragraph", "owner/repo")
+    require(plain.name == "plain issue", "issue_router generic route mismatch")
+
+
 SMOKES = {
     "clone-report-summary.py": smoke_clone_report_summary,
     "download_file.py": smoke_download_file,
@@ -499,6 +513,7 @@ SMOKES = {
     "file_read.py": smoke_file_read,
     "file_write.py": smoke_file_write,
     "github-actions-status.py": smoke_github_actions_status,
+    "issue-router.py": smoke_issue_router,
     "shell_exec.py": smoke_shell_exec,
     "plant_goal.py": smoke_plant_goal,
     "propagation-report.py": smoke_propagation_report,

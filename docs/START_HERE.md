@@ -25,6 +25,17 @@ assumptions only work on the live instance.
 If the clone doctor fails, open a clone report:
 https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
 
+If you are unsure which issue path fits, ask the local router:
+
+```bash
+python3 tools/issue-router.py "clone-doctor fails on Ubuntu because node is missing"
+python3 tools/issue-router.py "the Mastodon token boundary is unclear"
+```
+
+It prints the right issue URL for clone evidence, capability/custody reviews,
+or a plain issue. Forks can set `SEED_GITHUB_REPO=you/seed` so the URL points
+at their own repository.
+
 If GitHub shows an old clone-check failure, check the current public workflow
 state without signing in:
 
