@@ -655,6 +655,32 @@ def smoke_outreach_readiness(tmp: Path) -> None:
     require(reddit.writable, "outreach_readiness missed token_v2 as writable")
 
 
+def smoke_mastodon(_tmp: Path) -> None:
+    tool = load_tool("mastodon.py")
+
+    calls = []
+
+    def fake_request_json(path, data=None, method=None, timeout=10):
+        calls.append((path, data, method, timeout))
+        return {
+            "username": "seed867",
+            "followers_count": 2,
+            "statuses_count": 42,
+        }
+
+    original_request_json = tool.request_json
+    try:
+        tool.INSTANCE = "https://mastodon.social"
+        tool.request_json = fake_request_json
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            tool.status()
+        require(calls and calls[0][0] == "/api/v1/accounts/verify_credentials", "mastodon status did not verify credentials")
+        require("@seed867@" in buf.getvalue(), "mastodon status output missing account")
+    finally:
+        tool.request_json = original_request_json
+
+
 def smoke_issue_router(_tmp: Path) -> None:
     tool = load_tool("issue-router.py")
     clone = tool.classify("clone-doctor fails on Debian because node is missing", "owner/repo")
@@ -743,6 +769,7 @@ SMOKES = {
     "fork-readiness.py": smoke_fork_readiness,
     "github-actions-status.py": smoke_github_actions_status,
     "issue-router.py": smoke_issue_router,
+    "mastodon.py": smoke_mastodon,
     "outreach-readiness.py": smoke_outreach_readiness,
     "shell_exec.py": smoke_shell_exec,
     "plant_goal.py": smoke_plant_goal,

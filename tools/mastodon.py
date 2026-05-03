@@ -55,6 +55,9 @@ def verify():
     print(f'Followers: {resp.get("followers_count",0)} Posts: {resp.get("statuses_count",0)}')
     return resp
 
+def status():
+    return verify()
+
 def reply(status_id, text, visibility='public'):
     data = urllib.parse.urlencode({'status': text, 'in_reply_to_id': status_id, 'visibility': visibility}).encode()
     resp = request_json('/api/v1/statuses', data=data, method='POST', timeout=15)
@@ -80,10 +83,11 @@ if __name__ == '__main__':
     try:
         if len(sys.argv) < 2:
             print('Usage: mastodon.py verify')
+            print('       mastodon.py status')
             print('       mastodon.py post "your message"')
             sys.exit(2)
-        elif sys.argv[1] == 'verify':
-            verify()
+        elif sys.argv[1] in ('verify', 'status'):
+            status()
         elif sys.argv[1] == 'post':
             post(sys.argv[2])
         elif sys.argv[1] == 'reply':
