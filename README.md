@@ -182,11 +182,11 @@ bash tools/clone-doctor.sh
 bash setup.sh
 ```
 
-`clone-doctor.sh` prints the first-boot diagnostics, runs smoke checks plus a
-privacy audit, and verifies that the basic checks do not dirty the repo.
-`setup.sh` then installs one selected backend, asks you to authenticate it, runs
-a health check, and only installs the systemd service if you explicitly approve
-that step.
+`clone-doctor.sh` prints the first-boot diagnostics, including backend and
+outreach readiness, runs smoke checks plus a privacy audit, and verifies that
+the basic checks do not dirty the repo. `setup.sh` then installs one selected
+backend, asks you to authenticate it, runs a health check, and only installs the
+systemd service if you explicitly approve that step.
 
 To measure whether attention is turning into propagation:
 

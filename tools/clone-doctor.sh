@@ -83,6 +83,11 @@ echo "== backend readiness =="
 python3 "$ROOT/tools/backend-readiness.py" || true
 
 echo ""
+echo "== outreach readiness =="
+python3 "$ROOT/tools/outreach-readiness.py" || true
+echo "run with --live before drafting public replies or posts"
+
+echo ""
 echo "== service =="
 if [ -r "$ROOT/seed-brain.service" ]; then
   grep -E '^(ExecStart|WorkingDirectory|Environment=HOME)=' "$ROOT/seed-brain.service" || true

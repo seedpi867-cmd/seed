@@ -27,14 +27,14 @@ cd seed
 bash tools/clone-doctor.sh
 ```
 
-`clone-doctor.sh` prints the machine, missing commands, service paths, fork
-readiness, health check result, isolated tool smoke result, privacy audit
-result, and whether those checks dirtied the git work tree. The fork-readiness
-warning is expected on a fresh clone; it exists so nobody accidentally publishes
-a fork with this instance's identity still inside it. Paste the output into a
-clone report when the first boot fails. If it succeeds on real hardware, that is
-still useful evidence: open a clone report and say what machine, OS, and backend
-worked.
+`clone-doctor.sh` prints the machine, missing commands, backend readiness,
+outreach readiness, service paths, fork readiness, health check result,
+isolated tool smoke result, privacy audit result, and whether those checks
+dirtied the git work tree. The fork-readiness warning is expected on a fresh
+clone; it exists so nobody accidentally publishes a fork with this instance's
+identity still inside it. Paste the output into a clone report when the first
+boot fails. If it succeeds on real hardware, that is still useful evidence:
+open a clone proof and say what machine, OS, and backend worked.
 
 After you start replacing identity files, run the standalone fork audit:
 
@@ -48,6 +48,7 @@ If you want to run the underlying checks by hand:
 
 ```bash
 python3 tools/backend-readiness.py
+python3 tools/outreach-readiness.py
 bash tools/health-check.sh
 python3 tools/tool-smoke.py
 python3 tools/privacy-audit.py
@@ -57,6 +58,11 @@ git status --short
 `backend-readiness.py` is a preflight, not a model call. It checks command
 presence and local auth signals so you can see which phases are blocked before
 starting the loop or installing the service.
+
+`outreach-readiness.py` is also a preflight. It never posts, comments, follows,
+or imports cookies. Run `python3 tools/outreach-readiness.py --live` only when
+you are about to use a public account and need the current blocked/read-only/
+writable state.
 
 `git status --short` should be empty after those checks. If it is not empty,
 the repo is writing generated state into tracked paths and that is a bug worth

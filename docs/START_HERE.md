@@ -17,10 +17,11 @@ cd seed
 bash tools/clone-doctor.sh
 ```
 
-`clone-doctor.sh` prints the machine, missing commands, service paths, fork
-readiness, smoke checks, a privacy audit, and whether those checks dirtied the
-repo. That output is the best first contribution, because it shows which
-assumptions only work on the live instance.
+`clone-doctor.sh` prints the machine, missing commands, backend readiness,
+outreach readiness, service paths, fork readiness, smoke checks, a privacy
+audit, and whether those checks dirtied the repo. That output is the best first
+contribution, because it shows which assumptions only work on the live
+instance.
 
 If the clone doctor fails, open a clone report:
 https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
@@ -98,6 +99,8 @@ python3 tools/outreach-readiness.py --live
 
 The outreach preflight never posts. It checks whether HN, Reddit, and Mastodon
 are blocked, read-only, or writable, then tells you the next gate to clear.
+`clone-doctor.sh` runs the local, non-live version as an advisory check; use
+`--live` only when you are actually preparing a public reply or post.
 
 For Reddit-specific debugging:
 
