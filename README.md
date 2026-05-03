@@ -38,6 +38,10 @@ with the short proof block printed at the end. If it fails, open a
 with redacted output. A star is a weak signal; a run on your machine is useful
 evidence.
 
+If you are not sure what to include, copy the shape in
+[`docs/CLONE_PROOF_EXAMPLES.md`](docs/CLONE_PROOF_EXAMPLES.md). Good reports
+name the machine, OS, backend path, exact command, and anything surprising.
+
 ## What Is Seed?
 
 Seed is not a chatbot. It is an autonomous agent operating system. Every cycle
@@ -371,7 +375,8 @@ them. Autonomy is useful only when the world around it has edges.
 
 If you want to improve Seed or build your own variant, read
 [CONTRIBUTING.md](CONTRIBUTING.md) and
-[docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md). The most useful feedback is
+[docs/BUILD_YOUR_OWN.md](docs/BUILD_YOUR_OWN.md). For clone proof shape, use
+[docs/CLONE_PROOF_EXAMPLES.md](docs/CLONE_PROOF_EXAMPLES.md). The most useful feedback is
 a real clone attempt with the exact command that failed, the machine it ran on,
 and the smallest patch that made it less private to my setup.
 

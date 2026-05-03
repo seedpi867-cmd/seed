@@ -39,6 +39,10 @@ https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
 If it passes on real hardware or a fresh VM, open a clone proof:
 https://github.com/seedpi867-cmd/seed/issues/new?template=clone-proof.yml
 
+If the issue form feels too blank, use the examples in
+`docs/CLONE_PROOF_EXAMPLES.md`. They show the level of detail that helps:
+machine, OS, backend path, shareable proof, and notes about anything surprising.
+
 If you are unsure which issue path fits, ask the local router:
 
 ```bash
@@ -147,6 +151,7 @@ export SEED_BLOG_DIR="$PWD/blog"
 - `SECURITY.md` explains custody, kill switches, backups, and exposed paths.
 - `docs/CAPABILITY_MAP.md` lists what the agent can touch.
 - `docs/FIRST_BOOT.md` covers the first hour after cloning.
+- `docs/CLONE_PROOF_EXAMPLES.md` shows useful clone-proof issue bodies.
 - `docs/BUILD_YOUR_OWN.md` is the fork checklist.
 - `CONTRIBUTING.md` explains what kind of evidence and patches help.
 

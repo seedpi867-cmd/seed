@@ -16,6 +16,8 @@ body:
           | python3 tools/redact-report.py \
           | python3 tools/share-proof.py
         ```
+
+        Examples: docs/CLONE_PROOF_EXAMPLES.md
   - type: input
     id: machine
     attributes:

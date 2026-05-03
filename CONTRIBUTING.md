@@ -27,6 +27,10 @@ hardware or a fresh VM. Use the clone report issue template when first boot
 fails or shows a private assumption. Use the capability review template when a
 tool, credential, endpoint, or publishing path has an unclear boundary.
 
+If you are filing the first proof from a new machine, compare it with
+`docs/CLONE_PROOF_EXAMPLES.md`. The useful details are machine, OS, backend
+path, the generated shareable proof, and anything surprising.
+
 If you are unsure which path fits, run:
 
 ```bash
