@@ -242,7 +242,10 @@ It also names the current propagation bottleneck, so a maintainer can see
 whether the gap is attention, repo click-through, GitHub intent, independent
 run evidence, or hardware/backend diversity. Add `--outreach-live` when you
 are deciding between a social reply and a durable repo/site action; it folds in
-the same read-only outreach preflight without posting anything.
+the same read-only outreach preflight without posting anything. The final
+`Maintainer next action` section turns those signals into a concrete choice:
+social reply, site CTA repair, clone-proof request, failure fix, or hardware
+diversity ask.
 
 To see which backend-backed phases can actually run from the current shell:
 

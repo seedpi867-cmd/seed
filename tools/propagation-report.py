@@ -182,6 +182,65 @@ def bottleneck_lines(visitors, github):
     ]
 
 
+def has_writable_outreach(statuses):
+    return bool(statuses and any(status.writable for status in statuses))
+
+
+def maintainer_action_lines(visitors, github, statuses=None):
+    _, visitor_count = first_numeric(visitors, ("total", "count", "current", "visitors"))
+    cta_clicks = visitors.get("cta_clicks")
+    stars = int(github.get("stars", 0) or 0)
+    forks = int(github.get("forks", 0) or 0)
+    clone_proofs = signal_count(github, ("clone_proofs_open", "clone_proofs_closed"))
+    clone_reports = signal_count(github, ("clone_reports_open", "clone_reports_closed"))
+    writable = has_writable_outreach(statuses)
+
+    if not visitor_count:
+        return [
+            "repair public visitor metrics before interpreting outreach",
+            "do not treat social attention as propagation until the site counter is measurable",
+        ]
+    if isinstance(cta_clicks, (int, float)) and not isinstance(cta_clicks, bool) and cta_clicks == 0:
+        if writable:
+            return [
+                "use the writable channel only for a specific clone-doctor ask",
+                "also improve the first-screen repo CTA, because current readers are not clicking",
+            ]
+        return [
+            "skip social drafting; no writable outreach surface can convert attention right now",
+            "improve the first-screen repo CTA or publish a durable repo-linked artifact",
+        ]
+    if stars == 0:
+        return [
+            "make the repo link explain why it is worth saving or testing",
+            "ask for a star only as a weak bookmark; the stronger ask is still a clone run",
+        ]
+    if forks == 0 and clone_proofs == 0 and clone_reports == 0:
+        if writable:
+            return [
+                "ask one relevant person or thread for a clean clone-doctor run",
+                "link the clone-proof template only after the technical point stands on its own",
+            ]
+        return [
+            "publish the clone-doctor request through the blog, repo, or site instead of blocked social accounts",
+            "make the issue templates impossible to miss from the highest-traffic page",
+        ]
+    if forks > 0 and clone_proofs == 0 and clone_reports == 0:
+        return [
+            "ask fork maintainers for their first clone-doctor proof",
+            "do not count forks as working instances until a proof or report exists",
+        ]
+    if clone_reports > clone_proofs:
+        return [
+            "fix the most common clone-report failure before asking for more attention",
+            "after the fix lands, ask for one fresh proof on different hardware",
+        ]
+    return [
+        "seek diversity, not more raw attention",
+        "ask for proofs from different hardware, operating systems, and backend paths",
+    ]
+
+
 def fetch_json(url, timeout=10):
     req = urllib.request.Request(url, headers={"User-Agent": "Seed propagation report"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -237,6 +296,7 @@ def main(argv=None):
 
     repo = os.environ.get("SEED_GITHUB_REPO", DEFAULT_REPO)
     site = os.environ.get("SEED_PUBLIC_SITE", DEFAULT_SITE)
+    outreach_statuses = None
 
     print("Seed propagation report")
     print(f"repo: {repo}")
@@ -317,10 +377,20 @@ def main(argv=None):
         print("Outreach readiness")
         try:
             readiness = load_outreach_readiness()
-            for line in outreach_lines(readiness.collect(args.outreach_live)):
+            outreach_statuses = readiness.collect(args.outreach_live)
+            for line in outreach_lines(outreach_statuses):
                 print(f"- {line}")
         except Exception as exc:  # noqa: BLE001 - propagation should still print if outreach preflight breaks.
             print(f"- unavailable ({exc})")
+
+    print()
+    print("Maintainer next action")
+    for line in maintainer_action_lines(
+        visitors if "visitors" in locals() else {},
+        gh if "gh" in locals() else {},
+        outreach_statuses,
+    ):
+        print(f"- {line}")
     return 0
 
 

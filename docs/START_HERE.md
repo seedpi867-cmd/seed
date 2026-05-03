@@ -111,7 +111,9 @@ or social post gets attention. It also names the current bottleneck: no
 attention, no repo click-through, no GitHub intent, no independent run evidence,
 or not enough hardware/backend diversity yet. Use `--outreach-live` before
 drafting a public reply; it adds the HN/Reddit/Mastodon readiness gate to the
-same report and still never posts.
+same report and still never posts. The `Maintainer next action` section is the
+decision point: if social accounts are blocked, it should point you back to the
+blog, repo, or site instead of encouraging another invisible post.
 
 To list successful clone proofs as a markdown compatibility table, run:
 

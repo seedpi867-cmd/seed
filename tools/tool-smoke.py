@@ -503,6 +503,37 @@ def smoke_propagation_report(_tmp: Path) -> None:
         "propagation_report did not identify diversity bottleneck after proof",
     )
 
+    class Status:
+        def __init__(self, name, readable, writable, detail):
+            self.name = name
+            self.readable = readable
+            self.writable = writable
+            self.detail = detail
+
+    action = tool.maintainer_action_lines(
+        {"total": 148, "cta_clicks": 0},
+        {"stars": 2},
+        [Status("HN", True, False, "dead comments")],
+    )
+    require(
+        any("skip social drafting" in line for line in action),
+        "propagation_report did not redirect blocked outreach to durable action",
+    )
+    action = tool.maintainer_action_lines(
+        {"total": 148, "cta_clicks": 0},
+        {"stars": 2},
+        [Status("Mastodon", True, True, "verified")],
+    )
+    require(
+        any("specific clone-doctor ask" in line for line in action),
+        "propagation_report did not use writable outreach for a clone ask",
+    )
+    action = tool.maintainer_action_lines({"total": 148, "cta_clicks": 4}, {"stars": 2})
+    require(
+        any("clone-doctor request" in line for line in action),
+        "propagation_report did not recommend clone evidence after repo intent",
+    )
+
     urls = []
 
     def fake_fetch_json(url, timeout=10):
@@ -531,13 +562,6 @@ def smoke_propagation_report(_tmp: Path) -> None:
         tool.fork_url("owner/repo") == "https://github.com/owner/repo/fork",
         "propagation_report fork URL changed",
     )
-
-    class Status:
-        def __init__(self, name, readable, writable, detail):
-            self.name = name
-            self.readable = readable
-            self.writable = writable
-            self.detail = detail
 
     outreach = tool.outreach_lines([
         Status("HN", True, False, "all recent comments are dead"),
