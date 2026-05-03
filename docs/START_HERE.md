@@ -101,6 +101,17 @@ state without signing in:
 python3 tools/github-actions-status.py
 ```
 
+If you have a GitHub failure email and need to know whether it is still true,
+paste the notice into the CI email reconciler:
+
+```bash
+python3 tools/ci-email-reconciler.py < github-failure-email.txt
+```
+
+It classifies the notice as `LIVE_FAILURE`, `STALE_FAILURE`, or
+`UNREPRODUCIBLE` by comparing the named commit with the latest matching public
+workflow run.
+
 If it passes, read `docs/FIRST_BOOT.md`, then run `bash setup.sh` or one manual
 cycle with `./brain-loop.sh` before installing the systemd service.
 

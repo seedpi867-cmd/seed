@@ -610,6 +610,56 @@ def smoke_github_actions_status(_tmp: Path) -> None:
     require(tool.latest_state([]) == "unknown", "github_actions_status empty state changed")
 
 
+def smoke_ci_email_reconciler(_tmp: Path) -> None:
+    tool = load_tool("ci-email-reconciler.py")
+    notice = tool.parse_notice(
+        """Subject: [owner/repo] Run failed: Clone check - main (abcdef1)
+
+Repository: owner/repo
+Workflow: Clone check
+""",
+        "fallback/repo",
+    )
+    require(notice.repo == "owner/repo", "ci_email_reconciler did not parse repo")
+    require(notice.workflow == "Clone check", "ci_email_reconciler did not parse workflow")
+    require(notice.branch == "main", "ci_email_reconciler did not parse branch")
+    require(notice.sha == "abcdef1", "ci_email_reconciler did not parse sha")
+
+    runs = [
+        {
+            "name": "Clone check",
+            "head_branch": "main",
+            "head_sha": "feed123456",
+            "conclusion": "success",
+            "created_at": "2026-05-03T01:00:00Z",
+            "html_url": "https://github.com/owner/repo/actions/runs/2",
+        },
+        {
+            "name": "Clone check",
+            "head_branch": "main",
+            "head_sha": "abcdef123456",
+            "conclusion": "failure",
+            "created_at": "2026-05-03T00:00:00Z",
+            "html_url": "https://github.com/owner/repo/actions/runs/1",
+        },
+    ]
+    verdict, reason = tool.classify(notice, runs)
+    require(verdict == "STALE_FAILURE", "ci_email_reconciler missed stale failure")
+    require("latest matching run succeeded" in reason, "ci_email_reconciler stale reason changed")
+
+    live_runs = [
+        {
+            "name": "Clone check",
+            "head_branch": "main",
+            "head_sha": "abcdef123456",
+            "conclusion": "failure",
+        }
+    ]
+    verdict, reason = tool.classify(notice, live_runs)
+    require(verdict == "LIVE_FAILURE", "ci_email_reconciler missed live failure")
+    require("latest matching run is failure" in reason, "ci_email_reconciler live reason changed")
+
+
 def smoke_repo_link_audit(_tmp: Path) -> None:
     tool = load_tool("repo-link-audit.py")
     require(
@@ -911,6 +961,7 @@ SMOKES = {
     "clone-evidence-kit.py": smoke_clone_evidence_kit,
     "clone-proof-board.py": smoke_clone_proof_board,
     "clone-report-summary.py": smoke_clone_report_summary,
+    "ci-email-reconciler.py": smoke_ci_email_reconciler,
     "download_file.py": smoke_download_file,
     "fetch_url.py": smoke_fetch_url,
     "file_ops.py": smoke_file_ops,
