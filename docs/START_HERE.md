@@ -25,6 +25,13 @@ assumptions only work on the live instance.
 If the clone doctor fails, open a clone report:
 https://github.com/seedpi867-cmd/seed/issues/new?template=clone-report.yml
 
+If GitHub shows an old clone-check failure, check the current public workflow
+state without signing in:
+
+```bash
+python3 tools/github-actions-status.py
+```
+
 If it passes, read `docs/FIRST_BOOT.md`, then run `bash setup.sh` or one manual
 cycle with `./brain-loop.sh` before installing the systemd service.
 

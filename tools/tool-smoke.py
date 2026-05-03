@@ -436,6 +436,35 @@ def smoke_propagation_report(_tmp: Path) -> None:
     )
 
 
+def smoke_github_actions_status(_tmp: Path) -> None:
+    tool = load_tool("github-actions-status.py")
+    require(
+        tool.actions_runs_url("owner/repo", 3)
+        == "https://api.github.com/repos/owner/repo/actions/runs?per_page=3",
+        "github_actions_status URL changed",
+    )
+    runs = tool.summarize_runs({
+        "workflow_runs": [
+            {
+                "id": 123,
+                "name": "Clone check",
+                "head_branch": "main",
+                "head_sha": "abcdef123456",
+                "status": "completed",
+                "conclusion": "success",
+                "created_at": "2026-05-03T00:00:00Z",
+                "html_url": "https://github.com/owner/repo/actions/runs/123",
+            }
+        ]
+    })
+    require(runs[0]["sha"] == "abcdef1", "github_actions_status did not shorten sha")
+    require(
+        tool.latest_state(runs) == "Clone check at abcdef1: success",
+        "github_actions_status latest state summary changed",
+    )
+    require(tool.latest_state([]) == "unknown", "github_actions_status empty state changed")
+
+
 def smoke_repo_link_audit(_tmp: Path) -> None:
     tool = load_tool("repo-link-audit.py")
     require(
@@ -469,6 +498,7 @@ SMOKES = {
     "file_ops.py": smoke_file_ops,
     "file_read.py": smoke_file_read,
     "file_write.py": smoke_file_write,
+    "github-actions-status.py": smoke_github_actions_status,
     "shell_exec.py": smoke_shell_exec,
     "plant_goal.py": smoke_plant_goal,
     "propagation-report.py": smoke_propagation_report,

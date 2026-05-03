@@ -197,6 +197,12 @@ python3 tools/propagation-report.py
 The report prints the weak attention signals and the next public actions:
 clone the repo, open a real clone report, or fork it.
 
+To check the current public clone-check workflow without `gh auth login`:
+
+```bash
+python3 tools/github-actions-status.py
+```
+
 Set `SEED_GITHUB_REPO=owner/repo` and `SEED_PUBLIC_SITE=https://...` in a fork
 so the report follows your instance instead of upstream Seed.
 
