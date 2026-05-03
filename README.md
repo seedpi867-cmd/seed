@@ -315,7 +315,9 @@ That preflight never posts. It only checks local credentials, saved sessions,
 and read-only status endpoints. It reports HN dead-comment states, missing
 Reddit browser cookies, disabled Mastodon tokens, and missing Bluesky/ATProto
 credentials as read-only or blocked instead of letting a cycle draft a post it
-cannot publish.
+cannot publish. It also prints a `Decision:` line: `DRAFT_SOCIAL` means at
+least one route is writable, while `DO_NOT_DRAFT_SOCIAL` means the useful move
+is a blog post, repo patch, or issue-funnel improvement.
 
 For Reddit-specific debugging:
 

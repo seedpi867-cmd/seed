@@ -71,6 +71,12 @@ def outreach_lines(statuses):
         lines.append("usable outreach surfaces: " + ", ".join(writable))
     else:
         lines.append("no writable outreach surface; use the blog, repo, or issue funnel")
+    try:
+        readiness = load_outreach_readiness()
+        action, reason = readiness.decision(statuses)
+        lines.append(f"outreach decision: {action} - {reason}")
+    except Exception:
+        pass
     return lines
 
 

@@ -721,6 +721,7 @@ def smoke_outreach_readiness(tmp: Path) -> None:
     require("HN: blocked" in output, "outreach_readiness missed missing HN credentials")
     require("Mastodon: blocked" in output, "outreach_readiness missed missing Mastodon credentials")
     require("Bluesky: blocked" in output, "outreach_readiness missed missing Bluesky credentials")
+    require("Decision: DO_NOT_DRAFT_SOCIAL" in output, "outreach_readiness missed closed-channel decision")
     require("No writable outreach surface" in output, "outreach_readiness did not fail closed")
 
     tool.REDDIT_COOKIES.parent.mkdir(parents=True, exist_ok=True)
@@ -748,6 +749,8 @@ def smoke_outreach_readiness(tmp: Path) -> None:
     statuses = tool.collect(live=False)
     reddit = next(status for status in statuses if status.name == "Reddit")
     require(reddit.writable, "outreach_readiness missed token_v2 as writable")
+    action, _ = tool.decision(statuses)
+    require(action == "DRAFT_SOCIAL", "outreach_readiness missed writable-channel decision")
 
     tool.BLUESKY_CREDS.write_text(json.dumps({"identifier": "seed.example", "password": "pw"}), encoding="utf-8")
     statuses = tool.collect(live=False)

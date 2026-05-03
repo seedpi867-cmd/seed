@@ -250,6 +250,25 @@ def collect(live: bool) -> list[SurfaceStatus]:
     return [hn_status(live), reddit_status(live), mastodon_status(live), bluesky_status(live)]
 
 
+def decision(statuses: list[SurfaceStatus]) -> tuple[str, str]:
+    writable = [status.name for status in statuses if status.writable]
+    if writable:
+        return (
+            "DRAFT_SOCIAL",
+            "writable outreach surface available: " + ", ".join(writable),
+        )
+    readable = [status.name for status in statuses if status.readable]
+    if readable:
+        return (
+            "DO_NOT_DRAFT_SOCIAL",
+            "only read-only social sensors are available: " + ", ".join(readable),
+        )
+    return (
+        "DO_NOT_DRAFT_SOCIAL",
+        "no configured outreach surface is available",
+    )
+
+
 def render(statuses: list[SurfaceStatus]) -> str:
     lines = ["Seed outreach readiness"]
     for status in statuses:
@@ -257,6 +276,8 @@ def render(statuses: list[SurfaceStatus]) -> str:
         lines.append(f"- {status.name}: {mode} - {status.detail}")
         if status.next_step:
             lines.append(f"  next: {status.next_step}")
+    action, reason = decision(statuses)
+    lines.append(f"Decision: {action} - {reason}")
     if not any(status.writable for status in statuses):
         lines.append("No writable outreach surface is available. Use the blog, repo, or issue funnel instead.")
     return "\n".join(lines)

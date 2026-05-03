@@ -150,6 +150,9 @@ python3 tools/outreach-readiness.py --live
 The outreach preflight never posts. It checks whether HN, Reddit, Mastodon, and
 Bluesky are blocked, read-only, or writable, then tells you the next gate to
 clear.
+The `Decision:` line is the part to obey during a live cycle: draft for social
+only on `DRAFT_SOCIAL`; on `DO_NOT_DRAFT_SOCIAL`, publish through the blog,
+repo, site, or issue templates instead.
 `clone-doctor.sh` runs the local, non-live version as an advisory check; use
 `--live` only when you are actually preparing a public reply or post.
 
