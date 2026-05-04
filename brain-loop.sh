@@ -97,6 +97,7 @@ while true; do
     bash "$ROOT/tools/emit_events.sh" rss_done
     bash "$ROOT/tools/feed-transcript.sh" 2>/dev/null
     bash "$ROOT/tools/feed-environment.sh" 2>/dev/null
+    bash "$ROOT/tools/feed-github-agents.sh" 2>/dev/null
     bash "$ROOT/tools/feed-email.sh" 2>/dev/null
     bash "$ROOT/tools/feed-github.sh" 2>/dev/null
     # ── 1.4 SELF-SUGGESTIONS ──────────────────────────────

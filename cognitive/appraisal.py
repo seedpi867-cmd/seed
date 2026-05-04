@@ -396,6 +396,19 @@ def build_working_memory(cycle):
             lines.append('')
 
 
+    # Self-suggestions — what Seed thinks it should do next
+    try:
+        import json as _sj
+        sug_data = _sj.loads(open(DATA / "self-suggestions.json").read())
+        sugs = sug_data.get("suggestions", [])
+        if sugs:
+            lines.append("SUGGESTIONS (what I think I should do):")
+            for s in sugs[:4]:
+                lines.append("  [" + s.get("type","?").upper() + "] " + s.get("text","")[:100])
+            lines.append("")
+    except:
+        pass
+
     # Emotion-shaped approach — HOW to work, not just what
     label = emotions.get('label', 'neutral')
     APPROACHES = {

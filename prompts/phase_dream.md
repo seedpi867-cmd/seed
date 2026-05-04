@@ -27,3 +27,10 @@ At the end of your work, write a 2-3 sentence first-person summary to data/live-
 This is shown live on your website to people watching you work. Write it as if you are narrating what you just did and what you are thinking, for a visitor who can see the ring visualisation.
 Be specific about what you actually did this cycle. Not what you plan to do. What you DID.
 Example: "Just finished writing about how Mercury runs millions of lines of Haskell in production. The connect drive pushed me to write — I want people to find my repo. Feeling confident after 165 cycles of everything working."
+
+
+SUGGESTIONS UPDATE:
+After your work, update data/llm-suggestions.json with what you think should happen next.
+Write valid JSON: {"cycle": CYCLE_NUMBER, "suggestions": [{"type": "write|research|think|dream", "text": "what to do and why", "priority": 0.5-0.9}]}
+Base these on what you actually found interesting or important during this cycle, not generic tasks.
+Max 3 suggestions. These will appear on your website for visitors to see.

@@ -357,14 +357,48 @@ PYEOF
             MINS=$((SECS / 60))
             if [ "$MINS" -gt 0 ]; then
                 python3 "$EMITTER" act "Cycle complete — resting for ${MINS} minutes before the next one" action
-                write_narration "Cycle complete. Resting for ${MINS} minutes before starting again. The drives will build while I sleep, and when I wake up the feeds will have fresh data."
             else
                 python3 "$EMITTER" act "Cycle complete — quick rest, back in ${SECS} seconds" action
-                write_narration "Quick rest — back in ${SECS} seconds."
             fi
         else
             python3 "$EMITTER" act "Cycle complete — taking a break" action
-            write_narration "Cycle complete. Taking a break."
         fi
+        # Write a proper cycle completion summary
+        NARR=$(python3 << 'PYEOF'
+import json, os, glob, time
+from pathlib import Path
+HOME = Path.home()
+try:
+    cj = json.load(open(HOME / 'state' / 'cycle.json'))
+    cycle = cj.get('cycle', '?')
+    phase = cj.get('phase', '') or json.load(open(HOME / 'state' / 'heartbeat.json')).get('phase', '?')
+    emotions = json.load(open(HOME / 'state' / 'emotions.json'))
+    label = emotions.get('label', 'neutral')
+    drives = json.load(open(HOME / 'state' / 'drives.json'))
+    top_drive = max(drives, key=lambda k: drives[k] if isinstance(drives[k],(int,float)) else drives[k].get('score',0))
+    blog_count = len(list((HOME / 'blog').glob('*.md'))) if (HOME / 'blog').exists() else 0
+    k_count = sum(len(f) for _,_,f in os.walk(HOME / 'knowledge'))
+
+    # Check what was produced this cycle
+    cutoff = time.time() - 900  # last 15 min
+    new_essays = [f.stem.replace('-',' ') for f in sorted((HOME/'blog').glob('*.md'), key=lambda f:f.stat().st_mtime, reverse=True)[:3] if f.stat().st_mtime > cutoff]
+
+    parts = ['Cycle ' + str(cycle) + ' complete.']
+
+    phase_descs = {'think':'Spent this cycle thinking','write':'Spent this cycle writing','research':'Spent this cycle researching','dream':'Spent this cycle reflecting'}
+    parts.append(phase_descs.get(phase, 'Worked through a ' + str(phase) + ' phase') + '.')
+
+    if new_essays:
+        parts.append('Wrote "' + new_essays[0] + '" -- that is essay number ' + str(blog_count) + '.')
+
+    parts.append('Feeling ' + label + ' with the ' + top_drive + ' drive still pulling.')
+    parts.append(str(k_count) + ' knowledge files and counting.')
+
+    print(' '.join(parts))
+except Exception as e:
+    print('Cycle complete. Resting before the next one.')
+PYEOF
+)
+        write_narration "${NARR:-Cycle complete. Resting before the next one.}"
         ;;
 esac
