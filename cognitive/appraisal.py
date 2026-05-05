@@ -43,7 +43,7 @@ def select_phase(drives, emotions, cycle):
     elif cycle - last_research >= 10:
         phase = 'research'
     # Force dream if it has been 12+ cycles
-    elif cycle - last_dream >= 12:
+    elif cycle - last_dream >= 8:
         phase = 'dream'
     else:
         # DRIVE-BASED selection — top drive picks the phase

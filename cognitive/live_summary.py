@@ -111,12 +111,14 @@ def write_summary():
     knowledge = get_knowledge_count()
     top_drive = drives[0] if drives else ("unknown", 0)
 
-    # Check if the LLM already wrote a narration this cycle
+    # Check if the file was already written this cycle — don't overwrite
     try:
         existing = SUMMARY_FILE.read_text().strip()
-        age = time.time() - os.path.getmtime(SUMMARY_FILE)
-        if age < 180 and len(existing) > 50:
-            return existing
+        import json as _j
+        cycle_start = _j.loads(open(HOME / "state" / "cycle.json").read()).get("started_at", 0)
+        file_mtime = os.path.getmtime(SUMMARY_FILE)
+        if file_mtime > cycle_start and len(existing) > 50:
+            return existing  # already written this cycle by emit_events or LLM
     except:
         pass
 

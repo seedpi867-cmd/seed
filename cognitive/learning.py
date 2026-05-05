@@ -129,6 +129,17 @@ def detect_outcomes(log_path, cycle):
     except:
         pass
 
+    # 4.5 AGENT SHIPPED — check if a new agent dir was created
+    try:
+        import subprocess
+        agent_dirs = [d for d in HOME.iterdir() if d.is_dir() and (d.name.endswith('-agent') or d.name == 'receipt-auditor') and d / '.git' in list(d.iterdir())]
+        for ad in agent_dirs:
+            result = subprocess.run(['git', 'log', '--oneline', '-1', '--since=15 minutes ago'], capture_output=True, text=True, timeout=5, cwd=str(ad))
+            if result.stdout.strip():
+                events.append({'action': 'agent_shipped', 'source': 'git', 'dir': ad.name})
+                break
+    except: pass
+
     # 5. INNER VOICE — check if inner-voice.md was recently modified
     iv = DATA / 'inner-voice.md'
     if iv.exists() and os.path.getmtime(iv) > cutoff:
@@ -187,6 +198,7 @@ def update_from_outcomes(events):
     return drives
 
 def write_inner_voice(events, drives, emotions):
+    return  # disabled — LLM writes inner voice during its cycle
     """Generate inner voice entry from current state — no LLM needed"""
     label = emotions.get('label', 'neutral')
     top = max(drives.items(), key=lambda x: x[1]) if drives else ('unknown', 0)

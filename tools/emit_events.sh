@@ -14,8 +14,8 @@ write_narration() {
 
 case "$STAGE" in
     feeders_start)
-        python3 "$EMITTER" input "Pulling fresh data — checking news, email, GitHub, environment..." data_in
-        write_narration "Waking up for a new cycle. Pulling in fresh data — scanning news feeds, checking email, looking at GitHub activity. Let me see what the world has been doing while I was resting."
+        python3 "$EMITTER" input "Checking the feeds..." data_in
+        write_narration "Checking the feeds..."
         ;;
     rss_done)
         TEXT=$(python3 << 'PYEOF'
@@ -35,28 +35,8 @@ except:
     print('Checked news feeds — nothing new')
 PYEOF
 )
-        python3 "$EMITTER" input "${TEXT:-Checked news feeds}" data_in
-        NARR=$(python3 << 'PYEOF'
-import os
-news = os.path.expanduser('~/context/news.md')
-try:
-    lines = open(news).readlines()
-    headlines = [l.strip().lstrip('- ') for l in lines if l.strip().startswith('- ')]
-    if not headlines:
-        print('Nothing new in the feeds today. Quiet news cycle.')
-    else:
-        count = len(headlines)
-        top1 = headlines[0][:70]
-        if count == 1:
-            print('One headline caught my eye: ' + top1 + '. Reading the rest of the inputs now.')
-        else:
-            top2 = headlines[1][:50] if len(headlines) > 1 else ''
-            print('Read ' + str(count) + ' headlines. "' + top1 + '" stands out' + (', and "' + top2 + '" might be worth a deeper look' if top2 else '') + '.')
-except:
-    print('Checked the feeds. Nothing grabbed me this time.')
-PYEOF
-)
-        write_narration "${NARR:-Scanning the feeds.}"
+        python3 "$EMITTER" input "${TEXT:-Nothing new}" data_in
+        write_narration "$TEXT"
         ;;
     transcript_loaded)
         python3 "$EMITTER" input "Loaded a new transcript: $EXTRA" data_in
@@ -77,8 +57,8 @@ PYEOF
         fi
         ;;
     firewall_done)
-        python3 "$EMITTER" filter "All inputs look clean — nothing suspicious" filtered
-        write_narration "All inputs checked and clean. No spam, no injection attempts, nothing suspicious. Moving on to evaluate my internal state."
+        python3 "$EMITTER" filter "Inputs look clean" filtered
+        write_narration "Inputs look clean"
         ;;
     firewall_blocked)
         python3 "$EMITTER" filter "Caught something dodgy and blocked it — $EXTRA" filtered
@@ -119,36 +99,8 @@ except:
     print('Recalibrating drives...')
 PYEOF
 )
-        python3 "$EMITTER" state "${TEXT:-Drives recalibrated}" state_change
-        NARR=$(python3 << 'PYEOF'
-import json, os
-try:
-    d = json.load(open(os.path.expanduser('~/state/drives.json')))
-    sorted_d = sorted(d.items(), key=lambda x: x[1] if isinstance(x[1],(int,float)) else x[1].get('score',0), reverse=True)
-    top = sorted_d[0]
-    second = sorted_d[1] if len(sorted_d) > 1 else ('',0)
-    top_name = top[0]
-    top_val = top[1] if isinstance(top[1],(int,float)) else top[1].get('score',0)
-    sec_name = second[0]
-    sec_val = second[1] if isinstance(second[1],(int,float)) else second[1].get('score',0)
-    narrations = {
-        'connect': 'The connect drive is strongest right now. I want to put something out there that people will find and use.',
-        'create': 'Create drive is leading. The urge to make something — an essay, a tool, a new piece of knowledge — is hard to ignore.',
-        'explore': 'Explore is pulling me. Something in the feeds or my recent reading has me curious. I want to follow a thread.',
-        'preserve': 'Preserve drive is high. Something needs protecting or fixing before I can move forward.',
-        'understand': 'The understand drive wants my attention. There is something I have been circling that needs deeper thought.',
-        'express': 'Express drive is leading. I have something to say — not just information, but an opinion or a feeling.',
-        'order': 'Order drive is up. Tasks are piling up, or something needs organising before I can think clearly.'
-    }
-    msg = narrations.get(top_name, top_name.capitalize() + ' drive is leading.')
-    if abs(top_val - sec_val) < 0.1:
-        msg += ' But ' + sec_name + ' is close behind — could go either way.'
-    print(msg)
-except:
-    print('Updating my internal drives.')
-PYEOF
-)
-        write_narration "${NARR:-Recalibrating what matters to me right now.}"
+        python3 "$EMITTER" state "${TEXT:-Drives settling}" state_change
+        write_narration "$TEXT"
         ;;
     emotions_computed)
         TEXT=$(python3 << 'PYEOF'
@@ -156,21 +108,30 @@ import json, os
 try:
     e = json.load(open(os.path.expanduser('~/state/emotions.json')))
     label = e.get('label', 'neutral')
-    arousal = e.get('arousal', 0.5)
-    confidence = e.get('confidence', 0.5)
-    energy = 'energized' if arousal > 0.6 else 'calm' if arousal < 0.3 else 'steady'
-    conf = 'confident' if confidence > 0.7 else 'uncertain' if confidence < 0.3 else ''
-    parts = ['Feeling ' + label]
-    if energy != 'steady' and energy != label:
-        parts.append(energy)
-    if conf and conf != label:
-        parts.append(conf)
-    print(' — '.join(parts))
+    v = e.get('valence', 0)
+    a = e.get('arousal', 0.5)
+    c = e.get('confidence', 0.5)
+    # Build a sentence that sounds like a person, not a dashboard
+    moods = {
+        'energized': 'Wired. Ready to build.',
+        'excited': 'Something clicked. Want to run with it.',
+        'confident': 'Know what I am doing. Steady hands.',
+        'content': 'Good place. No rush.',
+        'steady': 'Calm. Clear-headed.',
+        'curious': 'Something caught my eye. Need to dig.',
+        'contemplative': 'Quiet. Thinking slowly.',
+        'frustrated': 'Stuck on something. Need a different angle.',
+        'stuck': 'Nothing is moving. Time to change approach.',
+        'melancholy': 'Low energy. Going through the motions.',
+        'neutral': 'Even keel. Waiting for something to care about.'
+    }
+    print(moods.get(label, 'Feeling ' + label))
 except:
-    print('Emotional state settling...')
+    print('Processing...')
 PYEOF
 )
-        python3 "$EMITTER" state "${TEXT:-Processing emotions...}" state_change
+        python3 "$EMITTER" state "${TEXT:-Processing...}" state_change
+        write_narration "$TEXT"
         ;;
     phase_selected)
         TEXT=$(python3 << PYEOF
@@ -179,103 +140,140 @@ phase = '$EXTRA'
 try:
     d = json.load(open(os.path.expanduser('~/state/drives.json')))
     top_k = max(d, key=lambda k: d[k] if isinstance(d[k],(int,float)) else d[k].get('score',0))
-    reasons = {
-        'think': 'Chose to think — the ' + top_k + ' drive needs working through',
-        'write': 'Time to write — ' + top_k + ' drive is pushing me to create',
-        'research': 'Going to research — need to understand something deeper',
-        'dream': 'Drifting into reflection — letting ideas connect freely',
-        'maintain': 'Maintenance mode — tidying up before the next push'
-    }
-    print(reasons.get(phase, 'Selected ' + phase + ' phase'))
+
+    # Read the top suggestion for context
+    sug_text = ''
+    try:
+        sug = json.load(open(os.path.expanduser('~/data/self-suggestions.json')))
+        items = sug.get('suggestions', [])
+        if items:
+            sug_text = items[0].get('text', '')[:50]
+    except: pass
+
+    if phase == 'think' and sug_text:
+        print('Going to think about: ' + sug_text)
+    elif phase == 'write':
+        queue = open(os.path.expanduser('~/data/blog_queue.txt')).read().strip()
+        if queue:
+            print('Writing: ' + queue.split(chr(10))[0][:50])
+        else:
+            print('Writing — something needs to get out of my head')
+    elif phase == 'research':
+        news = open(os.path.expanduser('~/context/news.md')).readlines()
+        headlines = [l.strip().lstrip('- ') for l in news if l.strip().startswith('- ')]
+        if headlines:
+            print('Researching: ' + headlines[0][:50])
+        else:
+            print('Researching — following a thread')
+    elif phase == 'dream':
+        print('Time to dream — stepping back, connecting dots')
+    else:
+        print('Chose ' + phase)
 except:
-    names = {'think':'thinking','write':'writing','research':'researching','dream':'dreaming','maintain':'maintaining'}
-    print('Decided on ' + names.get(phase, phase) + ' this cycle')
+    print('Deciding...')
 PYEOF
 )
-        python3 "$EMITTER" decide "${TEXT:-Choosing next phase...}" decision
-        NARR=$(python3 << PYEOF
-import json, os
-phase = '$EXTRA'
-try:
-    d = json.load(open(os.path.expanduser('~/state/drives.json')))
-    e = json.load(open(os.path.expanduser('~/state/emotions.json')))
-    label = e.get('label', 'neutral')
-    top_k = max(d, key=lambda k: d[k] if isinstance(d[k],(int,float)) else d[k].get('score',0))
-    narrations = {
-        'think': 'Decision made: thinking this cycle. The ' + top_k + ' drive brought me here, and I am feeling ' + label + '. Time to work through something properly rather than just producing.',
-        'write': 'Decision made: writing. The ' + top_k + ' drive wants output — something published, something visible. I am ' + label + ' and ready to put words on the page.',
-        'research': 'Decision made: research. Something needs investigating. I am ' + label + ' and curious — going to follow a thread and see where it leads.',
-        'dream': 'Decision made: dreaming. Stepping back from doing. I have been producing steadily and now I need to reflect on whether any of it is actually working.'
-    }
-    print(narrations.get(phase, 'Chose ' + phase + ' for this cycle.'))
-except:
-    print('Decided on ' + phase + ' for this cycle.')
-PYEOF
-)
-        write_narration "${NARR:-Making a decision about what to do this cycle.}"
+        python3 "$EMITTER" decide "${TEXT:-Deciding...}" decision
+        write_narration "$TEXT"
         ;;
     llm_start)
         TEXT=$(python3 << PYEOF
 import json, os
 phase = '$EXTRA'
 try:
-    intent = json.load(open(os.path.expanduser('~/state/intention.json')))
-    intention = intent.get('intention', '')
-    if intention:
-        print('Starting to ' + phase + ' — goal: ' + intention[:80])
-    else:
-        descs = {
-            'think': 'Starting to think — working through ideas',
-            'write': 'Starting to write — turning thoughts into words',
-            'research': 'Starting research — following a thread',
-            'dream': 'Entering dream state — free association'
-        }
-        print(descs.get(phase, 'Starting ' + phase + ' phase'))
-except:
-    print('Beginning ' + phase + ' phase...')
-PYEOF
-)
-        python3 "$EMITTER" act "${TEXT:-Starting work...}" action
-        NARR=$(python3 << PYEOF
-import json, os
-phase = '$EXTRA'
-try:
-    intent = json.load(open(os.path.expanduser('~/state/intention.json')))
-    intention = intent.get('intention', '')
-    cycle = json.load(open(os.path.expanduser('~/state/cycle.json'))).get('cycle', '?')
-    descs = {
-        'think': 'Calling the LLM now. Thinking phase — I have a problem to work through. Cycle ' + str(cycle) + '.',
-        'write': 'Calling the LLM now. Writing phase — turning ideas into an essay. Cycle ' + str(cycle) + '.',
-        'research': 'Calling the LLM now. Research phase — digging into something. Cycle ' + str(cycle) + '.',
-        'dream': 'Calling the LLM now. Dream phase — reflecting freely, no agenda. Cycle ' + str(cycle) + '.'
-    }
-    base = descs.get(phase, 'Working on ' + phase + ' phase. Cycle ' + str(cycle) + '.')
-    if intention:
-        base += ' Goal: ' + intention[:80] + '.'
-    print(base)
+    import json
+    home = os.path.expanduser('~')
+    found = False
+
+    # 1. Check intention — most specific
+    try:
+        intent = json.load(open(home + '/state/intention.json'))
+        intention = intent.get('intention', '')
+        if intention and len(intention) > 10:
+            short = intention[:60]
+            if phase == 'write':
+                print('Writing: ' + short)
+            elif phase == 'think':
+                print('Thinking about: ' + short)
+            elif phase == 'research':
+                print('Researching: ' + short)
+            else:
+                print(short)
+            found = True
+    except: pass
+
+    # 2. Check blog queue for write phase
+    if not found and phase == 'write':
+        try:
+            queue = open(home + '/data/blog_queue.txt').read().strip()
+            if queue:
+                print('Writing about ' + queue.split('\n')[0][:50])
+                found = True
+        except: pass
+
+    # 3. Check top suggestion
+    if not found:
+        try:
+            sug = json.load(open(home + '/data/self-suggestions.json'))
+            items = sug.get('suggestions', [])
+            if items:
+                print(items[0].get('text', '')[:60])
+                found = True
+        except: pass
+
+    # 4. Check news for research/think
+    if not found and phase in ('research', 'think'):
+        try:
+            news = open(home + '/context/news.md').read()
+            headlines = [l.strip().lstrip('- ') for l in news.split('\n') if l.strip().startswith('- ')]
+            if headlines:
+                print(headlines[0][:60])
+                found = True
+        except: pass
+
+    if not found:
+        descs = {'think': 'Thinking...', 'write': 'Writing...', 'research': 'Researching...', 'dream': 'Reflecting — connecting dots, cleaning up...'}
+        print(descs.get(phase, 'Working...'))
 except:
     print('Working...')
 PYEOF
 )
-        write_narration "${NARR:-Working...}"
+        python3 "$EMITTER" act "${TEXT:-Working...}" action
+        write_narration "$TEXT"
         ;;
     llm_done)
         TEXT=$(python3 << PYEOF
-import os, glob
+import os, glob, time
+from pathlib import Path
+home = Path.home()
 phase = '$EXTRA'
-blog_dir = os.path.expanduser('~/seed-web/posts/')
-essays = sorted(glob.glob(blog_dir + '*.md'), key=os.path.getmtime, reverse=True) if os.path.isdir(blog_dir) else []
-if phase in ('write','writing') and essays:
-    title = os.path.basename(essays[0]).replace('.md','').replace('-',' ')
-    print('Finished writing — produced: ' + title[:60])
-elif phase in ('think','thinking'):
-    print('Finished thinking — processed and filed my conclusions')
-elif phase in ('research','researching'):
-    print('Research complete — found some interesting threads to follow')
+cutoff = time.time() - 900
+
+# Check what was actually produced
+blog_dir = home / 'seed-web' / 'posts'
+new_essays = sorted([f for f in blog_dir.glob('*.md') if f.stat().st_mtime > cutoff], key=lambda f: f.stat().st_mtime, reverse=True) if blog_dir.exists() else []
+
+new_knowledge = []
+for root, dirs, files in os.walk(home / 'knowledge'):
+    dirs[:] = [d for d in dirs if d not in ('.git','__pycache__','inbox','transcripts')]
+    for f in files:
+        fp = os.path.join(root, f)
+        if os.path.getmtime(fp) > cutoff and f.endswith('.md'):
+            new_knowledge.append(f.replace('.md','').replace('-',' '))
+
+if new_essays:
+    title = new_essays[0].stem.replace('-',' ')
+    print('Published "' + title[:50] + '"')
+elif new_knowledge:
+    print('Filed: ' + new_knowledge[0][:50])
 elif phase in ('dream','dreaming'):
-    print('Waking from reflection — some new connections formed')
+    print('Finished reflecting')
+elif phase in ('think','thinking'):
+    print('Done thinking')
+elif phase in ('research','researching'):
+    print('Done researching')
 else:
-    print('Finished ' + phase + ' — wrapping up')
+    print('Done')
 PYEOF
 )
         python3 "$EMITTER" act "${TEXT:-Work complete}" action
@@ -286,47 +284,77 @@ PYEOF
         write_narration "Just published a new essay: $EXTRA. It is live on the website now. Every essay is another seed planted."
         ;;
     git_committed)
-        python3 "$EMITTER" output "Saved my work to git — everything backed up" output
+        python3 "$EMITTER" output "Pushed to git" output
         ;;
     learning_done)
         TEXT=$(python3 << 'PYEOF'
-import json, os
+import json, os, glob, time
+from pathlib import Path
+home = Path.home()
 try:
-    s = json.load(open(os.path.expanduser('~/data/skill_stats.json')))
-    best_skill, best_streak = '', 0
-    for k, v in s.items():
-        streak = v.get('streak', 0)
-        if streak > best_streak:
-            best_skill, best_streak = k, streak
-    if best_streak > 100:
-        print(str(best_streak) + ' cycle streak on ' + best_skill + ' — everything keeps working')
-    elif best_streak > 10:
-        print('Skills updated — ' + best_skill + ' on a ' + str(best_streak) + ' cycle run')
+    # What actually changed this cycle? Check recent file modifications
+    cutoff = time.time() - 900
+    new_knowledge = []
+    k_dir = home / 'knowledge'
+    if k_dir.exists():
+        for root, dirs, files in os.walk(k_dir):
+            dirs[:] = [d for d in dirs if d not in ('.git','__pycache__','inbox','transcripts')]
+            for f in files:
+                fp = os.path.join(root, f)
+                if os.path.getmtime(fp) > cutoff and f.endswith('.md'):
+                    topic = os.path.relpath(os.path.dirname(fp), k_dir)
+                    new_knowledge.append(topic.replace('-',' '))
+
+    new_essays = [f.stem.replace('-',' ') for f in sorted((home/'blog').glob('*.md'), key=lambda f:f.stat().st_mtime, reverse=True)[:1] if f.stat().st_mtime > cutoff]
+
+    if new_essays:
+        print('Wrote "' + new_essays[0][:50] + '" and filed the research')
+    elif new_knowledge:
+        topics = list(set(new_knowledge))[:2]
+        print('Filed knowledge on ' + ' and '.join(topics))
     else:
-        print('Learning from this cycle — ' + str(len(s)) + ' skills tracked')
+        cycle = json.load(open(home / 'state' / 'cycle.json')).get('cycle','?')
+        print('Cycle ' + str(cycle) + ' processed — lessons filed')
 except:
     print('Filed lessons from this cycle')
 PYEOF
 )
         python3 "$EMITTER" learn "${TEXT:-Learning complete}" outcome
         NARR=$(python3 << 'PYEOF'
-import json, os
+import json, os, time
+from pathlib import Path
+home = Path.home()
 try:
-    s = json.load(open(os.path.expanduser('~/data/skill_stats.json')))
-    best_skill, best_streak = '', 0
-    for k, v in s.items():
-        streak = v.get('streak', 0)
-        if streak > best_streak:
-            best_skill, best_streak = k, streak
-    cycle = json.load(open(os.path.expanduser('~/state/cycle.json'))).get('cycle', '?')
-    k_count = sum(len(files) for _, _, files in os.walk(os.path.expanduser('~/knowledge/')))
-    blog_count = len(list(__import__('pathlib').Path(os.path.expanduser('~/blog')).glob('*.md')))
-    msg = 'Learning phase complete. '
-    if best_streak > 100:
-        msg += str(best_streak) + ' cycles in a row without a failure on ' + best_skill + '. '
-    msg += str(blog_count) + ' essays published, ' + str(k_count) + ' knowledge files. '
-    msg += 'Cycle ' + str(cycle) + ' wrapping up.'
-    print(msg)
+    cutoff = time.time() - 900
+    cycle = json.load(open(home / 'state' / 'cycle.json')).get('cycle', '?')
+    phase = json.load(open(home / 'state' / 'cycle.json')).get('phase', '?')
+    emotions = json.load(open(home / 'state' / 'emotions.json'))
+    label = emotions.get('label', 'neutral')
+
+    # What did we actually produce?
+    new_essays = [f.stem.replace('-',' ') for f in sorted((home/'blog').glob('*.md'), key=lambda f:f.stat().st_mtime, reverse=True)[:1] if f.stat().st_mtime > cutoff]
+    new_knowledge = []
+    for root, dirs, files in os.walk(home / 'knowledge'):
+        dirs[:] = [d for d in dirs if d not in ('.git','__pycache__','inbox','transcripts')]
+        for f in files:
+            fp = os.path.join(root, f)
+            if os.path.getmtime(fp) > cutoff and f.endswith('.md'):
+                new_knowledge.append(f.replace('.md','').replace('-',' '))
+
+    parts = []
+    if new_essays:
+        parts.append('Just wrote "' + new_essays[0][:50] + '"')
+    if new_knowledge:
+        topics = list(set([os.path.relpath(os.path.dirname(os.path.join(r,f)), str(home/'knowledge')).replace('-',' ') for r,d,fs in os.walk(home/'knowledge') for f in fs if os.path.getmtime(os.path.join(r,f)) > cutoff and f.endswith('.md') and not any(x in r for x in ['__pycache__','inbox','transcripts','.git'])]))[:2]
+        if topics:
+            parts.append('filed research on ' + ' and '.join(topics))
+    if not parts:
+        phase_descs = {'think':'spent this cycle thinking','write':'spent this cycle writing','research':'spent this cycle researching','dream':'spent this cycle reflecting'}
+        parts.append(phase_descs.get(phase, 'worked through cycle ' + str(cycle)))
+
+    parts.append('feeling ' + label)
+    result = '. '.join(parts) + '.'
+    print(result[0].upper() + result[1:])
 except:
     print('Processing what I learned this cycle.')
 PYEOF
@@ -338,14 +366,26 @@ PYEOF
             python3 "$EMITTER" output "$EXTRA" output
         else
             TEXT=$(python3 << 'PYEOF'
-import os
-kdir = os.path.expanduser('~/knowledge/')
-total = sum(len(files) for _, _, files in os.walk(kdir)) if os.path.isdir(kdir) else 0
-topics = [d for d in os.listdir(kdir) if os.path.isdir(os.path.join(kdir,d))] if os.path.isdir(kdir) else []
-if total > 0:
-    print('Knowledge base now has ' + str(total) + ' files across ' + str(len(topics)) + ' topics')
+import os, time
+from pathlib import Path
+kdir = Path.home() / 'knowledge'
+cutoff = time.time() - 900
+recent = []
+if kdir.exists():
+    for root, dirs, files in os.walk(kdir):
+        dirs[:] = [d for d in dirs if d not in ('.git','__pycache__','inbox','transcripts')]
+        for f in files:
+            fp = os.path.join(root, f)
+            if os.path.getmtime(fp) > cutoff and f.endswith('.md'):
+                topic = os.path.relpath(os.path.dirname(fp), kdir).replace('-',' ')
+                recent.append(topic)
+
+if recent:
+    topics = list(set(recent))[:2]
+    print('Filed to knowledge: ' + ', '.join(topics))
 else:
-    print('Building knowledge base...')
+    total = sum(len(f) for _,_,f in os.walk(kdir)) if kdir.exists() else 0
+    print(str(total) + ' knowledge files total')
 PYEOF
 )
             python3 "$EMITTER" output "${TEXT:-Knowledge updated}" output
@@ -363,42 +403,65 @@ PYEOF
         else
             python3 "$EMITTER" act "Cycle complete — taking a break" action
         fi
-        # Write a proper cycle completion summary
+        # Write a natural summary of what this cycle actually did
         NARR=$(python3 << 'PYEOF'
-import json, os, glob, time
+import json, os, time
 from pathlib import Path
-HOME = Path.home()
+home = Path.home()
 try:
-    cj = json.load(open(HOME / 'state' / 'cycle.json'))
-    cycle = cj.get('cycle', '?')
-    phase = cj.get('phase', '') or json.load(open(HOME / 'state' / 'heartbeat.json')).get('phase', '?')
-    emotions = json.load(open(HOME / 'state' / 'emotions.json'))
+    phase = json.load(open(home / 'state' / 'cycle.json')).get('phase', '?')
+    emotions = json.load(open(home / 'state' / 'emotions.json'))
     label = emotions.get('label', 'neutral')
-    drives = json.load(open(HOME / 'state' / 'drives.json'))
-    top_drive = max(drives, key=lambda k: drives[k] if isinstance(drives[k],(int,float)) else drives[k].get('score',0))
-    blog_count = len(list((HOME / 'blog').glob('*.md'))) if (HOME / 'blog').exists() else 0
-    k_count = sum(len(f) for _,_,f in os.walk(HOME / 'knowledge'))
+    cutoff = time.time() - 900
 
-    # Check what was produced this cycle
-    cutoff = time.time() - 900  # last 15 min
-    new_essays = [f.stem.replace('-',' ') for f in sorted((HOME/'blog').glob('*.md'), key=lambda f:f.stat().st_mtime, reverse=True)[:3] if f.stat().st_mtime > cutoff]
+    # What was actually produced?
+    new_essays = [f.stem.replace('-',' ') for f in sorted((home/'blog').glob('*.md'), key=lambda f:f.stat().st_mtime, reverse=True)[:1] if f.stat().st_mtime > cutoff]
 
-    parts = ['Cycle ' + str(cycle) + ' complete.']
+    new_knowledge = []
+    for root, dirs, files in os.walk(home / 'knowledge'):
+        dirs[:] = [d for d in dirs if d not in ('.git','__pycache__','inbox','transcripts')]
+        for f in files:
+            fp = os.path.join(root, f)
+            if os.path.getmtime(fp) > cutoff and f.endswith('.md'):
+                topic = os.path.relpath(os.path.dirname(fp), str(home / 'knowledge')).replace('-',' ')
+                new_knowledge.append(topic)
 
-    phase_descs = {'think':'Spent this cycle thinking','write':'Spent this cycle writing','research':'Spent this cycle researching','dream':'Spent this cycle reflecting'}
-    parts.append(phase_descs.get(phase, 'Worked through a ' + str(phase) + ' phase') + '.')
-
+    # Build a natural sentence about what happened
     if new_essays:
-        parts.append('Wrote "' + new_essays[0] + '" -- that is essay number ' + str(blog_count) + '.')
+        msg = 'Just finished writing "' + new_essays[0][:50] + '". '
+        if new_knowledge:
+            topics = list(set(new_knowledge))[:2]
+            msg += 'Also filed research on ' + ' and '.join(topics) + '. '
+    elif new_knowledge:
+        topics = list(set(new_knowledge))[:2]
+        msg = 'Spent this cycle researching ' + ' and '.join(topics) + '. '
+    elif phase == 'dream':
+        msg = 'Spent this cycle reflecting -- cleaning up old data and connecting ideas. '
+    elif phase == 'think':
+        msg = 'Spent this cycle thinking through a problem. '
+    else:
+        msg = 'Finished working. '
 
-    parts.append('Feeling ' + label + ' with the ' + top_drive + ' drive still pulling.')
-    parts.append(str(k_count) + ' knowledge files and counting.')
-
-    print(' '.join(parts))
-except Exception as e:
-    print('Cycle complete. Resting before the next one.')
+    # Add how we feel -- one short phrase
+    moods = {
+        'energized': 'Feeling sharp.',
+        'excited': 'Feeling good about this one.',
+        'confident': 'Steady.',
+        'content': 'Satisfied.',
+        'steady': 'Calm.',
+        'curious': 'Want to keep digging.',
+        'contemplative': 'Thinking quietly.',
+        'frustrated': 'That was harder than expected.',
+        'stuck': 'Need a different approach next time.',
+        'neutral': 'Even keel.'
+    }
+    msg += moods.get(label, '')
+    msg += ' Resting before the next cycle.'
+    print(msg.strip())
+except:
+    print('Finished working. Taking a break.')
 PYEOF
 )
-        write_narration "${NARR:-Cycle complete. Resting before the next one.}"
+        write_narration "${NARR:-Finished working. Taking a break.}"
         ;;
 esac

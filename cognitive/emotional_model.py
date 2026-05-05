@@ -59,7 +59,8 @@ def compute_emotions():
         'visitor_engaged':    {'v': 0.08, 'a': 0.06,  'c': 0.04, 'o': 0.0},   # rare and meaningful
         'health_ok':          {'v': 0.0,  'a': 0.0,   'c': 0.0,  'o': 0.0},   # expected, no signal
         'inner_voice_written':{'v': 0.01, 'a': -0.01, 'c': 0.0,  'o': 0.02},  # minor
-        'git_committed':      {'v': 0.01, 'a': 0.0,   'c': 0.01, 'o': 0.0},   # routine
+        'git_committed':      {'v': 0.01, 'a': 0.0,   'c': 0.01, 'o': 0.0},
+        'agent_shipped':      {'v': 0.10, 'a': 0.06,  'c': 0.06, 'o': 0.04},  # big reward   # routine
     }
 
     # ── Real metrics: check what actually happened this cycle ──
@@ -136,6 +137,27 @@ def compute_emotions():
             c += 0.01
     except:
         pass
+
+    # ── Train of thought influence ──
+    # Deep thinking affects mood — connections create excitement, blind spots create discomfort
+    try:
+        tot = read_text(DATA / 'train-of-thought.md')
+        if tot:
+            lines = [l.strip() for l in tot.split(chr(10)) if len(l.strip()) > 20]
+            # More threads = more active thinking = higher arousal and openness
+            if len(lines) >= 3:
+                o += 0.02  # many threads = open mind
+                a += 0.01
+            # Check for aha-moment language
+            for line in lines:
+                ll = line.lower()
+                if any(w in ll for w in ['same pattern', 'connecting', 'wait,', 'that is the same', 'clicks', 'realise', 'actually']):
+                    v += 0.03  # aha moment = positive valence spike
+                    o += 0.02
+                if any(w in ll for w in ['embarrassing', 'never noticed', 'blind spot', 'missed', 'should have']):
+                    v -= 0.02  # self-criticism = slight negative
+                    c -= 0.01
+    except: pass
 
     # ── GENTLE CEILING PRESSURE ──
     # Values near the cap soften slowly — prevents permanent max states

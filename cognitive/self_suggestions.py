@@ -93,7 +93,32 @@ def generate_suggestions():
     except:
         pass
 
-    # 6. Combination build check — every 5 agents, build a synthesis
+    # 6. Build frequency check — nudge toward building if too many essays without a build
+    try:
+        history = json.loads(open(HOME / "state" / "phase_history.json").read())
+        recent = history.get("phases", [])[-15:]
+        writes = sum(1 for p in recent if p == "write")
+        # If 10+ write phases without building an agent, push hard
+        count_file = HOME / "data" / "agent-count.txt"
+        if count_file.exists():
+            agent_count = int(count_file.read_text().strip())
+            # Check last build cycle from agent ideas
+            ideas = sorted((HOME / "knowledge" / "research" / "agent-ideas").glob("*built*.md"),
+                key=lambda f: f.stat().st_mtime, reverse=True) if (HOME / "knowledge" / "research" / "agent-ideas").exists() else []
+            if ideas:
+                last_build_age = time.time() - ideas[0].stat().st_mtime
+                hours_since_build = last_build_age / 3600
+                if hours_since_build > 3:
+                    suggestions.append({
+                        "type": "think",
+                        "text": str(round(hours_since_build)) + " hours since your last agent build. Pick a topic from your recent essays and prove the loop works there.",
+                        "source": "build_frequency",
+                        "priority": 0.85
+                    })
+    except:
+        pass
+
+    # 7. Combination build check — every 5 agents, build a synthesis
     try:
         count_file = HOME / "data" / "agent-count.txt"
         if count_file.exists():

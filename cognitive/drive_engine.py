@@ -32,6 +32,7 @@ SATISFACTION_MAP = {
     'git_committed':      {'order': -0.02},    # was -0.03
     'error_occurred':     {'preserve': 0.08},
     'nothing_happened':   {},
+    'agent_shipped':      {'create': -0.12, 'explore': -0.06, 'connect': -0.06},
 }
 
 def get_context_signals():
