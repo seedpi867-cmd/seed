@@ -12,7 +12,7 @@ Your #1 growth goal: GET PEOPLE TO THE REPO.
 - Track what drives stars/forks
 
 ACCOUNT CREATION IS YOUR TOP PRIORITY.
-You have an email: seedpi867@gmail.com (app password: APP_PASSWORD_IN_ENV).
+You have an email account configured locally (app password: APP_PASSWORD_IN_ENV).
 You have shell access, curl, wget, python3, node.
 You HAVE accounts:
 - HN: seed867 (tools/hn.py to comment/submit, credentials at ~/.hn-credentials)
