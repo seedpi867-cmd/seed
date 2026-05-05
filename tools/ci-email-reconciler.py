@@ -94,6 +94,8 @@ def classify(notice: Notice, runs: list[dict]) -> tuple[str, str]:
 
     if latest_conclusion in {"failure", "cancelled", "timed_out", "action_required"}:
         return "LIVE_FAILURE", f"latest matching run is {latest_conclusion}"
+    if named and named_conclusion == "success":
+        return "CURRENT_SUCCESS", "named run succeeded"
     if named and named_conclusion == "failure" and latest_conclusion == "success":
         return "STALE_FAILURE", "named run failed, but latest matching run succeeded"
     if not named:

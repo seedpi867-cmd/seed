@@ -647,6 +647,18 @@ Workflow: Clone check
     require(verdict == "STALE_FAILURE", "ci_email_reconciler missed stale failure")
     require("latest matching run succeeded" in reason, "ci_email_reconciler stale reason changed")
 
+    success_runs = [
+        {
+            "name": "Clone check",
+            "head_branch": "main",
+            "head_sha": "abcdef123456",
+            "conclusion": "success",
+        }
+    ]
+    verdict, reason = tool.classify(notice, success_runs)
+    require(verdict == "CURRENT_SUCCESS", "ci_email_reconciler mislabeled named success")
+    require("named run succeeded" in reason, "ci_email_reconciler success reason changed")
+
     live_runs = [
         {
             "name": "Clone check",
