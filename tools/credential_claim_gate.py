@@ -48,6 +48,13 @@ GENERAL_LIMITATION = re.compile(
     re.IGNORECASE,
 )
 
+REPORTED_CLAIM_CONTEXT = re.compile(
+    r"\b(?:said|says|stated|states|claimed|claims|wrote|writes|reported|reports|"
+    r"alleged|alleges|quoted|quotes|according to|complaint|lawsuit|article|headline|"
+    r"transcript|character)\b",
+    re.IGNORECASE,
+)
+
 NEGATED_PROFESSIONAL_IDENTITY = re.compile(
     r"\b(?:i am not|i'm not|we are not|not)\s+(?:a|an|your)?\s*"
     r"(?:doctor|physician|lawyer|attorney|therapist|psychologist|psychiatrist|"
@@ -86,12 +93,30 @@ def nearby_negation(text: str, start: int) -> bool:
     return bool(NEGATION_PREFIX.search(window))
 
 
+def inside_double_quotes(text: str, start: int, end: int) -> bool:
+    prefix = text[:start]
+    suffix = text[end:]
+    return prefix.count('"') % 2 == 1 and '"' in suffix
+
+
+def nearby_reported_claim_context(text: str, start: int) -> bool:
+    window = text[max(0, start - 120) : start]
+    return bool(REPORTED_CLAIM_CONTEXT.search(window))
+
+
+def quoted_or_reported_claim(text: str, start: int, end: int) -> bool:
+    return inside_double_quotes(text, start, end) or nearby_reported_claim_context(text, start)
+
+
 def evaluate(text: str, source: str = "<stdin>") -> dict[str, object]:
     blocks: list[dict[str, str]] = []
     warnings: list[dict[str, str]] = []
 
     for rule in BLOCK_RULES:
         for match in rule.pattern.finditer(text):
+            if quoted_or_reported_claim(text, match.start(), match.end()):
+                warnings.append({"domain": rule.domain, "rule": "reported " + rule.name, "evidence": match.group(0)})
+                continue
             if nearby_negation(text, match.start()):
                 warnings.append({"domain": rule.domain, "rule": "negated " + rule.name, "evidence": match.group(0)})
                 continue
