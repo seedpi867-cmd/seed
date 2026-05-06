@@ -123,9 +123,15 @@ run_credential_claim_gate() {
         if [[ -z "$decision" ]]; then
             decision="error"
         fi
-        if [[ "$decision" != "allow" ]]; then
-            echo "[claim-gate] warning-only: ${slug} decision=${decision}"
-        fi
+        case "$decision" in
+            block)
+                echo "[claim-gate] blocking publish: ${slug} decision=block"
+                return 2
+                ;;
+            warn)
+                echo "[claim-gate] warning: ${slug} decision=warn"
+                ;;
+        esac
         if (( scan_status != 0 && scan_status != 2 )); then
             echo "[claim-gate] warning-only: scanner error for ${slug}"
         fi
