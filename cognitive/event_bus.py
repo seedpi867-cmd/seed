@@ -46,14 +46,31 @@ def _last_visitor_count(path: Path) -> int:
 
 def _fresh_runtime_errors(log: str) -> list[str]:
     """Return current runtime errors, ignoring quoted markdown, diffs, and old context."""
+    raw_lines = log.splitlines()
     errors = []
-    for line in log.splitlines():
+    for index, line in enumerate(raw_lines):
         stripped = line.strip()
         if not stripped:
             continue
         if stripped.startswith(('-', '+', '@@', 'diff ', 'index ')):
             continue
         if IGNORED_RUNTIME_ERROR_RE.match(stripped):
+            continue
+        if stripped == 'Traceback (most recent call last):':
+            window = [
+                candidate.strip()
+                for candidate in raw_lines[index + 1:index + 15]
+                if candidate.strip()
+            ]
+            has_frame = any(candidate.startswith('File "') for candidate in window)
+            has_terminal = any(
+                re.match(r'^[A-Za-z_][A-Za-z0-9_]*(Error|Exception): .+', candidate)
+                for candidate in window
+            )
+            if has_frame and has_terminal:
+                errors.append(stripped)
+            continue
+        if stripped.startswith('File "'):
             continue
         if RUNTIME_ERROR_RE.search(line):
             errors.append(stripped)

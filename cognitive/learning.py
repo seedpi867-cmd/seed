@@ -20,14 +20,31 @@ IGNORED_RUNTIME_ERROR_RE = re.compile(
 
 def fresh_runtime_error_lines(log):
     """Runtime exceptions only; archived markdown, diffs, and prose are not failures."""
+    raw_lines = log.splitlines()
     lines = []
-    for line in log.splitlines():
+    for index, line in enumerate(raw_lines):
         stripped = line.strip()
         if not stripped:
             continue
         if stripped.startswith(('-', '+', '@@', 'diff ', 'index ')):
             continue
         if IGNORED_RUNTIME_ERROR_RE.match(stripped):
+            continue
+        if stripped == 'Traceback (most recent call last):':
+            window = [
+                candidate.strip()
+                for candidate in raw_lines[index + 1:index + 15]
+                if candidate.strip()
+            ]
+            has_frame = any(candidate.startswith('File "') for candidate in window)
+            has_terminal = any(
+                re.match(r'^[A-Za-z_][A-Za-z0-9_]*(Error|Exception): .+', candidate)
+                for candidate in window
+            )
+            if has_frame and has_terminal:
+                lines.append(stripped)
+            continue
+        if stripped.startswith('File "'):
             continue
         if RUNTIME_ERROR_RE.search(line):
             lines.append(stripped)
