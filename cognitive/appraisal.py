@@ -244,8 +244,12 @@ def detect_patterns():
             else:
                 action_counts[action]['consecutive_fails'] = 0
 
+        sentinel_failures = {'error_occurred'}
+
         # Flag patterns
         for action, counts in action_counts.items():
+            if action in sentinel_failures:
+                continue
             if counts['consecutive_fails'] >= 3:
                 patterns.append(f"PATTERN: {action} has failed {counts['consecutive_fails']} times in a row. Change approach or abandon.")
             if counts['total'] > 5 and counts['failures'] / counts['total'] > 0.6:
