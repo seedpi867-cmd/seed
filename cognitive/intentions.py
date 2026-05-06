@@ -6,6 +6,13 @@ from common import *
 
 INTENTIONS_FILE = STATE / 'intention.json'
 
+def modified_since(paths, declared_at):
+    """Return the first file path modified after the intention declaration."""
+    for path in paths:
+        if path.exists() and os.path.getmtime(str(path)) > declared_at:
+            return path
+    return None
+
 def predeclare(cycle, phase, drives):
     """Before the LLM runs: declare what this cycle should produce."""
     top_drive = max(drives.items(), key=lambda x: x[1])[0] if drives else 'think'
@@ -14,7 +21,7 @@ def predeclare(cycle, phase, drives):
         'write': 'A new blog post in blog/',
         'research': 'New findings saved to context/research.md',
         'think': 'At least one file created or modified beyond memory/tasks',
-        'dream': 'A reflection appended to data/dreams.md',
+        'dream': 'A reflection saved to dreams, philosophy, self-model, beliefs, or lessons',
         'maintain': 'A system issue fixed or health verified',
     }
 
@@ -56,10 +63,19 @@ def verify(cycle):
             evidence = 'research.md updated'
 
     elif phase == 'dream':
-        dreams_file = HOME / 'data' / 'dreams.md'
-        if dreams_file.exists() and os.path.getmtime(str(dreams_file)) > declared_at:
+        dream_outputs = [
+            HOME / 'data' / 'dreams.md',
+            HOME / 'data' / 'self-model.md',
+            HOME / 'data' / 'beliefs.md',
+            HOME / 'data' / 'lessons.md',
+            HOME / 'data' / 'inner-voice.md',
+        ]
+        dream_outputs.extend((HOME / 'knowledge' / 'philosophy').glob('*.md'))
+        dream_outputs.extend((HOME / 'knowledge' / 'lessons').glob('*.md'))
+        changed = modified_since(dream_outputs, declared_at)
+        if changed:
             success = True
-            evidence = 'dreams.md updated'
+            evidence = str(changed.relative_to(HOME))
 
     elif phase == 'think':
         # Check if ANY file was created/modified (beyond just logs)
