@@ -33,4 +33,6 @@ jobs:
         run: python3 tools/privacy-audit.py
 
       - name: Full clone doctor
+        env:
+          SEED_CLONE_DOCTOR_SKIP_ADVISORY: "1"
         run: bash tools/clone-doctor.sh

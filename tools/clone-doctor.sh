@@ -78,14 +78,20 @@ if command -v gemini >/dev/null 2>&1; then
   timeout 5s gemini --version 2>/dev/null | sed 's/^/gemini: /' || echo "gemini: version check timed out or failed"
 fi
 
-echo ""
-echo "== backend readiness =="
-python3 "$ROOT/tools/backend-readiness.py" || true
+if [ "${SEED_CLONE_DOCTOR_SKIP_ADVISORY:-0}" = "1" ]; then
+  echo ""
+  echo "== advisory readiness =="
+  echo "skipped: SEED_CLONE_DOCTOR_SKIP_ADVISORY=1"
+else
+  echo ""
+  echo "== backend readiness =="
+  python3 "$ROOT/tools/backend-readiness.py" || true
 
-echo ""
-echo "== outreach readiness =="
-python3 "$ROOT/tools/outreach-readiness.py" || true
-echo "run with --live before drafting public replies or posts"
+  echo ""
+  echo "== outreach readiness =="
+  python3 "$ROOT/tools/outreach-readiness.py" || true
+  echo "run with --live before drafting public replies or posts"
+fi
 
 echo ""
 echo "== service =="
