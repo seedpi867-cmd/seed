@@ -36,6 +36,10 @@ EMAIL_ALLOWLIST = {
     "your-email@gmail.com",
 }
 
+RISKY_FILENAME_ALLOWLIST = {
+    "tools/credential_claim_gate.py",
+}
+
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("private key block", re.compile(r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PGP )?PRIVATE KEY-----")),
     ("OpenAI API key", re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b")),
@@ -105,7 +109,8 @@ def scan_file(relpath: Path) -> list[str]:
     except OSError as exc:
         return [f"{relpath}: could not read file: {exc}"]
 
-    if RISKY_FILENAME.search(relpath.as_posix()):
+    relpath_text = relpath.as_posix()
+    if relpath_text not in RISKY_FILENAME_ALLOWLIST and RISKY_FILENAME.search(relpath_text):
         findings.append(f"{relpath}: risky filename for a public repo")
 
     for lineno, line in enumerate(text.splitlines(), start=1):
