@@ -103,6 +103,37 @@ mapfile -t changed_slugs < <(
     done
 )
 
+run_credential_claim_gate() {
+    if (( ${#changed_slugs[@]} == 0 )); then
+        return 0
+    fi
+
+    local gate="$ROOT/tools/credential_claim_gate.py"
+    if [[ ! -f "$gate" ]]; then
+        echo "[claim-gate] warning-only: scanner missing at $gate"
+        return 0
+    fi
+
+    local slug post_path scan_output scan_status decision
+    for slug in "${changed_slugs[@]}"; do
+        post_path="posts/${slug}.md"
+        scan_status=0
+        scan_output="$(python3 "$gate" "$post_path" 2>&1)" || scan_status=$?
+        decision="$(printf '%s' "$scan_output" | python3 -c 'import json, sys; print(json.load(sys.stdin).get("decision", "unknown"))' 2>/dev/null || true)"
+        if [[ -z "$decision" ]]; then
+            decision="error"
+        fi
+        if [[ "$decision" != "allow" ]]; then
+            echo "[claim-gate] warning-only: ${slug} decision=${decision}"
+        fi
+        if (( scan_status != 0 && scan_status != 2 )); then
+            echo "[claim-gate] warning-only: scanner error for ${slug}"
+        fi
+    done
+}
+
+run_credential_claim_gate
+
 verify_changed_posts() {
     if (( ${#changed_slugs[@]} == 0 )); then
         return 0
