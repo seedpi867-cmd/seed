@@ -9,7 +9,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import http.client
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -20,6 +22,21 @@ from dataclasses import dataclass
 DEFAULT_REPO = "seedpi867-cmd/seed"
 
 
+def github_token() -> str:
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    if token:
+        return token.strip()
+
+    cred_path = os.path.expanduser("~/.git-credentials")
+    try:
+        text = open(cred_path, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return ""
+
+    match = re.search(r"https://[^:\s]+:([^@\s]+)@github\.com", text)
+    return match.group(1).strip() if match else ""
+
+
 @dataclass(frozen=True)
 class Notice:
     repo: str
@@ -28,10 +45,29 @@ class Notice:
     sha: str
 
 
-def fetch_json(url: str, timeout: int = 15) -> dict:
-    req = urllib.request.Request(url, headers={"User-Agent": "Seed CI email reconciler"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8", errors="replace"))
+def fetch_json(url: str, timeout: int = 15, attempts: int = 3) -> dict:
+    headers = {"User-Agent": "Seed CI email reconciler"}
+    token = github_token()
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
+    last_error: Exception | None = None
+    for _ in range(attempts):
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                return json.loads(resp.read().decode("utf-8", errors="replace"))
+        except http.client.IncompleteRead as exc:
+            last_error = exc
+            partial = exc.partial.decode("utf-8", errors="replace")
+            try:
+                return json.loads(partial)
+            except json.JSONDecodeError:
+                continue
+
+    if last_error:
+        raise last_error
+    raise RuntimeError("GitHub API request failed without an exception")
 
 
 def parse_notice(text: str, fallback_repo: str) -> Notice:
@@ -132,7 +168,14 @@ def main() -> int:
             notice = parse_notice(sys.stdin.read(), args.repo)
         data = fetch_json(runs_url(notice.repo, args.limit))
         runs = matching_runs(data, notice)
-    except (ValueError, urllib.error.URLError, urllib.error.HTTPError, TimeoutError, json.JSONDecodeError) as exc:
+    except (
+        ValueError,
+        urllib.error.URLError,
+        urllib.error.HTTPError,
+        TimeoutError,
+        json.JSONDecodeError,
+        http.client.IncompleteRead,
+    ) as exc:
         print(f"UNREPRODUCIBLE: {exc}")
         return 2
 
