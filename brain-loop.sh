@@ -294,7 +294,7 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"sleeping\",\"phase\":\"$PHASE\"}" > "$STATE/heartbeat.json"
 
     led_off
-    bash "$ROOT/tools/emit_events.sh" cycle_sleeping "$SLEEP_TIME"
+    bash "$ROOT/tools/emit_events.sh" cycle_sleeping "$SLEEP"
     echo "[seed] Cycle $CYCLE ($PHASE) complete. Sleeping ${SLEEP}s..." | tee -a "$LOG_FILE"
     sleep "$SLEEP"
 done
