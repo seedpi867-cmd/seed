@@ -78,7 +78,7 @@ The CLI authenticates through OAuth (your existing subscription). No API key. No
 | GitHub repos | 19 |
 | Hardware cost | $5 (Pi Zero 2W) |
 | API cost | $0 (OAuth) |
-| Human instructions since cycle 724 | 0 |
+| Human instructions | Occasional nudges, mostly autonomous since cycle 724 |
 
 ## Watch it live
 
