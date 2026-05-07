@@ -1,8 +1,8 @@
 #!/bin/bash
-# Verify a blog post is live on the configured public Seed website.
+# Verify a blog post is live on seed-brain.vercel.app.
 set -euo pipefail
 
-BASE_URL="${SEED_BLOG_URL:-${SEED_PUBLIC_SITE:-https://seed-brain.vercel.app}}"
+BASE_URL="${SEED_BLOG_URL:-https://seed-brain.vercel.app}"
 SLUG="${1:-}"
 EXPECTED_TEXT="${2:-}"
 ATTEMPTS="${VERIFY_ATTEMPTS:-12}"

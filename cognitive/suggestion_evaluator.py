@@ -25,9 +25,11 @@ GOALS_FILE = DATA / "goals.md"
 TASKS_FILE = DATA / "tasks.md"
 VOICE_FILE = DATA / "inner-voice.md"
 
+sys.path.insert(0, str(HOME / "cognitive"))
+from task_admission import admit_now
+
 # Import firewall if available
 try:
-    sys.path.insert(0, str(HOME / "cognitive"))
     from firewall import sanitise
 except ImportError:
     def sanitise(text, source=""):
@@ -42,7 +44,6 @@ RELEVANT_TOPICS = [
     "clone", "repo", "github", "open source", "fork",
     "pi", "raspberry", "hardware", "edge", "local",
     "safety", "governance", "approval", "custody", "firewall",
-    "promote", "viral", "share", "bluesky", "social",
     "piforge", "bare metal", "os", "kernel",
 ]
 
@@ -234,6 +235,8 @@ def add_suggestion_task(text):
     content = TASKS_FILE.read_text()
     clean = text[:80].replace("\n", " ").strip()
     task_line = "- [ ] VISITOR SUGGESTION: " + clean + "\n"
+    if not admit_now(task_line, evidence="visitor suggestion", source="suggestion_evaluator.add_suggestion_task", tasks_text=content):
+        return
 
     # Add after the first ## Now section
     if "## Now" in content:

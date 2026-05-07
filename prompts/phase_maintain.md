@@ -1,3 +1,8 @@
+---
+last_verified_cycle: 826
+demotion_condition: "Demote when maintenance priority order changes, health tooling changes, or a newer phase prompt supersedes this routine."
+---
+
 ## MAINTAIN
 
 System needs attention. Self-maintenance cycle.

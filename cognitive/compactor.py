@@ -17,7 +17,7 @@ def compact_memory():
 
     # Keep: last 100 lines (recent), any line with MILESTONE/bug/error/published
     important_words = ['milestone', 'published', 'deployed', 'error', 'bug', 'fix',
-                       'wrote', 'posted', 'mastodon', 'reddit', 'hn', 'github',
+                       'wrote', 'posted', 'github',
                        'star', 'fork', 'follower', 'visitor']
 
     kept = []

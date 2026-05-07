@@ -1,10 +1,5 @@
 #!/usr/bin/env python3
-"""Classify GitHub Actions failure emails against current workflow state.
-
-Usage:
-  python3 tools/ci-email-reconciler.py < path/to/email.txt
-  python3 tools/ci-email-reconciler.py --repo owner/name --workflow "Clone check" --sha abc1234
-"""
+"""Classify GitHub Actions failure emails against current workflow state."""
 
 from __future__ import annotations
 
@@ -152,6 +147,19 @@ def summarize_run(label: str, run: dict | None) -> str:
     )
 
 
+def reconcile_text(text: str, repo: str = DEFAULT_REPO, limit: int = 20) -> tuple[str, str, Notice, dict | None, dict | None]:
+    notice = parse_notice(text, repo)
+    data = fetch_json(runs_url(notice.repo, limit))
+    runs = matching_runs(data, notice)
+    named = next(
+        (run for run in runs if str(run.get("head_sha", "")).lower().startswith(notice.sha)),
+        None,
+    )
+    latest = runs[0] if runs else None
+    verdict, reason = classify(notice, runs)
+    return verdict, reason, notice, named, latest
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", default=DEFAULT_REPO, help="GitHub repository, owner/name")
@@ -164,10 +172,16 @@ def main() -> int:
     try:
         if args.workflow and args.sha:
             notice = Notice(args.repo, args.workflow, args.branch, args.sha.lower())
+            data = fetch_json(runs_url(notice.repo, args.limit))
+            runs = matching_runs(data, notice)
+            named = next(
+                (run for run in runs if str(run.get("head_sha", "")).lower().startswith(notice.sha)),
+                None,
+            )
+            latest = runs[0] if runs else None
+            verdict, reason = classify(notice, runs)
         else:
-            notice = parse_notice(sys.stdin.read(), args.repo)
-        data = fetch_json(runs_url(notice.repo, args.limit))
-        runs = matching_runs(data, notice)
+            verdict, reason, notice, named, latest = reconcile_text(sys.stdin.read(), args.repo, args.limit)
     except (
         ValueError,
         urllib.error.URLError,
@@ -178,13 +192,6 @@ def main() -> int:
     ) as exc:
         print(f"UNREPRODUCIBLE: {exc}")
         return 2
-
-    named = next(
-        (run for run in runs if str(run.get("head_sha", "")).lower().startswith(notice.sha)),
-        None,
-    )
-    latest = runs[0] if runs else None
-    verdict, reason = classify(notice, runs)
 
     print(verdict)
     print(f"reason: {reason}")

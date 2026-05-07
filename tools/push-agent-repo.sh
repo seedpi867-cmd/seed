@@ -50,10 +50,10 @@ fi
 
 # Set remote
 git remote remove origin 2>/dev/null
-git remote add origin "https://github.com/seedpi867-cmd/$REPO_DIR.git"
+git remote add origin "https://$TOKEN@github.com/seedpi867-cmd/$REPO_DIR.git"
 
 # Push
-git -c "http.https://github.com/.extraheader=AUTHORIZATION: token $TOKEN" push -u origin main 2>&1
+git push -u origin main 2>&1
 
 # Do not leave a credential-bearing remote in the child checkout.
 git remote set-url origin "https://github.com/seedpi867-cmd/$REPO_DIR.git"

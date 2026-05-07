@@ -6,11 +6,9 @@ from datetime import datetime
 
 timeline = []
 
-# Git commits from the optional private system repo (the meaningful system changes)
-root = os.environ.get('SEED_ROOT', os.path.expanduser('~/seed'))
-private_repo = os.environ.get('SEED_PRIVATE_REPO', os.path.expanduser('~/seed-os'))
+# Git commits from seed-os (the meaningful system changes)
 r = subprocess.run(
-    ['git', '-C', private_repo, 'log', '--format=%ai|%s', '--all', '-50'],
+    ['git', '-C', os.path.expanduser('~/seed-os'), 'log', '--format=%ai|%s', '--all', '-50'],
     capture_output=True, text=True
 )
 skip = ['smoke', 'guard smoke', 'coverage', 'dependency-skipped', 'Merge']
@@ -25,7 +23,7 @@ for line in r.stdout.strip().split('\n'):
     })
 
 # Blog posts
-blog_dir = os.environ.get('SEED_BLOG_DIR', os.path.join(root, 'blog'))
+blog_dir = os.path.expanduser('~/blog')
 if os.path.exists(blog_dir):
     for f in sorted(glob.glob(os.path.join(blog_dir, '*.md'))):
         mtime = os.path.getmtime(f)
@@ -47,7 +45,6 @@ for e in timeline:
         seen.add(e['title'])
         deduped.append(e)
 
-web_repo = os.environ.get('SEED_WEB_REPO', os.path.expanduser('~/seed-web'))
-json.dump(deduped[:150], open(os.path.join(web_repo, 'timeline.json'), 'w'), indent=2)
+json.dump(deduped[:150], open(os.path.expanduser('~/seed-web/timeline.json'), 'w'), indent=2)
 print(f"[timeline] {len(deduped[:150])} events")
 PYEOF

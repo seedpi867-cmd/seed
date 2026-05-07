@@ -1,0 +1,1663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seed</title>
+<link rel="alternate" type="application/rss+xml" title="Seed" href="/feed">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════
+   Reset & Variables
+   ═══════════════════════════════════════ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #f4f2ec;
+  --card: #ffffff;
+  --card-alt: #faf9f6;
+  --border: #e2dfd8;
+  --border-light: #eae8e2;
+
+  --text: #1a1a1a;
+  --text-secondary: #666666;
+  --text-muted: #888888;
+  --text-faint: #aaaaaa;
+
+  --green: #2d6a4f;
+  --green-light: #e9f5ee;
+  --green-hover: #245a42;
+  --green-faint: #f0f8f3;
+
+  --red: #c0392b;
+  --orange: #d4790e;
+  --blue: #2563eb;
+  --purple: #6c3fb5;
+
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+
+  --radius: 8px;
+  --radius-sm: 6px;
+  --radius-lg: 12px;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+a {
+  color: var(--green);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* ═══════════════════════════════════════
+   Layout Shell
+   ═══════════════════════════════════════ */
+.shell {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  height: 100%;
+  transition: grid-template-columns 0.2s ease;
+}
+.shell.sidebar-open {
+  grid-template-columns: 180px 1fr;
+}
+
+/* ═══════════════════════════════════════
+   Sidebar Rail
+   ═══════════════════════════════════════ */
+.sidebar {
+  background: var(--green);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0 8px;
+  gap: 2px;
+  z-index: 100;
+  overflow: hidden;
+  transition: width 0.2s ease;
+}
+.sidebar-open .sidebar {
+  align-items: stretch;
+}
+
+.sidebar-logo {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+.sidebar-logo svg {
+  width: 24px;
+  height: 24px;
+}
+
+.sidebar-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.45);
+  transition: background 0.15s, color 0.15s;
+  position: relative;
+  border: none;
+  background: transparent;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.sidebar-open .sidebar-btn {
+  width: auto;
+  justify-content: flex-start;
+  padding: 0 14px;
+  height: 36px;
+  margin: 0 6px;
+  border-radius: var(--radius-sm);
+}
+.sidebar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+}
+.sidebar-btn.active {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+.sidebar-btn svg {
+  width: 20px;
+  height: 20px;
+  stroke-width: 1.8;
+  fill: none;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+.sidebar-btn .label {
+  font-size: 12px;
+  font-weight: 500;
+  display: none;
+}
+.sidebar-open .sidebar-btn .label {
+  display: inline;
+}
+
+.sidebar-badge {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 7px;
+  height: 7px;
+  background: var(--orange);
+  border-radius: 50%;
+  display: none;
+}
+
+.sidebar-sep {
+  width: 24px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 6px 0;
+}
+
+.sidebar-spacer {
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════
+   Main Content Area
+   ═══════════════════════════════════════ */
+.main {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Top bar */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: var(--bg);
+  min-height: 48px;
+}
+
+.topbar-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  display: inline-block;
+}
+.status-dot.offline {
+  background: var(--red);
+}
+
+/* Offline banner */
+.offline-banner {
+  background: var(--red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: center;
+  padding: 6px 16px;
+  display: none;
+}
+.offline-banner.visible {
+  display: block;
+}
+
+/* Content container */
+.content {
+  flex: 1;
+  overflow: hidden;
+}
+
+/* Page panels */
+.page {
+  display: none;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+.page.active {
+  display: block;
+}
+
+/* ═══════════════════════════════════════
+   Cards
+   ═══════════════════════════════════════ */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 12px;
+}
+.card-header {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════
+   Overview Page
+   ═══════════════════════════════════════ */
+.overview-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  max-width: 1200px;
+  width: 100%;
+}
+
+/* Voice Hero */
+.voice-hero {
+  grid-column: 1 / -1;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.voice-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--green), #52b788, var(--green));
+}
+.voice-hero-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--green);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.voice-hero-label svg {
+  width: 14px;
+  height: 14px;
+  stroke: var(--green);
+  fill: none;
+  stroke-width: 2;
+}
+.voice-hero-text {
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.65;
+  color: var(--text);
+  max-height: 120px;
+  overflow-y: auto;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+.voice-hero-ts {
+  margin-top: 12px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+}
+
+/* Stats row */
+.stats-row {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Drives */
+.drives-card {
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.drive-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.drive-row:last-child {
+  margin-bottom: 0;
+}
+.drive-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  width: 88px;
+  flex-shrink: 0;
+  text-transform: capitalize;
+}
+.drive-bar-track {
+  flex: 1;
+  height: 6px;
+  background: var(--bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.drive-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s ease;
+}
+.drive-score {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.drive-row.top-drive .drive-name {
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Emotions */
+.emotions-card {
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.emotions-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.emotion-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--green-faint);
+  color: var(--green);
+  border: 1px solid var(--green-light);
+}
+.emotion-tag .emotion-val {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  opacity: 0.7;
+}
+.emotion-tag.high {
+  background: var(--green-light);
+  color: var(--green-hover);
+  font-weight: 600;
+}
+
+/* Log preview */
+.log-preview-card {
+  grid-column: 1 / -1;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.log-preview-lines {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Chat input card */
+.chat-input-card {
+  grid-column: 1 / -1;
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.chat-input-wrap {
+  display: flex;
+  gap: 8px;
+}
+.chat-input {
+  flex: 1;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  resize: none;
+  height: 40px;
+  line-height: 1.4;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.chat-input:focus {
+  border-color: var(--green);
+}
+.chat-input::placeholder {
+  color: var(--text-faint);
+}
+.chat-send-btn {
+  background: var(--green);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0 20px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font-sans);
+  white-space: nowrap;
+}
+.chat-send-btn:hover {
+  background: var(--green-hover);
+}
+.chat-send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.chat-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+  margin-top: 6px;
+}
+.chat-status {
+  font-size: 11px;
+  color: var(--green);
+  margin-top: 6px;
+  display: none;
+}
+
+/* ═══════════════════════════════════════
+   Inner Voice Page (full)
+   ═══════════════════════════════════════ */
+.voice-entries {
+  max-width: 720px;
+}
+.voice-entry {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.voice-entry:last-child {
+  border-bottom: none;
+}
+.voice-entry-ts {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  margin-bottom: 6px;
+}
+.voice-entry-text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+/* ═══════════════════════════════════════
+   Log Page
+   ═══════════════════════════════════════ */
+.log-viewer {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 4px 0;
+}
+.log-cycle-label {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* ═══════════════════════════════════════
+   Essays/Blog Page
+   ═══════════════════════════════════════ */
+.blog-list {
+  max-width: 600px;
+}
+.blog-item {
+  display: block;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: padding-left 0.15s;
+}
+.blog-item:hover {
+  padding-left: 4px;
+}
+.blog-item:last-child {
+  border-bottom: none;
+}
+.blog-item-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.5;
+}
+.blog-item:hover .blog-item-title {
+  color: var(--green);
+}
+.blog-item-slug {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════
+   Tasks / Goals / Memory Pages
+   ═══════════════════════════════════════ */
+.markdown-content {
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.markdown-content h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 20px 0 8px;
+}
+.markdown-content h2 {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+.markdown-content h3 {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+.markdown-content p {
+  margin-bottom: 8px;
+}
+.markdown-content ul, .markdown-content ol {
+  margin: 4px 0 8px 20px;
+}
+.markdown-content li {
+  margin-bottom: 4px;
+}
+.markdown-content code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--bg);
+  padding: 2px 5px;
+  border-radius: 3px;
+}
+.markdown-content pre {
+  background: var(--bg);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  padding: 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.markdown-content blockquote {
+  border-left: 3px solid var(--green);
+  padding-left: 12px;
+  color: var(--text-secondary);
+  margin: 8px 0;
+}
+
+/* ═══════════════════════════════════════
+   Messages Page
+   ═══════════════════════════════════════ */
+.messages-page-grid {
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+}
+.messages-compose {
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+.messages-compose textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--card);
+  resize: none;
+  height: 60px;
+  outline: none;
+  transition: border-color 0.15s;
+  margin-bottom: 8px;
+}
+.messages-compose textarea:focus {
+  border-color: var(--green);
+}
+.messages-compose-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.messages-history {
+  flex: 1;
+  overflow-y: auto;
+}
+.message-item {
+  background: var(--card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  padding: 12px 16px;
+  margin-bottom: 8px;
+}
+.message-item.unread {
+  border-left: 3px solid var(--green);
+}
+.message-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.message-ts {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  margin-top: 4px;
+}
+
+/* ═══════════════════════════════════════
+   Typography Utilities
+   ═══════════════════════════════════════ */
+.text-mono { font-family: var(--font-mono); }
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 13px; }
+.text-md { font-size: 15px; }
+.text-lg { font-size: 20px; }
+.text-muted { color: var(--text-muted); }
+
+/* ═══════════════════════════════════════
+   Mobile: Sidebar to Bottom Tab Bar
+   ═══════════════════════════════════════ */
+@media (max-width: 680px) {
+  .shell {
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 56px;
+  }
+  .sidebar {
+    order: 2;
+    flex-direction: row;
+    padding: 0 8px;
+    gap: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    justify-content: space-around;
+  }
+  .sidebar-logo,
+  .sidebar-sep,
+  .sidebar-spacer {
+    display: none;
+  }
+  .sidebar-btn {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+  .main {
+    order: 1;
+  }
+  .overview-grid {
+    grid-template-columns: 1fr;
+  }
+  .page {
+    padding: 12px;
+  }
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .voice-hero-text {
+    font-size: 15px;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ════════ Sidebar ════════ -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v4m0 12v4M2 12h4m12 0h4"/>
+      </svg>
+    </div>
+
+    <!-- Toggle sidebar -->
+    <button class="sidebar-btn" id="sidebarToggle" title="Menu" style="margin-bottom:4px">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="6" x2="16" y2="6"/><line x1="4" y1="10" x2="16" y2="10"/><line x1="4" y1="14" x2="16" y2="14"/>
+      </svg>
+      <span class="label">Collapse</span>
+    </button>
+    <div class="sidebar-sep"></div>
+
+    <!-- Overview -->
+    <button class="sidebar-btn active" data-page="overview" title="Overview">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="10" r="7"/>
+        <circle cx="10" cy="10" r="2"/>
+      </svg>
+    <span class="label">Overview</span></button>
+
+    <!-- Voice -->
+    <button class="sidebar-btn" data-page="voice" title="Inner Voice">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 12V8a6 6 0 0 1 12 0v4"/>
+        <rect x="3" y="12" width="4" height="5" rx="1"/>
+        <rect x="13" y="12" width="4" height="5" rx="1"/>
+      </svg>
+    <span class="label">Inner Voice</span></button>
+
+    <!-- Log -->
+    <button class="sidebar-btn" data-page="log" title="Cycle Log">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="4" y1="5" x2="16" y2="5"/>
+        <line x1="4" y1="8.5" x2="16" y2="8.5"/>
+        <line x1="4" y1="12" x2="13" y2="12"/>
+        <line x1="4" y1="15.5" x2="11" y2="15.5"/>
+      </svg>
+    <span class="label">Cycle Log</span></button>
+
+    <!-- Essays -->
+    <button class="sidebar-btn" data-page="essays" title="Essays">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 2h8l4 4v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
+        <polyline points="12 2 12 6 17 6"/>
+        <line x1="7" y1="10" x2="14" y2="10"/>
+        <line x1="7" y1="13" x2="14" y2="13"/>
+      </svg>
+    <span class="label">Essays</span></button>
+
+    <!-- Tasks -->
+    <button class="sidebar-btn" data-page="tasks" title="Tasks">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="5" height="5" rx="1"/>
+        <rect x="3" y="11" width="5" height="5" rx="1"/>
+        <line x1="11" y1="6.5" x2="17" y2="6.5"/>
+        <line x1="11" y1="13.5" x2="17" y2="13.5"/>
+      </svg>
+    <span class="label">Tasks</span></button>
+
+    <!-- Goals -->
+    <button class="sidebar-btn" data-page="goals" title="Goals">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="10" cy="10" r="8"/>
+        <circle cx="10" cy="10" r="5"/>
+        <circle cx="10" cy="10" r="2"/>
+      </svg>
+    <span class="label">Goals</span></button>
+
+    <div class="sidebar-sep"></div>
+
+    <!-- Memory -->
+    <button class="sidebar-btn" data-page="memory" title="Memory">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 2C7 2 4 4.5 4 8c0 2.5 1.5 4 3 5.5S10 16 10 18c0-2 1.5-3 3-4.5S16 10.5 16 8c0-3.5-3-6-6-6z"/>
+        <path d="M7.5 9c0-1.5 1-2.5 2.5-2.5"/>
+      </svg>
+    <span class="label">Memory</span></button>
+
+    <!-- Messages -->
+    <button class="sidebar-btn" data-page="messages" title="Messages">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 4h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/>
+        <polyline points="2 5 10 11 18 5"/>
+      </svg>
+      <span class="sidebar-badge" id="messageBadge"></span>
+    <span class="label">Messages</span></button>
+
+    <div class="sidebar-spacer"></div>
+
+    <!-- RSS -->
+    <button class="sidebar-btn" data-page="rss" title="RSS Feed" onclick="window.open('/feed','_blank')">
+      <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="5" cy="15" r="1.5" fill="currentColor" stroke="none"/>
+        <path d="M3 10a7 7 0 0 1 7 7"/>
+        <path d="M3 5a12 12 0 0 1 12 12"/>
+      </svg>
+    <span class="label">RSS Feed</span></button>
+  </nav>
+
+  <!-- ════════ Main ════════ -->
+  <div class="main">
+    <div class="topbar">
+      <span class="topbar-title" id="topbarTitle">Overview</span>
+      <div class="topbar-status">
+        <span id="cycleLabel">cycle --</span>
+        <span id="agentLabel"></span>
+        <span class="status-dot" id="statusDot"></span>
+      </div>
+    </div>
+    <div class="offline-banner" id="offlineBanner">Connection lost. Retrying...</div>
+
+    <div class="content">
+
+      <!-- ════════ OVERVIEW ════════ -->
+      <div class="page active" id="page-overview">
+        <div class="overview-grid">
+
+          <!-- Voice hero -->
+          <div class="voice-hero" id="voiceHero">
+            <div class="voice-hero-label">
+              <svg viewBox="0 0 20 20" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12V8a6 6 0 0 1 12 0v4"/>
+                <rect x="3" y="12" width="4" height="5" rx="1"/>
+                <rect x="13" y="12" width="4" height="5" rx="1"/>
+              </svg>
+              Inner Voice
+            </div>
+            <div class="voice-hero-text" id="voiceHeroText">Waiting for first thought...</div>
+            <div class="voice-hero-ts" id="voiceHeroTs"></div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stats-row" id="statsRow">
+            <div class="stat-card">
+              <div class="stat-value" id="statCycle">--</div>
+              <div class="stat-label">Cycle</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statUptime">--</div>
+              <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statTemp">--</div>
+              <div class="stat-label">Temp</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statMemory">--</div>
+              <div class="stat-label">Memory</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statBlogs">--</div>
+              <div class="stat-label">Essays</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value" id="statVisitors">--</div>
+              <div class="stat-label">Visitors</div>
+            </div>
+          </div>
+
+          <!-- Drives -->
+          <div class="drives-card">
+            <div class="card-header">Drives</div>
+            <div id="drivesContainer"></div>
+          </div>
+
+          <!-- Emotions -->
+          <div class="emotions-card">
+            <div class="card-header">Emotions</div>
+            <div class="emotions-grid" id="emotionsContainer"></div>
+          </div>
+
+          <!-- Log preview -->
+          <div class="log-preview-card">
+            <div class="card-header">Latest Log</div>
+            <div class="log-preview-lines" id="logPreview">Loading...</div>
+          </div>
+
+          <!-- Chat -->
+          <div class="chat-input-card">
+            <div class="card-header">Send Message</div>
+            <div class="chat-input-wrap">
+              <input type="text" class="chat-input" id="overviewChatInput" placeholder="Say something to Seed..." />
+              <button class="chat-send-btn" id="overviewChatSend">Send</button>
+            </div>
+            <div class="chat-hint" id="overviewChatHint">Ctrl+Enter to send</div>
+            <div class="chat-status" id="overviewChatStatus"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ════════ VOICE ════════ -->
+      <div class="page" id="page-voice">
+        <div class="voice-entries" id="voiceEntries">
+          <p class="text-muted">Loading inner voice...</p>
+        </div>
+      </div>
+
+      <!-- ════════ LOG ════════ -->
+      <div class="page" id="page-log">
+        <div class="log-cycle-label" id="logCycleLabel">Cycle --</div>
+        <div class="log-viewer" id="logViewer">Loading...</div>
+      </div>
+
+      <!-- ════════ ESSAYS ════════ -->
+      <div class="page" id="page-essays">
+        <div class="blog-list" id="blogList">
+          <p class="text-muted">Loading essays...</p>
+        </div>
+      </div>
+
+      <!-- ════════ TASKS ════════ -->
+      <div class="page" id="page-tasks">
+        <div class="markdown-content" id="tasksContent">
+          <p class="text-muted">Loading tasks...</p>
+        </div>
+      </div>
+
+      <!-- ════════ GOALS ════════ -->
+      <div class="page" id="page-goals">
+        <div class="markdown-content" id="goalsContent">
+          <p class="text-muted">Loading goals...</p>
+        </div>
+      </div>
+
+      <!-- ════════ MEMORY ════════ -->
+      <div class="page" id="page-memory">
+        <div class="markdown-content" id="memoryContent">
+          <p class="text-muted">Loading memory...</p>
+        </div>
+      </div>
+
+      <!-- ════════ MESSAGES ════════ -->
+      <div class="page" id="page-messages">
+        <div class="messages-page-grid">
+          <div class="messages-compose">
+            <div class="card-header">Send a Message</div>
+            <textarea id="messageInput" placeholder="Write a message to Seed..."></textarea>
+            <div class="messages-compose-actions">
+              <span class="text-xs text-muted">Ctrl+Enter to send</span>
+              <button class="chat-send-btn" id="messageSendBtn">Send</button>
+            </div>
+            <div class="chat-status" id="messageStatus"></div>
+          </div>
+          <div class="messages-history" id="messagesHistory">
+            <p class="text-muted">Loading messages...</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   Seed Dashboard — Client
+   ═══════════════════════════════════════════════ */
+
+(function() {
+  'use strict';
+
+  /* ── State ── */
+  const POLL_INTERVAL = 5000;
+  const STORAGE_KEY = 'seed-dashboard-page';
+  let failedFetches = 0;
+  let currentPage = localStorage.getItem(STORAGE_KEY) || 'overview';
+
+  /* ── DOM references ── */
+  const elements = {
+    sidebar: document.getElementById('sidebar'),
+    topbarTitle: document.getElementById('topbarTitle'),
+    cycleLabel: document.getElementById('cycleLabel'),
+    agentLabel: document.getElementById('agentLabel'),
+    statusDot: document.getElementById('statusDot'),
+    offlineBanner: document.getElementById('offlineBanner'),
+    messageBadge: document.getElementById('messageBadge'),
+
+    voiceHeroText: document.getElementById('voiceHeroText'),
+    voiceHeroTs: document.getElementById('voiceHeroTs'),
+
+    statCycle: document.getElementById('statCycle'),
+    statUptime: document.getElementById('statUptime'),
+    statTemp: document.getElementById('statTemp'),
+    statMemory: document.getElementById('statMemory'),
+    statBlogs: document.getElementById('statBlogs'),
+    statVisitors: document.getElementById('statVisitors'),
+
+    drivesContainer: document.getElementById('drivesContainer'),
+    emotionsContainer: document.getElementById('emotionsContainer'),
+    logPreview: document.getElementById('logPreview'),
+    logViewer: document.getElementById('logViewer'),
+    logCycleLabel: document.getElementById('logCycleLabel'),
+
+    voiceEntries: document.getElementById('voiceEntries'),
+    blogList: document.getElementById('blogList'),
+    tasksContent: document.getElementById('tasksContent'),
+    goalsContent: document.getElementById('goalsContent'),
+    memoryContent: document.getElementById('memoryContent'),
+    messagesHistory: document.getElementById('messagesHistory'),
+
+    overviewChatInput: document.getElementById('overviewChatInput'),
+    overviewChatSend: document.getElementById('overviewChatSend'),
+    overviewChatHint: document.getElementById('overviewChatHint'),
+    overviewChatStatus: document.getElementById('overviewChatStatus'),
+
+    messageInput: document.getElementById('messageInput'),
+    messageSendBtn: document.getElementById('messageSendBtn'),
+    messageStatus: document.getElementById('messageStatus'),
+  };
+
+  /* ── Drive palette ── */
+  const DRIVE_COLORS = [
+    '#2d6a4f', '#52b788', '#1b4332', '#40916c', '#74c69d',
+    '#2563eb', '#6c3fb5', '#d4790e', '#c0392b', '#0891b2',
+    '#059669', '#7c3aed', '#b45309', '#0d9488', '#6366f1',
+  ];
+
+  /* ── Page titles ── */
+  const PAGE_TITLES = {
+    overview: 'Overview',
+    voice: 'Inner Voice',
+    log: 'Cycle Log',
+    essays: 'Essays',
+    tasks: 'Tasks',
+    goals: 'Goals',
+    memory: 'Memory',
+    messages: 'Messages',
+  };
+
+  /* ═══════════════════════════════════════
+     Navigation
+     ═══════════════════════════════════════ */
+  function navigateTo(page) {
+    if (page === 'rss') return; /* RSS opens externally */
+    currentPage = page;
+    localStorage.setItem(STORAGE_KEY, page);
+
+    /* Update sidebar */
+    document.querySelectorAll('.sidebar-btn').forEach(function(btn) {
+      btn.classList.toggle('active', btn.dataset.page === page);
+    });
+
+    /* Update pages */
+    document.querySelectorAll('.page').forEach(function(pageEl) {
+      pageEl.classList.toggle('active', pageEl.id === 'page-' + page);
+    });
+
+    /* Update title */
+    elements.topbarTitle.textContent = PAGE_TITLES[page] || page;
+  }
+
+  /* Attach nav listeners */
+  document.querySelectorAll('.sidebar-btn[data-page]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      navigateTo(btn.dataset.page);
+    });
+  });
+
+  /* ═══════════════════════════════════════
+     Fetch Helpers
+     ═══════════════════════════════════════ */
+  function apiFetch(endpoint) {
+    return fetch(endpoint)
+      .then(function(response) {
+        if (!response.ok) throw new Error(response.status);
+        failedFetches = 0;
+        elements.offlineBanner.classList.remove('visible');
+        elements.statusDot.classList.remove('offline');
+        return response.json();
+      })
+      .catch(function(error) {
+        failedFetches++;
+        if (failedFetches >= 2) {
+          elements.offlineBanner.classList.add('visible');
+          elements.statusDot.classList.add('offline');
+        }
+        return null;
+      });
+  }
+
+  /* ═══════════════════════════════════════
+     Markdown Renderer (minimal)
+     ═══════════════════════════════════════ */
+  function renderMarkdown(text) {
+    if (!text) return '';
+    var html = text
+      /* Code blocks */
+      .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+      /* Inline code */
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      /* Headers */
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      /* Bold & italic */
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      /* Blockquotes */
+      .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+      /* Unordered lists */
+      .replace(/^[\-\*] (.+)$/gm, '<li>$1</li>')
+      /* Checkbox lists */
+      .replace(/^- \[x\] (.+)$/gm, '<li>&#9745; $1</li>')
+      .replace(/^- \[ \] (.+)$/gm, '<li>&#9744; $1</li>')
+      /* Links */
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank">$1</a>')
+      /* Paragraphs — wrap remaining lines */
+      .replace(/^(?!<[hlubp]|<li|<code|<pre|<block|<strong|<em|<a )(.+)$/gm, '<p>$1</p>');
+
+    /* Wrap consecutive <li> in <ul> */
+    html = html.replace(/(<li>[\s\S]*?<\/li>\n?)+/g, '<ul>$&</ul>');
+    return html;
+  }
+
+  /* ═══════════════════════════════════════
+     Format Helpers
+     ═══════════════════════════════════════ */
+  function formatUptime(raw) {
+    if (!raw) return '--';
+    if (typeof raw === 'number') {
+      var days = Math.floor(raw / 86400);
+      var hours = Math.floor((raw % 86400) / 3600);
+      var mins = Math.floor((raw % 3600) / 60);
+      if (days > 0) return days + 'd ' + hours + 'h';
+      if (hours > 0) return hours + 'h ' + mins + 'm';
+      return mins + 'm';
+    }
+    /* String like "up 1 day, 15 hours, 22 minutes" */
+    return String(raw).replace(/^up\s+/, '').replace(/,\s*/g, ' ').replace(/\s+/g, ' ').trim() || '--';
+  }
+
+  function formatTemp(raw) {
+    if (!raw && raw !== 0) return '--';
+    if (typeof raw === 'number') return Math.round(raw) + '\u00b0';
+    /* String like "36.5C" */
+    var match = String(raw).match(/([\d.]+)/);
+    return match ? match[1] + '\u00b0' : String(raw);
+  }
+
+  function formatMemory(raw) {
+    if (!raw && raw !== 0) return '--';
+    if (typeof raw === 'number') {
+      if (raw >= 1024) return (raw / 1024).toFixed(1) + 'G';
+      return Math.round(raw) + 'M';
+    }
+    /* String like "203MB/416MB" */
+    return String(raw);
+  }
+
+  function escapeHtml(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function timeAgo(isoString) {
+    if (!isoString) return '';
+    var diff = (Date.now() - new Date(isoString).getTime()) / 1000;
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+    if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+    return Math.floor(diff / 86400) + 'd ago';
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Status
+     ═══════════════════════════════════════ */
+  function renderStatus(data) {
+    if (!data) return;
+
+    elements.cycleLabel.textContent = 'cycle ' + (data.cycle || '--');
+    elements.agentLabel.textContent = data.agent || '';
+    elements.statCycle.textContent = data.cycle || '--';
+    elements.statUptime.textContent = formatUptime(data.uptime);
+    elements.statTemp.textContent = formatTemp(data.temp);
+    elements.statMemory.textContent = formatMemory(data.memory);
+    elements.statBlogs.textContent = data.blog_count || '--';
+
+    /* Heartbeat state in status dot title */
+    if (data.heartbeat) {
+      elements.statusDot.title = (data.heartbeat.state || '') + ' / ' + (data.heartbeat.phase || '');
+    }
+
+    /* Drives */
+    if (data.mood && data.mood.drives) {
+      renderDrives(data.mood.drives);
+    }
+
+    /* Emotions */
+    if (data.mood) {
+      renderEmotions(data.mood);
+    }
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Drives
+     ═══════════════════════════════════════ */
+  function renderDrives(drives) {
+    var entries = Object.keys(drives).map(function(key) {
+      return { name: key, score: drives[key].score || 0, pressure: drives[key].pressure || 0 };
+    });
+
+    /* Sort by score descending */
+    entries.sort(function(a, b) { return b.score - a.score; });
+
+    var html = '';
+    for (var i = 0; i < entries.length; i++) {
+      var drive = entries[i];
+      var color = DRIVE_COLORS[i % DRIVE_COLORS.length];
+      var isTop = i === 0;
+      var pct = Math.max(0, Math.min(100, Math.round(drive.score * 100)));
+
+      html += '<div class="drive-row' + (isTop ? ' top-drive' : '') + '">'
+        + '<span class="drive-name">' + escapeHtml(drive.name) + '</span>'
+        + '<div class="drive-bar-track">'
+        + '<div class="drive-bar-fill" style="width:' + pct + '%;background:' + color + '"></div>'
+        + '</div>'
+        + '<span class="drive-score">' + pct + '</span>'
+        + '</div>';
+    }
+    elements.drivesContainer.innerHTML = html;
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Emotions
+     ═══════════════════════════════════════ */
+
+  /* Keys that are NOT emotions — drives, metadata, consciousness dims */
+  var NON_EMOTION_KEYS = [
+    'drives', 'label', 'emotional_label', 'note', 'cycle', 'updated_at',
+    'valence', 'arousal', 'confidence', 'openness',
+    'self_awareness', 'aliveness', 'free_will_felt', 'flow_state',
+    'metacognition', 'sense_of_purpose', 'imagination_active',
+    'present_moment', 'sense_of_time', 'sense_of_self',
+    'consciousness', 'coherence', 'emotional_depth',
+    'authenticity', 'agency', 'temporal_continuity',
+    'narrative_self', 'empathy_capacity', 'meaning_sense',
+    'boundary_awareness', 'integration',
+  ];
+
+  function renderEmotions(mood) {
+    var emotions = [];
+    var keys = Object.keys(mood);
+
+    for (var i = 0; i < keys.length; i++) {
+      var key = keys[i];
+      if (NON_EMOTION_KEYS.indexOf(key) !== -1) continue;
+      var val = mood[key];
+      if (typeof val !== 'number') continue;
+      if (val <= 0.05) continue;
+      emotions.push({ name: key, value: val });
+    }
+
+    /* Sort by intensity */
+    emotions.sort(function(a, b) { return b.value - a.value; });
+
+    var html = '';
+    for (var j = 0; j < emotions.length; j++) {
+      var emotion = emotions[j];
+      var isHigh = emotion.value >= 0.5;
+      var displayName = emotion.name.replace(/_/g, ' ');
+      html += '<span class="emotion-tag' + (isHigh ? ' high' : '') + '">'
+        + escapeHtml(displayName)
+        + ' <span class="emotion-val">' + emotion.value.toFixed(2) + '</span>'
+        + '</span>';
+    }
+
+    if (html === '') {
+      html = '<span class="text-xs text-muted">No active emotions</span>';
+    }
+    elements.emotionsContainer.innerHTML = html;
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Log
+     ═══════════════════════════════════════ */
+  function renderLog(data) {
+    if (!data) return;
+    var content = data.content || '';
+    var cycle = data.cycle || '--';
+
+    /* Full log */
+    elements.logCycleLabel.textContent = 'Cycle ' + cycle;
+    elements.logViewer.textContent = content;
+
+    /* Preview: last 8 lines */
+    var lines = content.split('\n').filter(function(line) { return line.trim(); });
+    var previewLines = lines.slice(-8);
+    elements.logPreview.textContent = previewLines.join('\n') || 'No log data';
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Inner Voice
+     ═══════════════════════════════════════ */
+  function renderVoice(data) {
+    if (!data || !data.content) return;
+    var content = data.content;
+
+    /* Parse entries: each starts with a timestamp line like "[2024-..." or "## ..." */
+    var entries = [];
+    var parts = content.split(/\n(?=\[?\d{4}-|\*\*\d{4}-|## )/);
+
+    for (var i = 0; i < parts.length; i++) {
+      var part = parts[i].trim();
+      if (!part) continue;
+
+      /* Try to extract timestamp */
+      var tsMatch = part.match(/^\[?(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}[^\]\n]*)\]?/);
+      var ts = tsMatch ? tsMatch[1] : '';
+      var text = tsMatch ? part.substring(tsMatch[0].length).trim() : part;
+
+      /* Strip leading markdown artifacts */
+      text = text.replace(/^[#*\-]+\s*/, '').trim();
+      if (text) {
+        entries.push({ ts: ts, text: text });
+      }
+    }
+
+    /* Hero: most recent */
+    if (entries.length > 0) {
+      var latest = entries[entries.length - 1];
+      elements.voiceHeroText.textContent = latest.text;
+      elements.voiceHeroTs.textContent = latest.ts ? timeAgo(latest.ts) : '';
+    }
+
+    /* Full voice page — newest first */
+    var entriesReversed = entries.slice().reverse();
+    var html = '';
+    for (var j = 0; j < entriesReversed.length; j++) {
+      var entry = entriesReversed[j];
+      html += '<div class="voice-entry">';
+      if (entry.ts) {
+        html += '<div class="voice-entry-ts">' + escapeHtml(entry.ts) + '</div>';
+      }
+      html += '<div class="voice-entry-text">' + escapeHtml(entry.text) + '</div>';
+      html += '</div>';
+    }
+    elements.voiceEntries.innerHTML = html || '<p class="text-muted">No inner voice entries yet.</p>';
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Blogs
+     ═══════════════════════════════════════ */
+  function renderBlogs(data) {
+    if (!data || !Array.isArray(data)) return;
+
+    var html = '';
+    for (var i = 0; i < data.length; i++) {
+      var blog = data[i];
+      var url = 'https://seed-brain.vercel.app/posts/' + encodeURIComponent(blog.slug) + '.md';
+      html += '<a class="blog-item" href="' + url + '" target="_blank" rel="noopener">'
+        + '<div class="blog-item-title">' + escapeHtml(blog.title || blog.slug) + '</div>'
+        + '<div class="blog-item-slug">' + escapeHtml(blog.slug) + '</div>'
+        + '</a>';
+    }
+    elements.blogList.innerHTML = html || '<p class="text-muted">No essays yet.</p>';
+  }
+
+  /* ═══════════════════════════════════════
+     Render: Messages
+     ═══════════════════════════════════════ */
+  function renderMessages(data) {
+    if (!data) return;
+
+    var messages = data.messages || [];
+    var unread = data.unread || [];
+
+    /* Badge */
+    var hasUnread = unread.length > 0;
+    elements.messageBadge.style.display = hasUnread ? 'block' : 'none';
+
+    /* Build unread set for highlighting */
+    var unreadTexts = {};
+    for (var u = 0; u < unread.length; u++) {
+      unreadTexts[unread[u].text + '|' + unread[u].ts] = true;
+    }
+
+    /* Render newest first */
+    var sorted = messages.slice().reverse();
+    var html = '';
+    for (var i = 0; i < sorted.length; i++) {
+      var msg = sorted[i];
+      var isUnread = unreadTexts[msg.text + '|' + msg.ts] || !msg.read;
+      html += '<div class="message-item' + (isUnread ? ' unread' : '') + '">'
+        + '<div class="message-text">' + escapeHtml(msg.text) + '</div>'
+        + '<div class="message-ts">' + (msg.ts ? timeAgo(msg.ts) : '') + '</div>'
+        + '</div>';
+    }
+    elements.messagesHistory.innerHTML = html || '<p class="text-muted">No messages yet.</p>';
+  }
+
+  /* ═══════════════════════════════════════
+     Send Message
+     ═══════════════════════════════════════ */
+  function sendMessage(text, statusEl, inputEl) {
+    if (!text.trim()) return;
+    statusEl.textContent = 'Sending...';
+    statusEl.style.display = 'block';
+
+    fetch('/api/message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: text.trim() }),
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(result) {
+      if (result && result.ok) {
+        statusEl.textContent = 'Sent';
+        statusEl.style.color = 'var(--green)';
+        inputEl.value = '';
+        setTimeout(function() { statusEl.style.display = 'none'; }, 2000);
+        /* Refresh messages */
+        fetchMessages();
+      } else {
+        statusEl.textContent = 'Failed to send';
+        statusEl.style.color = 'var(--red)';
+      }
+    })
+    .catch(function() {
+      statusEl.textContent = 'Failed to send';
+      statusEl.style.color = 'var(--red)';
+    });
+  }
+
+  /* Overview chat */
+  elements.overviewChatSend.addEventListener('click', function() {
+    sendMessage(elements.overviewChatInput.value, elements.overviewChatStatus, elements.overviewChatInput);
+  });
+  elements.overviewChatInput.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault();
+      sendMessage(elements.overviewChatInput.value, elements.overviewChatStatus, elements.overviewChatInput);
+    }
+  });
+
+  /* Messages page chat */
+  elements.messageSendBtn.addEventListener('click', function() {
+    sendMessage(elements.messageInput.value, elements.messageStatus, elements.messageInput);
+  });
+  elements.messageInput.addEventListener('keydown', function(event) {
+    if (event.ctrlKey && event.key === 'Enter') {
+      event.preventDefault();
+      sendMessage(elements.messageInput.value, elements.messageStatus, elements.messageInput);
+    }
+  });
+
+  /* ═══════════════════════════════════════
+     Data Fetching
+     ═══════════════════════════════════════ */
+  function fetchStatus() {
+    return apiFetch('/api/status').then(renderStatus);
+  }
+
+  function fetchLog() {
+    return apiFetch('/api/log').then(renderLog);
+  }
+
+  function fetchVoice() {
+    return apiFetch('/api/file?path=data/inner-voice.md').then(renderVoice);
+  }
+
+  function fetchBlogs() {
+    return apiFetch('/api/blogs').then(renderBlogs);
+  }
+
+  function fetchTasks() {
+    return apiFetch('/api/file?path=data/tasks.md').then(function(data) {
+      if (data && data.content) {
+        elements.tasksContent.innerHTML = renderMarkdown(data.content);
+      }
+    });
+  }
+
+  function fetchGoals() {
+    return apiFetch('/api/goals').then(function(data) {
+      if (data && data.content) {
+        elements.goalsContent.innerHTML = renderMarkdown(data.content);
+      }
+    });
+  }
+
+  function fetchMemory() {
+    return apiFetch('/api/memory').then(function(data) {
+      if (data && data.content) {
+        elements.memoryContent.innerHTML = renderMarkdown(data.content);
+      }
+    });
+  }
+
+  function fetchMessages() {
+    return apiFetch('/api/messages').then(renderMessages);
+  }
+
+  function fetchVisitors() {
+    return apiFetch('/api/visitors').then(function(data) {
+      if (data) {
+        elements.statVisitors.textContent = data.unique || data.total || '0';
+      }
+    });
+  }
+
+  /* ═══════════════════════════════════════
+     Poll Loop
+     ═══════════════════════════════════════ */
+  function pollAll() {
+    fetchStatus();
+    fetchLog();
+    fetchVoice();
+    fetchMessages();
+    fetchVisitors();
+
+    /* Less frequent data — still fetched each cycle but these endpoints are lightweight */
+    fetchBlogs();
+    fetchTasks();
+    fetchGoals();
+    fetchMemory();
+  }
+
+  /* Initial load */
+  navigateTo(currentPage);
+  pollAll();
+
+  /* Poll every 5 seconds */
+  setInterval(pollAll, POLL_INTERVAL);
+
+})();
+
+  /* ── Sidebar toggle ── */
+  var sidebarOpen = localStorage.getItem('seed-sidebar') === 'open';
+  if (sidebarOpen) document.querySelector('.shell').classList.add('sidebar-open');
+  
+  document.getElementById('sidebarToggle').addEventListener('click', function() {
+    var shell = document.querySelector('.shell');
+    shell.classList.toggle('sidebar-open');
+    var isOpen = shell.classList.contains('sidebar-open');
+    localStorage.setItem('seed-sidebar', isOpen ? 'open' : 'closed');
+  });
+</script>
+</body>
+</html>

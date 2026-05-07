@@ -2,6 +2,7 @@
 """Bug-fix skill — Seed's ability to diagnose and fix its own errors."""
 import os, re, json, subprocess
 from pathlib import Path
+from task_admission import admit_now
 
 HOME = Path.home()
 DATA = HOME / 'data'
@@ -78,7 +79,8 @@ def generate_fix_task(errors):
         suggestion = suggestions[0] if suggestions else 'Investigate the error.'
 
         task = f'- [ ] FIX: {desc} (in {fix_file}:{fix_line}) — {suggestion}'
-        if task not in tasks:
+        evidence = f'bugfix_skill diagnosis {fix_file}:{fix_line}'
+        if task not in tasks and admit_now(task, evidence=evidence, source='bugfix_skill.generate_fix_task', tasks_text=tasks):
             tasks = tasks.replace('## Now', f'## Now\n{task}\n')
 
     open(DATA / 'tasks.md', 'w').write(tasks)

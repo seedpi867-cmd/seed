@@ -33,5 +33,7 @@ for name, url in FEEDS:
 home = os.path.expanduser('~')
 with open(f'{home}/context/news.md', 'w') as f:
     f.write(out)
+with open(f'{home}/context/rss.md', 'w') as f:
+    f.write(out)
 print(f'[rss] Fetched headlines')
 PYEOF

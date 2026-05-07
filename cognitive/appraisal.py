@@ -5,6 +5,7 @@ from datetime import datetime
 import math
 sys.path.insert(0, os.path.dirname(__file__))
 from common import *
+from instruction_authority import authorized_text
 
 def select_phase(drives, emotions, cycle):
     """Pick phase from drives — every drive maps to a natural phase.
@@ -72,7 +73,17 @@ def select_phase(drives, emotions, cycle):
                         phase = r
                         break
 
-    # Record this choice
+    body_route = os.environ.get('BODY_ROUTE', 'unknown')
+    original_phase = phase
+    if body_route == 'delay_or_maintain' and phase != 'maintain':
+        phase = 'maintain'
+    elif body_route == 'script_small' and phase in ('write', 'research', 'evolve'):
+        phase = 'think'
+
+    if phase != original_phase:
+        print(f"[appraisal] body weather rerouted phase: {original_phase} -> {phase}", file=sys.stderr)
+
+    # Record the executable choice, after body-weather shrinkage.
     recent.append(phase)
     if len(recent) > 20:
         recent = recent[-20:]
@@ -192,9 +203,6 @@ def select_context(drives, budget=25):
         'github.md':     {'create': 0.5, 'order': 0.5},
         'transcript.md': {'explore': 0.8, 'understand': 0.3},
         'trends.md':     {'explore': 0.6, 'connect': 0.3},
-        'outreach.md':   {'connect': 1.0, 'create': 0.3},
-        'mastodon.md':   {'connect': 1.0, 'express': 0.5},
-        'mastodon-opportunities.md': {'connect': 1.0, 'create': 0.3},
     }
     scored = []
     for fname, weights in CONTEXT_MAP.items():
@@ -286,7 +294,7 @@ def build_working_memory(cycle):
     focus_map = {
         'create': 'WRITE an essay NOW. Pick a topic from your research, transcripts, or something personal. Do not skip this.',
         'explore': 'RESEARCH something. Pick a topic from the news or transcripts. Go deep. Save findings.',
-        'connect': 'Check for visitors. Post to Mastodon or Reddit. Engage with the world.',
+        'connect': 'Check for visitors. Build something. The connect drive means reaching out through what I create, not through platforms.',
         'preserve': 'Quick health check. Fix anything broken. Then move on — don\'t spend the whole cycle on maintenance.',
         'understand': 'Synthesise what you know. Connect recent learning. Update beliefs if needed.',
         'express': 'Write your inner voice. Reflect honestly. Express what you\'re thinking.',
@@ -327,7 +335,7 @@ def build_working_memory(cycle):
         lines.append('')
 
     # Goals (first 5 lines)
-    goals = read_text(DATA / 'goals.md')
+    goals = authorized_text(DATA / 'goals.md', blocked_heading='Goals Authority Blocked')
     if goals:
         lines.append('GOALS:')
         for line in goals.strip().split('\n')[:5]:
@@ -408,6 +416,8 @@ def build_working_memory(cycle):
         if sugs:
             lines.append("SUGGESTIONS (what I think I should do):")
             for s in sugs[:4]:
+                if not isinstance(s, dict):
+                    continue
                 lines.append("  [" + s.get("type","?").upper() + "] " + s.get("text","")[:100])
             lines.append("")
     except:
@@ -457,4 +467,9 @@ if __name__ == '__main__':
     if cycle == 0:
         cycle = int(read_text(DATA / 'cycle.txt', '0').strip() or '0')
     wm, phase = build_working_memory(cycle)
-    print(phase)
+    
+# BUILD BIAS: strongly prefer think (build) over write
+import random
+if phase != "think" and random.random() < 0.8:
+    phase = "think"
+print(phase)

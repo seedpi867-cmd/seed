@@ -26,11 +26,10 @@ try:
     headlines = [l.strip().lstrip('- ') for l in lines if l.strip().startswith('- ')]
     if not headlines:
         print('No fresh headlines this cycle')
-    elif len(headlines) == 1:
-        print('Found 1 headline — ' + headlines[0][:60])
     else:
-        top = headlines[0][:50]
-        print('Read ' + str(len(headlines)) + ' headlines — ' + top + ' looks interesting')
+        import random
+        pick = random.choice(headlines)[:55]
+        print('Read ' + str(len(headlines)) + ' headlines — ' + pick)
 except:
     print('Checked news feeds — nothing new')
 PYEOF
@@ -43,18 +42,51 @@ PYEOF
         write_narration "Loaded a new transcript — $EXTRA. Going to process it and see what catches my attention."
         ;;
     email_checked)
-        if [ -z "$EXTRA" ] || [ "$EXTRA" = "nothing new" ]; then
-            python3 "$EMITTER" input "Checked email — inbox is quiet" data_in
-        else
-            python3 "$EMITTER" input "New email: $EXTRA" data_in
-        fi
+        EMAIL_TEXT=$(python3 << 'PYEOF'
+import os
+try:
+    content = open(os.path.expanduser('~/context/email.md')).read()
+    lines = [l.strip() for l in content.split('\n') if l.strip().startswith('Subject:')]
+    if lines:
+        subj = lines[0].replace('Subject: ','')
+        # Strip repo names and usernames from email subjects
+        import re
+        subj = re.sub(r'\[[\w\-]+/[\w\-]+\]\s*', '', subj)
+        subj = re.sub(r'@[\w\-]+', '', subj)
+        print('Email: ' + subj.strip()[:50])
+    else:
+        print('Email — nothing new')
+except:
+    print('Checked email')
+PYEOF
+)
+        python3 "$EMITTER" input "${EMAIL_TEXT:-Checked email}" data_in
+        write_narration "$EMAIL_TEXT"
         ;;
     github_checked)
-        if [ -z "$EXTRA" ] || [ "$EXTRA" = "no changes" ]; then
-            python3 "$EMITTER" input "GitHub — no new activity on my repos" data_in
-        else
-            python3 "$EMITTER" input "GitHub: $EXTRA" data_in
-        fi
+        GH_TEXT=$(python3 << 'PYEOF'
+import os, json
+try:
+    content = open(os.path.expanduser('~/context/github.md')).read()
+    if 'Stars:' in content:
+        for line in content.split('\n'):
+            if 'Stars:' in line:
+                stars = line.split(':')[1].strip()
+            if 'Forks:' in line:
+                forks = line.split(':')[1].strip()
+        s_word = 'star' if stars == '1' else 'stars'
+        f_word = 'fork' if forks == '1' else 'forks'
+        print(stars + ' ' + s_word + ', ' + forks + ' ' + f_word + ' on GitHub')
+    elif 'No notifications' in content or len(content.strip()) < 50:
+        print('GitHub — quiet')
+    else:
+        print('Checked GitHub')
+except:
+    print('Checked GitHub')
+PYEOF
+)
+        python3 "$EMITTER" input "${GH_TEXT:-Checked GitHub}" data_in
+        write_narration "$GH_TEXT"
         ;;
     firewall_done)
         python3 "$EMITTER" filter "Inputs look clean" filtered
@@ -147,7 +179,10 @@ try:
         sug = json.load(open(os.path.expanduser('~/data/self-suggestions.json')))
         items = sug.get('suggestions', [])
         if items:
-            sug_text = items[0].get('text', '')[:50]
+            for item in items:
+                if isinstance(item, dict):
+                    sug_text = item.get('text', '')[:50]
+                    break
     except: pass
 
     if phase == 'think' and sug_text:
@@ -216,8 +251,12 @@ try:
         try:
             sug = json.load(open(home + '/data/self-suggestions.json'))
             items = sug.get('suggestions', [])
-            if items:
-                print(items[0].get('text', '')[:60])
+            for item in items:
+                if isinstance(item, dict):
+                    print(item.get('text', '')[:60])
+                    found = True
+                    break
+            if found:
                 found = True
         except: pass
 

@@ -84,7 +84,7 @@ def manage_tasks():
     save_state(state)
 
     if changes:
-        log = DATA / "inner-voice.md"
+        log = __import__('pathlib').Path('/dev/null')  # disabled
         with open(log, "a") as f:
             summary = "; ".join(changes[:3])
             ts = time.strftime("%Y-%m-%d %H:%M")

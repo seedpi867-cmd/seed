@@ -42,5 +42,5 @@ def run(args: dict) -> dict:
     return {
         "success": True,
         "slug": slug,
-        "url": f"http://localhost:8080/blog/{slug}",
+        "url": f"http://192.168.8.190:8080/blog/{slug}",
     }

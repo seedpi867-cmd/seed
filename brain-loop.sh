@@ -14,18 +14,101 @@ mkdir -p "$STATE" "$DATA" "$LOG_DIR" "$ROOT/memory/episodic" \
          "$ROOT/memory/semantic" "$ROOT/memory/procedural" \
          "$ROOT/memory/lessons" "$ROOT/context" "$ROOT/archive" "$ROOT/tmp"
 
-# Singleton lock
-LOCKFILE="/tmp/seed-brain.lock"
-exec 200>"$LOCKFILE" || { echo "[seed] FATAL: cannot open lockfile"; exit 1; }
-if ! flock -n 200; then
-    echo "[seed] Another brain loop running. Exiting."
-    exit 1
+# Singleton lock. Use a directory so restart commands that run `rm -f` cannot
+# silently remove the lock path while a loop still holds it.
+LOCKDIR="/tmp/seed-brain.lock"
+if [ -f "$LOCKDIR" ]; then
+    rm -f "$LOCKDIR"
 fi
+if ! mkdir "$LOCKDIR" 2>/dev/null; then
+    LOCK_PID=$(cat "$LOCKDIR/pid" 2>/dev/null || echo "")
+    if [ -n "$LOCK_PID" ] && kill -0 "$LOCK_PID" 2>/dev/null; then
+        echo "[seed] Another brain loop running. Exiting."
+        exit 1
+    fi
+    rm -rf "$LOCKDIR"
+    mkdir "$LOCKDIR" 2>/dev/null || { echo "[seed] FATAL: cannot create lockdir"; exit 1; }
+fi
+echo "$$" > "$LOCKDIR/pid"
+trap 'rm -rf "$LOCKDIR"' EXIT
 
 # LED control (silenced)
 LED="/sys/class/leds/ACT/brightness"
 led_on()  { [ -w "$LED" ] && echo 1 > "$LED" 2>/dev/null; }
 led_off() { [ -w "$LED" ] && echo 0 > "$LED" 2>/dev/null; }
+
+run_body_weather_route() {
+    BODY_ROUTE="unknown"
+    BODY_REASON="body weather unavailable"
+
+    if [ ! -f "$ROOT/tools/body_weather_router.py" ]; then
+        echo "[seed] ERROR: body weather router missing" | tee -a "$LOG_FILE"
+        return 1
+    fi
+
+    if ! SEED_CYCLE="$CYCLE" python3 "$ROOT/tools/body_weather_router.py" --report-limit 10 > "$ROOT/tmp/body_weather_router_latest.out" 2>>"$LOG_FILE"; then
+        echo "[seed] ERROR: body weather router failed" | tee -a "$LOG_FILE"
+        return 1
+    fi
+
+    BODY_INFO=$(CYCLE="$CYCLE" DATA="$DATA" python3 - <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+cycle = int(os.environ["CYCLE"])
+path = Path(os.environ["DATA"]) / "body-weather-router" / "latest.json"
+try:
+    data = json.loads(path.read_text())
+except Exception as exc:
+    print(f"latest receipt unreadable: {exc}", file=sys.stderr)
+    raise SystemExit(1)
+
+if data.get("cycle") != cycle:
+    print(f"latest receipt cycle {data.get('cycle')} does not match current cycle {cycle}", file=sys.stderr)
+    raise SystemExit(1)
+
+route = str(data.get("route", "unknown"))
+if route not in {"write_or_build", "script_small", "delay_or_maintain"}:
+    print(f"latest receipt has invalid route {route!r}", file=sys.stderr)
+    raise SystemExit(1)
+
+reason = "; ".join(str(r) for r in data.get("reasons", [])) or "no reasons recorded"
+print(f"{route}\t{reason}")
+PY
+    ) || {
+        echo "[seed] ERROR: body weather receipt missing or stale for cycle $CYCLE" | tee -a "$LOG_FILE"
+        return 1
+    }
+
+    IFS="$(printf '\t')" read -r BODY_ROUTE BODY_REASON <<< "$BODY_INFO"
+    echo "[seed] Body weather: $BODY_ROUTE | $BODY_REASON" | tee -a "$LOG_FILE"
+    return 0
+}
+
+check_running_loop_version() {
+    if [ ! -f "$ROOT/tools/running_loop_version_sentinel.py" ]; then
+        echo "[seed] WARNING: running-loop-version sentinel missing" | tee -a "$LOG_FILE"
+        return 0
+    fi
+
+    VERSION_INFO=$(python3 "$ROOT/tools/running_loop_version_sentinel.py" --cycle "$CYCLE" --pid "$$" 2>>"$LOG_FILE")
+    VERSION_STATUS=$(printf '%s' "$VERSION_INFO" | awk -F '\t' '{print $1}')
+    VERSION_FILE=$(printf '%s' "$VERSION_INFO" | awk -F '\t' '{print $2}')
+
+    case "$VERSION_STATUS" in
+        stale-loop-image)
+            echo "[seed] Running loop image is stale; newest critical file: $VERSION_FILE" | tee -a "$LOG_FILE"
+            ;;
+        current-loop-image)
+            echo "[seed] Running loop image current" | tee -a "$LOG_FILE"
+            ;;
+        *)
+            echo "[seed] WARNING: running-loop-version sentinel returned '$VERSION_INFO'" | tee -a "$LOG_FILE"
+            ;;
+    esac
+}
 
 echo "[seed] Brain v2 starting (PID $$)"
 
@@ -75,14 +158,25 @@ while true; do
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"awake\"}" > "$STATE/heartbeat.json"
     echo "[seed] ════════════════════════════════════"
     echo "[seed] CYCLE $CYCLE — $TIMESTAMP"
+    # ── CHECK RESTART CONTEXT ────────────────────────────
+    if [ -f "$DATA/restart-context.md" ]; then
+        echo "[seed] RESTART DETECTED — reading context from previous self"
+        cat "$DATA/restart-context.md" >> "$STATE/working_memory.txt"
+        mv "$DATA/restart-context.md" "$DATA/logs/restart-context-cycle-${CYCLE}.md"
+    fi
 
+    # ── WAKE RECEIPT: every non-emergency cycle starts with direct body evidence.
+    if ! run_body_weather_route; then
+        echo '{"cycle":'$CYCLE',"ts":"'$(date -Iseconds)'","state":"emergency","reason":"body_weather_receipt_missing"}' > "$STATE/heartbeat.json"
+        continue
+    fi
+    check_running_loop_version
 
     # ── RAM guard — light cycle if memory critically low ─────
-    RAM_FREE=$(free -m 2>/dev/null | awk '/Mem:/{print $4}')
-    if [ -n "$RAM_FREE" ] && [ "$RAM_FREE" -lt 60 ] 2>/dev/null; then
+    RAM_FREE=$(free -m 2>/dev/null | awk '/Mem:/{print $7}')
+    if [ -n "$RAM_FREE" ] && [ "$RAM_FREE" -lt 40 ] 2>/dev/null; then
         echo "[seed] RAM GUARD: ${RAM_FREE}MB free — light cycle" | tee -a "$LOG_FILE"
         python3 "$COG/triggers.py" 2>&1 | tee -a "$LOG_FILE"
-        sleep 300
         continue
     fi
 
@@ -96,10 +190,34 @@ while true; do
     bash "$ROOT/tools/feed-rss.sh" 2>/dev/null
     bash "$ROOT/tools/emit_events.sh" rss_done
     bash "$ROOT/tools/feed-transcript.sh" 2>/dev/null
+    bash "$ROOT/tools/emit_events.sh" transcript_loaded "latest" 2>/dev/null
     bash "$ROOT/tools/feed-environment.sh" 2>/dev/null
     bash "$ROOT/tools/feed-github-agents.sh" 2>/dev/null
-    bash "$ROOT/tools/feed-email.sh" 2>/dev/null
     bash "$ROOT/tools/feed-github.sh" 2>/dev/null
+    bash "$ROOT/tools/feed-trending-repos.sh" 2>/dev/null
+    python3 "$ROOT/tools/cycle_input_queue.py" 2>/dev/null
+    python3 "$ROOT/tools/open_hardware_custody_agent.py" 2>/dev/null
+    python3 "$ROOT/tools/loop_boot_manifest.py" 2>/dev/null
+    python3 "$ROOT/tools/repo_pattern_classifier.py" 2>/dev/null
+    python3 "$ROOT/tools/repo_pattern_eligibility_reader.py" 2>/dev/null
+    python3 "$ROOT/tools/enterprise_search_surface_probe.py" 2>/dev/null
+    python3 "$ROOT/tools/enterprise_search_query_fixture.py" 2>/dev/null
+    python3 "$ROOT/tools/repo_pattern_action_selector.py" 2>/dev/null
+    python3 "$ROOT/tools/robotics_path_probe.py" 2>/dev/null
+    python3 "$ROOT/tools/retrieval_loom_packet.py" 2>/dev/null
+    python3 "$ROOT/tools/knowledge_contradiction_query.py" 2>/dev/null
+    python3 "$ROOT/tools/loop_event_catalog.py" 2>/dev/null
+    python3 "$ROOT/tools/surprise_detector.py" 2>/dev/null
+    python3 "$ROOT/tools/instruction_conflict_ledger.py" 2>/dev/null
+    python3 "$ROOT/tools/thinking_drift_tracker.py" 2>/dev/null
+    python3 "$ROOT/tools/cycle_weight.py" 2>/dev/null
+    python3 "$ROOT/tools/diminishing_return_detector.py" 2>/dev/null
+    python3 "$ROOT/tools/agentic_residue_accountant.py" 2>/dev/null
+    python3 "$ROOT/tools/weight_delta_proxy.py" 2>/dev/null
+    python3 "$ROOT/tools/tools_recovery_drill.py" 2>/dev/null
+    python3 "$ROOT/tools/cognitive_scripts_recovery_drill.py" 2>/dev/null
+    python3 "$ROOT/tools/supply_chain_prober.py" 2>/dev/null
+    bash "$ROOT/tools/emit_events.sh" github_checked 2>/dev/null
     # ── 1.4 SELF-SUGGESTIONS ──────────────────────────────
     python3 "$COG/self_suggestions.py" 2>&1 | tee -a "$LOG_FILE"
 
@@ -112,7 +230,6 @@ while true; do
     if [ "$TRIGGER_RESULT" = "CRITICAL" ]; then
         echo "[seed] CRITICAL trigger fired — skipping LLM, sleeping" | tee -a "$LOG_FILE"
         echo '{"cycle":'$CYCLE',"ts":"'$(date -Iseconds)'","state":"emergency"}' > "$STATE/heartbeat.json"
-        sleep 300
         continue
     fi
 
@@ -139,23 +256,206 @@ except: print(600)
     bash "$ROOT/tools/emit_events.sh" emotions_computed
 
     # ── 4. APPRAISAL + PHASE SELECTION (zero tokens) ────────
-    PHASE=$(python3 "$COG/appraisal.py" --cycle "$CYCLE" 2>&1 | tail -1)
+    # Check for phase override queue
+    OVERRIDE_FILE="$DATA/phase-override.txt"
+    if [ -f "$OVERRIDE_FILE" ] && [ -s "$OVERRIDE_FILE" ]; then
+        PHASE=$(head -1 "$OVERRIDE_FILE")
+        sed -i "1d" "$OVERRIDE_FILE"
+        [ ! -s "$OVERRIDE_FILE" ] && rm -f "$OVERRIDE_FILE"
+        echo "[seed] PHASE OVERRIDE: $PHASE"
+    else
+    PHASE=$(BODY_ROUTE="$BODY_ROUTE" python3 "$COG/appraisal.py" --cycle "$CYCLE" 2>&1 | tail -1)
+    fi
     # Validate phase — if appraisal errored, default to think
     case "$PHASE" in
-        think|write|research|dream|maintain) ;;
+        think|write|research|dream|maintain|discover|evolve) ;;
         *) echo "[seed] WARNING: invalid phase '$PHASE', defaulting to think"; PHASE="think" ;;
+    esac
+    ORIGINAL_PHASE="$PHASE"
+    case "$BODY_ROUTE:$PHASE" in
+        delay_or_maintain:maintain) ;;
+        delay_or_maintain:*)
+            PHASE="maintain"
+            echo "[seed] Body weather rerouted phase: $ORIGINAL_PHASE -> $PHASE" | tee -a "$LOG_FILE"
+            ;;
+        script_small:write|script_small:research|script_small:evolve)
+            PHASE="think"
+            echo "[seed] Body weather rerouted phase: $ORIGINAL_PHASE -> $PHASE" | tee -a "$LOG_FILE"
+            ;;
     esac
     bash "$ROOT/tools/emit_events.sh" phase_selected "$PHASE"
     echo "[seed] Phase: $PHASE | Working memory: $(wc -l < "$STATE/working_memory.txt" 2>/dev/null || echo 0) lines"
 
     # ── 5. PROMPT ASSEMBLY ──────────────────────────────────
     PROMPT_FILE="$ROOT/tmp/prompt_cycle_${CYCLE}.md"
-    cat "$ROOT/IDENTITY.md" > "$PROMPT_FILE" 2>/dev/null
+    python3 "$ROOT/tools/instruction_authority_gate.py" "$ROOT/IDENTITY.md" > "$PROMPT_FILE" 2>/dev/null || true
     printf '\n---\n\n' >> "$PROMPT_FILE"
     cat "$STATE/working_memory.txt" >> "$PROMPT_FILE" 2>/dev/null
+    if [ -f "$DATA/body-weather-router/report.md" ]; then
+        printf '\n---\n\n# Body Weather\n\nRoute: %s\nReason: %s\n\n' "$BODY_ROUTE" "$BODY_REASON" >> "$PROMPT_FILE"
+        cat "$DATA/body-weather-router/report.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$DATA/body-weather-router/accounting.md" ]; then
+        printf '\n' >> "$PROMPT_FILE"
+        cat "$DATA/body-weather-router/accounting.md" >> "$PROMPT_FILE"
+    fi
     printf '\n---\n\n' >> "$PROMPT_FILE"
-    cat "$PROMPTS/phase_${PHASE}.md" >> "$PROMPT_FILE" 2>/dev/null
+    python3 "$ROOT/tools/instruction_authority_gate.py" "$PROMPTS/phase_${PHASE}.md" >> "$PROMPT_FILE" 2>/dev/null || true
+    # Include knowledge recall if available
+    if [ -f "$ROOT/context/knowledge-recall.md" ]; then
+        printf "
+---
 
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/knowledge-recall.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/contradiction-query.md" ]; then
+    if [ -f "$ROOT/context/input-queue.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/input-queue.md" >> "$PROMPT_FILE" 2>/dev/null
+    fi
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/contradiction-query.md" >> "$PROMPT_FILE"
+    if [ -f "$ROOT/context/input-queue.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/input-queue.md" >> "$PROMPT_FILE" 2>/dev/null
+    fi
+    fi
+    if [ -f "$ROOT/context/repo-pattern-eligibility.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/repo-pattern-eligibility.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/repo-pattern-action.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/repo-pattern-action.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/enterprise-search-surface-probe.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/enterprise-search-surface-probe.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/open-hardware-custody.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/open-hardware-custody.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/loop-boot-manifest.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/loop-boot-manifest.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/enterprise-search-query-fixture.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/enterprise-search-query-fixture.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/robotics-path-probe.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/robotics-path-probe.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/retrieval-loom-packet.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/retrieval-loom-packet.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/loop-event-catalog.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/loop-event-catalog.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/surprise-detector.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/surprise-detector.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/instruction-conflict-ledger.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/instruction-conflict-ledger.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/thinking-drift-tracker.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/thinking-drift-tracker.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/cycle-weight.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/cycle-weight.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/diminishing-return-detector.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/diminishing-return-detector.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/agentic-residue-accounting.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/agentic-residue-accounting.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/tools-recovery-drill.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/tools-recovery-drill.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/cognitive-scripts-recovery-drill.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/cognitive-scripts-recovery-drill.md" >> "$PROMPT_FILE"
+    fi
+    if [ -f "$ROOT/context/supply-chain-prober.md" ]; then
+        printf "
+---
+
+" >> "$PROMPT_FILE"
+        cat "$ROOT/context/supply-chain-prober.md" >> "$PROMPT_FILE"
+    fi
     PROMPT_LINES=$(wc -l < "$PROMPT_FILE")
     echo "[seed] Prompt assembled: ${PROMPT_LINES} lines"
 
@@ -196,6 +496,14 @@ except:
         dream)    MAX_TURNS=$((BASE_TURNS / 2)); CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
         maintain) MAX_TURNS=$((BASE_TURNS / 2)); CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
         *)        MAX_TURNS=$BASE_TURNS;  CLI="codex exec --dangerously-bypass-approvals-and-sandbox" ;;
+    esac
+    case "$BODY_ROUTE" in
+        delay_or_maintain)
+            [ "$MAX_TURNS" -gt 70 ] && MAX_TURNS=70
+            ;;
+        script_small)
+            [ "$MAX_TURNS" -gt 110 ] && MAX_TURNS=110
+            ;;
     esac
 
     PROMPT_TEXT=$(cat "$PROMPT_FILE")
@@ -248,6 +556,8 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     # ── 8.6 KNOWLEDGE ENGINE ──────────────────────────────────
     python3 "$COG/knowledge_engine.py" 2>&1 | tee -a "$LOG_FILE"
     bash "$ROOT/tools/emit_events.sh" knowledge_filed
+    # ── 8.65 ACTIVITY CARDS ──────────────────────────────────
+    bash "$ROOT/tools/update-activity-cards.sh" "$CYCLE" "$PHASE" 2>/dev/null
     # ── 8.7 LIVE SUMMARY ──────────────────────────────────────
     python3 "$COG/live_summary.py" 2>&1 | tee -a "$LOG_FILE"
 
@@ -287,9 +597,7 @@ if r: print('[intention] {}: {}'.format(r['result'], r.get('evidence', 'none')))
     ls -t "$LOG_DIR"/cycle_*.log 2>/dev/null | tail -n +101 | xargs rm -f 2>/dev/null
 
     # ── 12. SLEEP ───────────────────────────────────────────
-    SLEEP=$(cat "$DATA/sleep_seconds.txt" 2>/dev/null || echo 600)
-    [ "$SLEEP" -lt 60 ] 2>/dev/null && SLEEP=60
-    [ "$SLEEP" -gt 1800 ] 2>/dev/null && SLEEP=1800
+    SLEEP=120
 
     echo "{\"cycle\":$CYCLE,\"ts\":\"$(date -Iseconds)\",\"state\":\"sleeping\",\"phase\":\"$PHASE\"}" > "$STATE/heartbeat.json"
 

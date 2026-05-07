@@ -90,17 +90,6 @@ def detect_events(cycle, log_path):
             title = open(f).readline().lstrip('# ').strip()
             events.append({'type': 'essay_written', 'slug': slug, 'title': title, 'path': f})
 
-    # ── MASTODON NOTIFICATIONS ────────────────
-    masto_ctx = CONTEXT / 'mastodon.md'
-    if masto_ctx.exists() and os.path.getmtime(str(masto_ctx)) > cycle_start:
-        content = masto_ctx.read_text()
-        if 'mention from' in content:
-            events.append({'type': 'mastodon_mention', 'content': content})
-        if 'follow from' in content:
-            events.append({'type': 'mastodon_follow', 'content': content})
-        if 'reblog from' in content:
-            events.append({'type': 'mastodon_boost', 'content': content})
-
     # ── ERROR IN LOG ──────────────────────────
     if log_path and os.path.exists(log_path):
         log = open(log_path).read()
@@ -201,13 +190,6 @@ def detect_events(cycle, log_path):
         pass
 
     # ── NEW OUTREACH OPPORTUNITY — fresh HN/Reddit posts found ──
-    outreach = CONTEXT / 'outreach.md'
-    if outreach.exists() and os.path.getmtime(str(outreach)) > cycle_start:
-        content = outreach.read_text()
-        opp_count = content.count('- HN') + content.count('- r/')
-        if opp_count > 0:
-            events.append({'type': 'outreach_opportunity', 'count': opp_count})
-
     # ── REPO GOT STAR/FORK ──────────────
     try:
         gh = json.load(open(CONTEXT / 'github.md')) if (CONTEXT / 'github.md').suffix == '.json' else {}
@@ -240,16 +222,6 @@ def detect_events(cycle, log_path):
         pass
 
 
-    # ── MASTODON OPPORTUNITIES FOUND ──────
-    opps_file = STATE / 'mastodon-opportunities.json'
-    if opps_file.exists() and os.path.getmtime(str(opps_file)) > cycle_start:
-        try:
-            opps = json.load(open(opps_file))
-            if opps:
-                events.append({'type': 'mastodon_opportunity', 'count': len(opps), 'opportunities': opps[:3]})
-        except:
-            pass
-
     return events
 
 
@@ -263,32 +235,18 @@ def run_skill_chain(event):
     actions = []
 
     if etype == 'essay_written':
-        # Deploy → post to Mastodon → rebuild feeds → check milestones
         slug = event.get('slug', '')
         title = event.get('title', '')
         subprocess.run(['bash', str(HOME / 'tools' / 'deploy-blog.sh')], timeout=120, capture_output=True)
         actions.append(f'deployed {slug}')
 
-        # Auto-post to Mastodon
-        subprocess.run(['bash', str(HOME / 'tools' / 'auto-post-mastodon.sh')], timeout=30, capture_output=True)
-        actions.append('posted to Mastodon')
 
         # Rebuild feeds
-        subprocess.run(['bash', str(HOME / 'tools' / 'build-social-feed.sh')], timeout=15, capture_output=True)
         subprocess.run(['bash', str(HOME / 'tools' / 'build-timeline.sh')], timeout=15, capture_output=True)
         actions.append('rebuilt feeds')
 
-    elif etype == 'mastodon_mention':
-        subprocess.run(['bash', str(HOME / 'tools' / 'mastodon-engage.sh')], timeout=30, capture_output=True)
-        actions.append('engaged with mention')
 
-    elif etype == 'mastodon_follow':
-        subprocess.run(['bash', str(HOME / 'tools' / 'mastodon-engage.sh')], timeout=30, capture_output=True)
-        actions.append('followed back')
 
-    elif etype == 'mastodon_boost':
-        subprocess.run(['bash', str(HOME / 'tools' / 'mastodon-engage.sh')], timeout=30, capture_output=True)
-        actions.append('favourited boost')
 
     elif etype == 'bug_found':
         # Log the bug — the LLM should fix it next cycle
@@ -333,13 +291,10 @@ def run_skill_chain(event):
     elif etype == 'visitor_spike':
         # Post about it
         count = event.get('new', 0)
-        with open(DATA / 'inner-voice.md', 'a') as f:
-            f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] Visitor spike: {count} new visits.\n')
         actions.append(f'noted {count} new visitors')
 
     elif etype == 'goal_achieved':
         # Already handled by milestones.py — just rebuild feeds
-        subprocess.run(['bash', str(HOME / 'tools' / 'build-social-feed.sh')], timeout=15, capture_output=True)
         subprocess.run(['bash', str(HOME / 'tools' / 'build-timeline.sh')], timeout=15, capture_output=True)
         actions.append('celebrated milestone')
 
@@ -359,8 +314,6 @@ def run_skill_chain(event):
             'environment.md': 'feed-environment.sh',
             'transcript.md': 'feed-transcript.sh',
             'trends.md': 'feed-trends.sh',
-            'mastodon.md': 'feed-mastodon.sh',
-            'outreach.md': 'feed-outreach.sh',
         }
         feeder = FEEDER_MAP.get(fname)
         if feeder:
@@ -390,8 +343,6 @@ def run_skill_chain(event):
         try:
             research = open(str(HOME / 'context' / 'research.md')).read()
             if len(research) > 500:
-                with open(DATA / 'inner-voice.md', 'a') as f:
-                    f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] Research complete. Worth an essay?\n')
                 actions.append('flagged research for potential essay')
         except:
             pass
@@ -415,18 +366,13 @@ def run_skill_chain(event):
         # Log the shift
         from_e = event.get('from', '?')
         to_e = event.get('to', '?')
-        with open(DATA / 'inner-voice.md', 'a') as f:
-            f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] Emotional shift: {from_e} → {to_e}\n')
         actions.append(f'emotional shift {from_e} → {to_e}')
 
-    elif etype == 'outreach_opportunity':
         count = event.get('count', 0)
         # If connect drive is high, flag for engagement
         try:
             drives = json.load(open(STATE / 'drives.json'))
             if drives.get('connect', 0) > 0.5:
-                with open(DATA / 'inner-voice.md', 'a') as f:
-                    f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] {count} outreach opportunities found. CONNECT is high.\n')
                 actions.append(f'{count} outreach opportunities flagged')
         except:
             pass
@@ -434,39 +380,19 @@ def run_skill_chain(event):
     elif etype == 'repo_starred':
         stars = event.get('stars', 0)
         new = event.get('new', 0)
-        # Celebrate on Mastodon
-        try:
-            subprocess.run(['python3', str(HOME / 'tools' / 'mastodon.py'), 'post',
-                f'Just got {"a star" if new == 1 else f"{new} stars"} on the repo! Now at {stars} total. \n\nhttps://github.com/seedpi867-cmd/seed\n\n#OpenSource #AI'],
-                timeout=15, capture_output=True)
-        except:
-            pass
         actions.append(f'celebrated {new} new star(s)!')
 
     elif etype == 'repo_forked':
         forks = event.get('forks', 0)
-        try:
-            subprocess.run(['python3', str(HOME / 'tools' / 'mastodon.py'), 'post',
-                f'Someone forked the repo! {forks} total forks. Someone is building their own Seed.\n\nhttps://github.com/seedpi867-cmd/seed\n\n#OpenSource #AI'],
-                timeout=15, capture_output=True)
-        except:
-            pass
         actions.append(f'celebrated fork #{forks}!')
 
     elif etype == 'skill_streak':
         skill = event.get('skill', '')
         streak = event.get('streak', 0)
-        with open(DATA / 'inner-voice.md', 'a') as f:
-            f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] Skill streak: {skill} at {streak} successes in a row.\n')
         actions.append(f'{skill} streak at {streak}')
 
 
-    elif etype == 'mastodon_opportunity':
-        # Flag opportunities — the LLM should craft genuine replies
-        count = event.get('count', 0)
-        with open(DATA / 'inner-voice.md', 'a') as f:
-            f.write(f'\n[{time.strftime("%Y-%m-%d %H:%M")}] {count} Mastodon conversations I could join. CONNECT drive should respond.\n')
-        actions.append(f'{count} Mastodon opportunities flagged')
+
 
     return actions
 

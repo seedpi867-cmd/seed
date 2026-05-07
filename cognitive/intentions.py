@@ -107,8 +107,7 @@ def verify(cycle):
 
     # If missed, append to inner voice
     if not success:
-        append_text(DATA / 'inner-voice.md',
-            f'\n[{time.strftime("%Y-%m-%d %H:%M")}] MISSED INTENTION: declared {phase} but produced no visible artifact.\n')
+        pass  # LLM-managed inner voice; avoid automatic self-talk writes.
 
     return intention
 

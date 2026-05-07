@@ -147,7 +147,7 @@ def detect_topic(text):
         "ai safety": ["safety", "sandbox", "injection", "firewall", "alignment"],
         "autonomous systems": ["autonomous", "self-directed", "drives", "cognitive"],
         "bare metal": ["bare metal", "kernel", "piforge", "arm64", "neon"],
-        "web and social": ["website", "mastodon", "reddit", "hn", "bluesky", "social"],
+        "web and social": ["website", "social"],
         "propagation": ["clone", "fork", "star", "propagation", "viral"],
         "architecture": ["architecture", "event bus", "appraisal", "learning loop"],
         "writing": ["essay", "blog", "wrote", "writing", "published"],

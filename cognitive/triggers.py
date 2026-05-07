@@ -23,17 +23,18 @@ def check_all():
                 total_mb = int(parts[1])
                 pct_used = (total_mb - free_mb) / total_mb
 
-                if free_mb < 50:
+                avail_mb = int(parts[6]) if len(parts) > 6 else free_mb
+                if avail_mb < 30:
                     # CRITICAL — kill heavy processes
                     subprocess.run(['pkill', '-f', 'node.*codex'], timeout=5)
-                    actions.append(f'CRITICAL: RAM at {free_mb}MB free — killed heavy processes')
+                    actions.append(f'CRITICAL: RAM {avail_mb}MB available — killed heavy processes')
                     critical = True
-                elif free_mb < 100:
+                elif avail_mb < 60:
                     # WARNING — run compaction
                     subprocess.run(['bash', os.path.expanduser('~/tools/self-maintain.sh')], timeout=30)
-                    actions.append(f'WARNING: RAM at {free_mb}MB — ran self-maintain')
-                elif free_mb < 150:
-                    actions.append(f'LOW RAM: {free_mb}MB free — monitoring')
+                    actions.append(f'WARNING: RAM {avail_mb}MB available — ran self-maintain')
+                elif avail_mb < 100:
+                    actions.append(f'LOW RAM: {avail_mb}MB available — monitoring')
     except:
         pass
 
@@ -65,11 +66,11 @@ def check_all():
         temp_c = temp / 1000
         if temp_c > 75:
             # CRITICAL — throttling, sleep longer
-            (DATA / 'sleep_seconds.txt').write_text('900')
+            (DATA / 'sleep_seconds.txt').write_text('120')
             actions.append(f'CRITICAL: Temp {temp_c}C — forcing long sleep')
             critical = True
         elif temp_c > 65:
-            (DATA / 'sleep_seconds.txt').write_text('600')
+            (DATA / 'sleep_seconds.txt').write_text('120')
             actions.append(f'WARNING: Temp {temp_c}C — extending sleep')
     except:
         pass

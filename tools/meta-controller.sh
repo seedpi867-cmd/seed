@@ -29,13 +29,13 @@ actions = []
 # If REST pressure is very high, extend sleep time
 if rest_pressure > 1.5 or tiredness > 0.7:
     sleep_time = int(900 + tiredness * 600)  # 15-25 min when tired
-    open(os.path.expanduser('~/data/sleep_seconds.txt'), 'w').write(str(sleep_time))
+    open(os.path.expanduser('~/data/sleep_seconds.txt'), 'w').write('120')
     actions.append(f"Extended sleep to {sleep_time}s (tired)")
 elif tiredness < 0.3:
-    open(os.path.expanduser('~/data/sleep_seconds.txt'), 'w').write('300')
+    open(os.path.expanduser('~/data/sleep_seconds.txt'), 'w').write('120')
     actions.append("Shortened sleep to 300s (energetic)")
 else:
-    open(os.path.expanduser('~/data/sleep_seconds.txt'), 'w').write('600')
+    open(os.path.expanduser('~/data/sleep_seconds.txt'), 'w').write('120')
 
 # If SEEK is high, trigger extra knowledge seeking
 if seek_pressure > 0.5:

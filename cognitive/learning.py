@@ -198,7 +198,105 @@ def detect_outcomes(log_path, cycle):
 
     return unique
 
-def update_from_outcomes(events):
+def open_task_lines():
+    tasks = read_text(DATA / 'tasks.md')
+    return [
+        line.strip()[6:].strip()
+        for line in tasks.split('\n')
+        if line.strip().startswith('- [ ]')
+    ]
+
+
+def load_snapshot_tasks(cycle):
+    path = DATA / 'snapshots' / f'tasks.md.cycle-{cycle}'
+    text = read_text(path)
+    return {
+        line.strip()[6:].strip()
+        for line in text.split('\n')
+        if line.strip().startswith('- [ ]')
+    }
+
+
+def schema_files_changed_since(cutoff):
+    """Count receipt/schema-like implementation files touched this cycle."""
+    candidates = [
+        HOME / 'brain-loop.sh',
+        DATA / 'tasks.md',
+        DATA / 'goals.md',
+    ]
+    for pattern in (
+        'cognitive/*.py',
+        'tools/*receipt*.py',
+        'tools/*account*.py',
+        'tools/*router*.py',
+        'tools/repo_pattern_classifier.py',
+        'tools/body_weather_router.py',
+    ):
+        candidates.extend(HOME.glob(pattern))
+
+    changed = []
+    seen = set()
+    for path in candidates:
+        if path in seen:
+            continue
+        seen.add(path)
+        try:
+            if path.exists() and path.stat().st_mtime > cutoff:
+                changed.append(str(path.relative_to(HOME)))
+        except:
+            pass
+    return changed
+
+
+def compute_consequence_metrics(cycle):
+    """Receipt fields that can go to zero when pressure actually clears."""
+    try:
+        _cj = load_json(STATE / 'cycle.json', {})
+        cutoff = _cj.get('started_at', now() - 600)
+    except:
+        cutoff = now() - 600
+
+    tasks = open_task_lines()
+    previous_tasks = load_snapshot_tasks(cycle - 1)
+    recurring_tasks = [task for task in tasks if task in previous_tasks]
+    contradiction_tasks = [
+        task for task in tasks
+        if re.search(r'\b(contradict|contradiction|disagree|oppos)', task, re.I)
+    ]
+    schema_changed_files = schema_files_changed_since(cutoff)
+
+    metrics = {
+        'contradiction': len(contradiction_tasks),
+        'schema_change': len(schema_changed_files),
+        'task_non_recurrence': len(recurring_tasks),
+        'definitions': {
+            'contradiction': 'open task lines still asking for contradiction/disagreement work',
+            'schema_change': 'receipt/schema implementation files touched during this cycle',
+            'task_non_recurrence': 'open task lines that recur from the previous tasks snapshot',
+        },
+        'evidence': {
+            'contradiction_tasks': contradiction_tasks[:5],
+            'schema_changed_files': schema_changed_files[:10],
+            'recurring_tasks': recurring_tasks[:5],
+        },
+    }
+
+    latest = DATA / 'consequence-metrics' / 'latest.json'
+    history = DATA / 'consequence-metrics' / 'history.jsonl'
+    latest.parent.mkdir(parents=True, exist_ok=True)
+    receipt = {
+        'cycle': cycle,
+        'ts': now_iso(),
+        'consequence_metrics': metrics,
+    }
+    save_json(latest, receipt)
+    with open(history, 'a') as f:
+        f.write(json.dumps(receipt) + '\n')
+
+    return metrics
+
+
+def update_from_outcomes(events, consequence_metrics=None):
     """Apply outcomes to drives (satisfaction) and save"""
     from drive_engine import SATISFACTION_MAP
     drives = load_json(STATE / 'drives.json', {})
@@ -211,7 +309,10 @@ def update_from_outcomes(events):
                 drives[drive] = clamp(drives[drive] + delta, 0.20, 0.95)
 
     save_json(STATE / 'drives.json', drives)
-    save_json(STATE / 'last_outcome.json', {'events': events, 'timestamp': now()})
+    receipt = {'events': events, 'timestamp': now()}
+    if consequence_metrics is not None:
+        receipt['consequence_metrics'] = consequence_metrics
+    save_json(STATE / 'last_outcome.json', receipt)
     return drives
 
 def write_inner_voice(events, drives, emotions):
@@ -338,8 +439,9 @@ def run_learning(log_path, cycle, phase):
             title = fname.replace(".md", "").replace("-", " ")
             subprocess.run(["bash", str(HOME / "tools" / "emit_events.sh"), "essay_written", title], timeout=5, capture_output=True)
 
-    # 2. Update drives from outcomes
-    drives = update_from_outcomes(events)
+    # 2. Update drives from outcomes, with consequence fields on the receipt.
+    consequence_metrics = compute_consequence_metrics(cycle)
+    drives = update_from_outcomes(events, consequence_metrics)
 
     # 3. Write inner voice
     write_inner_voice(events, drives, emotions)

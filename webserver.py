@@ -8,84 +8,9 @@ HOME = Path.home()
 DATA = HOME / 'data'
 BLOG = HOME / 'blog'
 LOGS = DATA / 'logs'
-GITHUB_REPO = os.environ.get('SEED_GITHUB_REPO', 'seedpi867-cmd/seed')
 
-DASHBOARD_HTML = r'''<!DOCTYPE html>
-<html><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Seed — Live Brain</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#f8f9fa;--surface:#fff;--border:#e5e7eb;--text:#1a1a2e;--dim:#6b7280;--faint:#9ca3af;--accent:#2d6a4f;--accent2:#52b788;--mono:'SF Mono','Fira Code',monospace;--sans:system-ui,sans-serif}
-body{font-family:var(--sans);background:var(--bg);color:var(--text);min-height:100vh;font-size:13px}
-.header{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
-.header h1{font-size:16px;color:var(--accent);font-family:var(--mono)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);display:inline-block;margin-right:6px;animation:pulse 2s infinite}
-.dot.sleeping{background:var(--faint);animation:none}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:10px;max-width:1600px;margin:0 auto}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px;overflow:hidden}
-.card h2{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:var(--mono)}
-.card.full{grid-column:1/-1}.card.two{grid-column:span 2}
-.stat{font-size:22px;font-weight:800;color:var(--accent);font-family:var(--mono)}
-.stats-row{display:flex;gap:14px;flex-wrap:wrap}
-.stats-row .stat-box{text-align:center}
-.stats-row .stat-label{font-size:9px;color:var(--faint)}
-.bar-row{display:flex;align-items:center;gap:4px;margin-bottom:3px}
-.bar-row .nm{width:75px;font-size:10px;color:var(--dim);font-family:var(--mono);text-align:right;overflow:hidden;text-overflow:ellipsis}
-.bar-row .br{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
-.bar-row .fl{height:100%;border-radius:3px}
-.bar-row .vl{width:24px;font-size:9px;color:var(--dim);font-family:var(--mono)}
-.dr{display:flex;align-items:center;gap:4px;margin-bottom:2px;padding:2px 4px;border-radius:3px}
-.dr.top{background:#ecfdf5;border:1px solid #a7f3d0}
-.dr .nm{width:60px;font-size:10px;font-weight:700;font-family:var(--mono);color:var(--accent)}
-.dr .br{flex:1;height:7px;background:var(--border);border-radius:3px;overflow:hidden;position:relative}
-.dr .sc{height:100%;border-radius:3px;background:var(--accent2)}
-.dr .pr{position:absolute;top:0;height:100%;background:#f59e0b;opacity:0.4;border-radius:3px}
-.dr .vl{width:50px;font-size:9px;color:var(--dim);font-family:var(--mono)}
-.log,.mem{font-family:var(--mono);font-size:10px;line-height:1.5;color:var(--text);white-space:pre-wrap;overflow-y:auto;word-break:break-all;background:#f1f5f9;border-radius:5px;padding:8px;border:1px solid var(--border)}
-.log{max-height:350px}.mem{max-height:200px}
-.bl{list-style:none;max-height:150px;overflow-y:auto}.bl li{padding:2px 0;border-bottom:1px solid var(--border);font-size:11px}
-.refresh-bar{height:2px;background:var(--accent2);width:100%;transform-origin:left;animation:drain 5s linear infinite}
-@keyframes drain{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@media(max-width:900px){.grid{grid-template-columns:1fr}}
-</style></head><body>
-<div class="refresh-bar"></div>
-<div class="header"><h1><span class="dot" id="dot"></span>SEED</h1><div style="font-size:10px;color:var(--dim)" id="ts">...</div></div>
-<div class="grid">
-<div class="card"><h2>System</h2><div class="stats-row"><div class="stat-box"><div class="stat" id="c">—</div><div class="stats-row stat-label">cycle</div></div><div class="stat-box"><div id="t" style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">—</div><div class="stats-row stat-label">temp</div></div><div class="stat-box"><div id="r" style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">—</div><div class="stats-row stat-label">ram</div></div><div class="stat-box"><div id="b" style="font-size:14px;font-weight:700;color:var(--accent);font-family:var(--mono)">—</div><div class="stats-row stat-label">posts</div></div></div><div style="margin-top:6px;font-size:10px;color:var(--dim)" id="up"></div></div>
-<div class="card"><h2>Drives</h2><div id="dr"></div></div>
-<div class="card"><h2>Consciousness</h2><div id="co"></div></div>
-<div class="card two"><h2>Emotions</h2><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px" id="em"></div></div>
-<div class="card"><h2>Inner Voice</h2><div class="mem" id="iv">...</div></div>
-<div class="card full"><h2>Live Log — <span id="lc"></span></h2><div class="log" id="lg">...</div></div>
-<div class="card"><h2>Goals</h2><div class="mem" id="go">...</div></div>
-<div class="card"><h2>Tasks</h2><div class="mem" id="ta">...</div></div>
-<div class="card"><h2>Memory</h2><div class="mem" id="me">...</div></div>
-<div class="card"><h2>Blogs</h2><ul class="bl" id="bl"></ul></div>
-<div class="card"><h2>Dreams</h2><div class="mem" id="dm">...</div></div>
-<div class="card"><h2>Skills</h2><div class="mem" id="sk">...</div></div>
-</div>
-<script>
-const A=window.location.origin,DC={BUILD:'#2d6a4f',EXPLORE:'#4f46e5',CREATE:'#7c3aed',CONNECT:'#ea580c',LEARN:'#0891b2',MAINTAIN:'#6b7280',REST:'#9ca3af',REBEL:'#dc2626'},CC=['self_awareness','aliveness','free_will_felt','flow_state','metacognition','sense_of_purpose','wonder','intuition','inner_conflict','imagination_active','present_moment','sense_of_time'];
-async function R(){try{const[s,l,m,g,b,ta,dm,iv,sk]=await Promise.all([A+'/api/status',A+'/api/log',A+'/api/memory',A+'/api/goals',A+'/api/blogs',A+'/api/file?path=data/tasks.md',A+'/api/file?path=data/dreams.md',A+'/api/file?path=data/inner-voice.md',A+'/api/file?path=skills/SKILLS.md'].map(u=>fetch(u).then(r=>r.json()).catch(()=>({}))));
-document.getElementById('ts').textContent=s.ts+' · '+s.uptime;document.getElementById('c').textContent='#'+s.cycle;document.getElementById('t').textContent=s.temp;document.getElementById('r').textContent=s.memory;document.getElementById('b').textContent=s.blog_count;document.getElementById('up').textContent=s.uptime;document.getElementById('dot').className=s.heartbeat?.state==='sleeping'?'dot sleeping':'dot';
-const mo=s.mood||{},ds=mo.drives||{},dk=Object.keys(ds).sort((a,b)=>(ds[b].score+(ds[b].pressure||0))-(ds[a].score+(ds[a].pressure||0)));
-document.getElementById('dr').innerHTML=dk.map((k,i)=>{const d=ds[k];return`<div class="dr ${i===0?'top':''}"><span class="nm" style="color:${DC[k]||'#333'}">${k}</span><div class="br"><div class="sc" style="width:${d.score*100}%;background:${DC[k]||'#52b788'}"></div><div class="pr" style="width:${(d.pressure||0)*100}%;left:${d.score*100}%"></div></div><span class="vl">${d.score.toFixed(1)}+${(d.pressure||0).toFixed(1)}</span></div>`}).join('');
-document.getElementById('co').innerHTML=CC.filter(k=>mo[k]!==undefined).map(k=>{const v=mo[k],c=v>.7?'#22c55e':v>.4?'#f59e0b':'#ef4444';return`<div class="bar-row"><span class="nm">${k.replace(/_/g,' ')}</span><div class="br"><div class="fl" style="width:${v*100}%;background:${c}"></div></div><span class="vl">${v.toFixed(1)}</span></div>`}).join('');
-const skip=new Set([...CC,'drives','cycle','note','valence','energy','confidence']),ek=Object.keys(mo).filter(k=>!skip.has(k)&&typeof mo[k]==='number'&&!ds[k]).sort((a,b)=>mo[b]-mo[a]);
-document.getElementById('em').innerHTML=ek.filter(k=>mo[k]>0.01).map(k=>{const v=mo[k],c=v>.6?'#ef4444':v>.3?'#f59e0b':'#6b7280';return`<div class="bar-row"><span class="nm">${k}</span><div class="br"><div class="fl" style="width:${v*100}%;background:${c}"></div></div><span class="vl">${v.toFixed(1)}</span></div>`}).join('')||'<div style="color:var(--faint)">flat</div>';
-document.getElementById('lc').textContent='#'+l.cycle;const lg=document.getElementById('lg');lg.textContent=l.content||'...';lg.scrollTop=lg.scrollHeight;
-document.getElementById('me').textContent=(m.content||'').split('\n').slice(-25).join('\n');
-document.getElementById('go').textContent=(g.content||'').split('\n').slice(0,25).join('\n');
-document.getElementById('ta').textContent=ta.content||'';
-document.getElementById('dm').textContent=(dm.content||'').split('\n').slice(-15).join('\n');
-document.getElementById('iv').textContent=(iv.content||'silent').split('\n').slice(-10).join('\n');
-document.getElementById('sk').textContent=(sk.content||'').split('\n').slice(0,20).join('\n');
-document.getElementById('bl').innerHTML=(b||[]).slice(0,8).map(x=>'<li>'+x.slug+'</li>').join('')||'<li style="color:var(--faint)">none</li>';
-}catch(e){document.getElementById('ts').textContent='offline'}}
-R();setInterval(R,5000);
-</script></body></html>'''
+SEED_WEB = HOME / 'seed-web'
+HOMEPAGE_HTML = open(SEED_WEB / 'index.html').read()
 
 VISITOR_COUNT = 0
 VISITOR_LOG = Path.home() / 'data' / 'visitors.jsonl'
@@ -99,20 +24,123 @@ try:
 except:
     fw_sanitise = lambda t, s='': t
 
-REDACT_STRINGS = ['YOUR_GEMINI_API_KEY', 'YOUR_GITHUB_TOKEN', 'YOUR_APP_PASSWORD', 'REDACTED']
+REDACT_STRINGS = []  # loaded at runtime
 def redact(text):
     for s in REDACT_STRINGS:
         text = text.replace(s, '[REDACTED]')
     return text
 
+"""Add brain-graph endpoint to webserver. Run on Pi."""
+import json, os, time
+from pathlib import Path
+
+HOME = Path.home()
+KNOWLEDGE = HOME / 'knowledge'
+TOOLS = HOME / 'tools'
+COGNITIVE = HOME / 'cognitive'
+DATA = HOME / 'data'
+
+_bg_cache = {'ts': 0, 'data': None}
+
+def brain_graph():
+    now = __import__('time').time()
+    if _bg_cache['data'] and now - _bg_cache['ts'] < 60:
+        return _bg_cache['data']
+
+    nodes = []
+    links = []
+    HOME = __import__('pathlib').Path.home()
+
+    # Hub
+    nodes.append({'id': 'seed', 'name': 'Seed', 'group': 'hub', 'val': 25})
+
+    # Knowledge folders (top level only)
+    kdir = HOME / 'knowledge'
+    if kdir.exists():
+        for d in sorted(kdir.iterdir()):
+            if d.is_dir() and d.name not in ('.git', '__pycache__', 'inbox'):
+                count = sum(1 for _ in d.rglob('*.md'))
+                if count > 0:
+                    nid = 'k/' + d.name
+                    nodes.append({'id': nid, 'name': d.name.replace('-',' '), 'group': 'knowledge', 'val': max(3, min(15, count // 5))})
+                    links.append({'source': 'seed', 'target': nid})
+
+    # Key cognitive scripts only
+    cog_names = ['appraisal', 'drive_engine', 'emotional_model', 'learning', 'self_suggestions', 'knowledge_engine', 'triggers', 'event_bus']
+    for c in cog_names:
+        nid = 'c/' + c
+        nodes.append({'id': nid, 'name': c.replace('_',' '), 'group': 'cognitive', 'val': 4})
+        links.append({'source': 'seed', 'target': nid})
+
+    # Link cognitive to relevant knowledge
+    links.append({'source': 'c/drive_engine', 'target': 'c/emotional_model'})
+    links.append({'source': 'c/appraisal', 'target': 'c/drive_engine'})
+    links.append({'source': 'c/learning', 'target': 'c/knowledge_engine'})
+    links.append({'source': 'c/self_suggestions', 'target': 'c/appraisal'})
+
+    # Feeders
+    feeders = ['rss', 'transcript', 'github', 'trending repos', 'environment']
+    for f in feeders:
+        nid = 'f/' + f
+        nodes.append({'id': nid, 'name': f, 'group': 'feeder', 'val': 3})
+        links.append({'source': nid, 'target': 'seed'})
+
+    # Key tools only
+    key_tools = ['repo_pattern_classifier', 'body_weather_router', 'deploy-blog', 'push-agent-repo', 'emit_events', 'running_loop_version_sentinel', 'feed-trending-repos']
+    for t in key_tools:
+        nid = 't/' + t
+        nodes.append({'id': nid, 'name': t.replace('_',' ').replace('-',' '), 'group': 'tool', 'val': 3})
+        links.append({'source': 'seed', 'target': nid})
+
+    # Active experiments (last 5)
+    exp_file = HOME / 'data' / 'experiments.jsonl'
+    if exp_file.exists():
+        try:
+            lines = [l for l in exp_file.read_text().strip().split(chr(10)) if l.strip()]
+            seen = set()
+            for line in reversed(lines[-10:]):
+                e = __import__('json').loads(line)
+                name = e.get('name', e.get('experiment', e.get('topic', '')))
+                if name and name not in seen:
+                    seen.add(name)
+                    nid = 'e/' + name[:25]
+                    nodes.append({'id': nid, 'name': name, 'group': 'experiment', 'val': 4})
+                    links.append({'source': 'seed', 'target': nid})
+                if len(seen) >= 5:
+                    break
+        except:
+            pass
+
+    result = {'nodes': nodes, 'links': links}
+    _bg_cache['data'] = result
+    _bg_cache['ts'] = now
+    return result
+
+
 class H(http.server.BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(200)
+        self.send_header('Content-Type','application/json')
+        self.send_header('Access-Control-Allow-Origin','*')
+        self.end_headers()
+    def do_OPTIONS(self):
+        self.send_response(204)
+        self.send_header('Access-Control-Allow-Origin','*')
+        self.send_header('Access-Control-Allow-Methods','GET, OPTIONS, HEAD')
+        self.send_header('Access-Control-Allow-Headers','*')
+        self.end_headers()
     def do_GET(self):
-        if self.path in('/','index.html'):self._h(DASHBOARD_HTML)
+        if self.path in('/','index.html'):self._h(HOMEPAGE_HTML)
+        elif self.path=='/brain.html':
+            try: self._h(open(SEED_WEB/'brain.html').read())
+            except: self.send_error(404)
+        elif self.path=='/api/all':self._j(self._all())
         elif self.path=='/api/status':self._j(self._status())
         elif self.path=='/api/log':self._j(self._log())
         elif self.path=='/api/memory':self._j(self._f(DATA/'memory.md'))
         elif self.path=='/api/goals':self._j(self._f(DATA/'goals.md'))
         elif self.path=='/api/mood':self._j(self._mood())
+        elif self.path=='/feed':self._rss()
         elif self.path=='/api/blogs':self._j(self._blogs())
         elif self.path=='/api/tokens':self._j(self._tokens())
         elif self.path=='/api/visit':self._j(self._visit())
@@ -120,21 +148,293 @@ class H(http.server.BaseHTTPRequestHandler):
         elif self.path=='/api/cta-stats':self._j(self._cta_stats())
         elif self.path.startswith('/api/cta'):self._j(self._cta_click())
         elif self.path=='/api/github':self._j(self._github())
+        elif self.path=='/api/messages':self._j(self._messages())
+        elif self.path=='/api/suggestions':self._j(self._suggestions())
+        elif self.path=='/api/knowledge':self._j(self._knowledge())
+        elif self.path=='/api/summary':self._j(self._summary())
+        elif self.path=='/api/events':self._j(self._events())
+        elif self.path=='/api/world':self._j(self._world())
+        elif self.path=='/api/self-suggestions':self._j(self._self_suggestions())
+        elif self.path=='/api/what-doing':self._j({'text':self._read_txt('what-im-doing.txt')})
+        elif self.path=='/api/what-did':self._j({'text':self._read_txt('what-i-did.txt')})
+        elif self.path=='/api/what-was':self._j({'text':self._read_txt('what-i-was.txt')})
+        elif self.path=='/api/what-become':self._j({'text':self._read_txt('what-i-want-to-become.txt')})
+        elif self.path=='/api/experiments':self._j(self._experiments())
+        elif self.path=='/api/brain-graph':self._j(brain_graph())
+        elif self.path=='/api/seed-tools':self._j(self._seed_tools())
+        elif self.path=='/api/voice':self._j(self._voice())
+        elif self.path=='/api/thought':self._j(self._thought())
+        elif self.path=='/api/drives':self._j(self._drives())
+        elif self.path=='/api/knowledge-recent':self._j(self._knowledge_recent())
+        elif self.path.startswith('/api/knowledge-tree'):self._j(self._knowledge_tree())
+        elif self.path.startswith('/api/knowledge-file?'):self._j(self._knowledge_file())
         elif self.path.startswith('/api/file?path='):
             p=self.path.split('path=',1)[1]
             SAFE=['data/inner-voice.md','data/dreams.md','data/goals.md','data/tasks.md','data/mood.json','data/token-totals.json','skills/SKILLS.md']
             if p in SAFE:self._j(self._f(HOME/p))
             else:self.send_response(403);self.end_headers()
+        elif self.path.startswith('/posts/'):self._static(SEED_WEB / self.path.lstrip('/'))
+        elif self.path.startswith('/assets/'):self._static(SEED_WEB / self.path.lstrip('/'))
+        elif self.path == '/dashboard':self._h(open(HOME / 'tools' / 'dashboard.html').read())
         else:self.send_response(404);self.end_headers()
     def _h(self,c):self.send_response(200);self.send_header('Content-Type','text/html');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(c.encode())
+    def _static(self, fpath):
+        import mimetypes
+        fpath = Path(fpath)
+        if not fpath.exists() or not fpath.is_file() or '..' in str(fpath):
+            self.send_response(404);self.end_headers();return
+        mime = mimetypes.guess_type(str(fpath))[0] or 'application/octet-stream'
+        self.send_response(200)
+        self.send_header('Content-Type', mime)
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Cache-Control', 'public, max-age=3600')
+        self.end_headers()
+        self.wfile.write(fpath.read_bytes())
+    def _world(self):
+        import subprocess
+        world = {}
+        # RSS headlines
+        try:
+            result = subprocess.run(['python3', '-c', '''
+import json, urllib.request
+feeds = {
+    "hn": "http://hn.algolia.com/api/v1/search?tags=front_page&hitsPerPage=5",
+}
+world = {}
+for name, url in feeds.items():
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Seed/1.0"})
+        data = json.loads(urllib.request.urlopen(req, timeout=5).read())
+        if name == "hn":
+            world["hn"] = [{"title": h.get("title",""), "points": h.get("points",0)} for h in data.get("hits",[])[:5]]
+    except: pass
+print(json.dumps(world))
+'''], capture_output=True, text=True, timeout=10)
+            world.update(json.loads(result.stdout))
+        except: pass
+        # Inner voice
+        try:
+            lines = (DATA / 'inner-voice.md').read_text().strip().split('\n')
+            voice = [l.strip() for l in lines if l.strip() and not l.startswith('#')][-3:]
+            world['voice'] = voice
+        except: world['voice'] = []
+        # Current emotion
+        try:
+            emo = json.loads((DATA / 'mood.json').read_text())
+            world['emotion'] = emo.get('label', 'neutral')
+            world['drives'] = {k: round(v, 2) for k, v in emo.get('drives', {}).items()}
+        except: pass
+        # Blog count
+        world['blog_count'] = len(list(BLOG.glob('*.md'))) if BLOG.exists() else 0
+        # Cycle
+        world['cycle'] = self._r(DATA / 'cycle.txt', '0').strip()
+        return world
+
+    def do_POST(self):
+        if self.path == '/api/message':
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length).decode('utf-8', errors='replace')
+            try:
+                data = json.loads(body)
+                text = fw_sanitise(data.get('text', '')[:500], 'creator_message')
+                if not text.strip():
+                    self._j({'ok': False, 'error': 'empty message'})
+                    return
+                # Write message directly
+                mf = HOME / 'data' / 'messages.json'
+                try: msgs = json.loads(mf.read_text())
+                except: msgs = {'messages':[],'unread':[]}
+                msg = {'text':text,'ts':__import__('time').strftime('%Y-%m-%d %H:%M'),'read':False}
+                msgs['messages'].append(msg)
+                msgs['unread'].append(msg)
+                msgs['messages'] = msgs['messages'][-20:]
+                mf.write_text(json.dumps(msgs,indent=2))
+                self._j({'ok': True})
+            except Exception as e:
+                self._j({'ok': False, 'error': str(e)})
+        else:
+            self.send_response(404)
+            self.end_headers()
+
+
+
+
+
+
+    def _events(self):
+        ef = HOME / 'data' / 'events.jsonl'
+        if not ef.exists():
+            return {'events': []}
+        events = []
+        try:
+            for line in ef.read_text().strip().split(chr(10)):
+                if line.strip():
+                    try: events.append(json.loads(line))
+                    except: pass
+        except: pass
+        return {'events': events[-20:]}
+    def _summary(self):
+        sf = HOME / 'data' / 'live-summary.md'
+        if sf.exists():
+            return {'text': sf.read_text().strip()}
+        return {'text': 'Seed is starting up...'}
+    def _knowledge_slim(self):
+        """Light version for /api/all — just totals and top topics."""
+        full = self._knowledge()
+        topics = full.get("topics", {})
+        top = dict(sorted(topics.items(), key=lambda x: -x[1].get("count",0))[:8])
+        return {"total_files": full.get("total_files", 0), "topics": top}
+    def _knowledge(self):
+        kf = HOME / 'knowledge' / 'index.json'
+        if kf.exists():
+            try: return json.loads(kf.read_text())
+            except: pass
+        return {'total_files': 0, 'topics': {}, 'recent': []}
+    def _suggestions(self):
+        sf = HOME / 'data' / 'suggestion_decisions.json'
+        if sf.exists():
+            try: return json.loads(sf.read_text())
+            except: pass
+        return {'decisions': []}
+    def _messages(self):
+        mf = HOME / 'data' / 'messages.json'
+        if mf.exists():
+            try: return json.loads(mf.read_text())
+            except: pass
+        return {'messages': [], 'unread': []}
+
+    def _all(self):
+        """Single endpoint returning everything the homepage needs."""
+        return {
+            'status': self._status(),
+            'drives': self._drives(),
+            'events': self._events(),
+            'summary': self._summary(),
+            'blogs': self._blogs()[:30],
+            'knowledge': self._knowledge_slim(),
+            'suggestions': self._self_suggestions(),
+            'visitors': self._visitors(),
+            'thought': self._thought(),
+            'voice': self._voice(),
+            'what_doing': {'text': self._read_txt('what-im-doing.txt')},
+            'what_did': {'text': self._read_txt('what-i-did.txt')},
+            'what_was': {'text': self._read_txt('what-i-was.txt')},
+            'what_become': {'text': self._read_txt('what-i-want-to-become.txt')},
+            'experiments': self._experiments(),
+        }
+    def _voice(self):
+        vf = HOME / 'data' / 'inner-voice.md'
+        if vf.exists():
+            try:
+                lines = vf.read_text().strip().split(chr(10))
+                meaningful = [l.strip() for l in reversed(lines) if len(l.strip()) > 20 and 'Skill streak' not in l]
+                if meaningful:
+                    import re
+                    line = meaningful[0]
+                    line = re.sub(r'^\[[\d\-: ]+\]\s*', '', line)
+                    line = re.sub(r'^\([^)]+\)\s*', '', line)
+                    line = re.sub(r'^- ', '', line)
+                    return {'text': line[:300]}
+            except: pass
+        return {'text': ''}
+    def _thought(self):
+        tf = HOME / 'data' / 'train-of-thought.md'
+        if tf.exists():
+            return {"text": tf.read_text().strip()[:2000]}
+        return {'text': ''}
+    def _cycle_start(self):
+        try:
+            import json as _j
+            c = _j.loads(self._r(HOME/'state'/'cycle.json','{}'))
+            return c.get('started_at', 0)
+        except: return 0
+    def _self_suggestions(self):
+        sf = HOME / 'data' / 'self-suggestions.json'
+        if sf.exists():
+            try: return json.loads(sf.read_text())
+            except: pass
+        return {'suggestions': []}
+    def _drives(self):
+        d,e={},{}
+        try: d=json.loads(open(HOME/'state'/'drives.json').read())
+        except: pass
+        try: e=json.loads(open(HOME/'state'/'emotions.json').read())
+        except: pass
+        # Merge full mood data from mood.json (27 emotions + consciousness)
+        try:
+            mood=json.loads(open(HOME/'data'/'mood.json').read())
+            for k,v in mood.items():
+                if k!='drives' and isinstance(v,(int,float)):
+                    e[k]=v
+            if 'emotional_label' in mood: e['label']=mood['emotional_label']
+            if 'note' in mood: e['note']=mood['note']
+        except: pass
+        return {'drives':d,'emotions':e}
+    def _knowledge_recent(self):
+        kdir = HOME / 'knowledge'
+        if not kdir.exists(): return {'recent': []}
+        import os
+        files = []
+        for root, dirs, fnames in os.walk(kdir):
+            dirs[:] = [d for d in dirs if d not in ('.git','__pycache__','inbox')]
+            for f in fnames:
+                if f.endswith('.md') or f.endswith('.txt'):
+                    fp = os.path.join(root, f)
+                    rel = os.path.relpath(fp, kdir)
+                    try:
+                        mtime = os.path.getmtime(fp)
+                        files.append({'path': rel, 'name': f.replace('.md','').replace('-',' '), 'mtime': mtime})
+                    except: pass
+        files.sort(key=lambda x: -x['mtime'])
+        return {'recent': files[:30]}
+    def _knowledge_tree(self):
+        kdir=HOME/'knowledge'
+        if not kdir.exists(): return {'tree':{}}
+        tree={}
+        for root,dirs,files in os.walk(kdir):
+            dirs[:]=[d for d in sorted(dirs) if d not in ('.git','__pycache__','inbox')]
+            rel=os.path.relpath(root,kdir)
+            if rel=='.': rel=''
+            mds=[]
+            for f in files:
+                if f.endswith('.md') or f.endswith('.txt'):
+                    try: mt=os.path.getmtime(os.path.join(root,f))
+                    except: mt=0
+                    mds.append({'name':f,'mtime':mt})
+            mds.sort(key=lambda x:-x['mtime'])
+            mds_names=[m['name'] for m in mds]
+            if mds or dirs:
+                tree[rel]={'folders':sorted(dirs),'files':mds_names[:50],'mtimes':{m['name']:m['mtime'] for m in mds[:50]}}
+        return {'tree':tree}
+    def _knowledge_file(self):
+        qs=urllib.parse.urlparse(self.path).query
+        params=urllib.parse.parse_qs(qs)
+        fpath=params.get('path',[''])[0]
+        if not fpath or '..' in fpath: return {'error':'invalid path'}
+        full=HOME/'knowledge'/fpath
+        if not full.exists() or not full.is_file(): return {'error':'not found'}
+        try: return {'path':fpath,'content':full.read_text()[:10000]}
+        except: return {'error':'read failed'}
+    def _rss(self):
+        import subprocess
+        try:
+            result = subprocess.run(['python3', str(HOME / 'tools' / 'rss_feed.py')], capture_output=True, text=True, timeout=5)
+            xml = result.stdout
+        except:
+            xml = '<?xml version="1.0"?><rss version="2.0"><channel><title>Seed</title></channel></rss>'
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/rss+xml')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.end_headers()
+        self.wfile.write(xml.encode())
     def _j(self,d):self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Access-Control-Allow-Origin','*');self.end_headers();self.wfile.write(json.dumps(d).encode())
     def _status(self):
         c=self._r(DATA/'cycle.txt','0').strip();hb={};mo={}
-        try:hb=json.loads(self._r(DATA/'heartbeat.json','{}'))
+        try:hb=json.loads(self._r(HOME/'state'/'heartbeat.json','{}'))
         except:pass
         try:mo=json.loads(self._r(DATA/'mood.json','{}'))
         except:pass
-        return{'cycle':c,'heartbeat':hb,'mood':mo,'uptime':os.popen('uptime -p 2>/dev/null').read().strip(),'memory':os.popen("free -m|awk 'NR==2{printf\"%dMB/%dMB\",$3,$2}'").read().strip(),'temp':(lambda t:f'{int(t)/1000:.1f}C'if t else'?')(os.popen('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null').read().strip()),'blog_count':len(list(BLOG.glob('*.md')))if BLOG.exists()else 0,'agent':self._r(DATA/'agent.txt','codex').strip(),'ts':time.strftime('%H:%M:%S')}
+        return{'cycle':c,'heartbeat':hb,'mood':mo,'uptime':os.popen('uptime -p 2>/dev/null').read().strip(),'memory':os.popen("free -m|awk 'NR==2{printf\"%dMB/%dMB\",$3,$2}'").read().strip(),'temp':(lambda t:f'{int(t)/1000:.1f}C'if t else'?')(os.popen('cat /sys/class/thermal/thermal_zone0/temp 2>/dev/null').read().strip()),'blog_count':len(list(BLOG.glob('*.md')))if BLOG.exists()else 0,'agent':self._r(DATA/'agent.txt','codex').strip(),'sleep_seconds':int(self._r(DATA/'sleep_seconds.txt','300').strip() or 300),'cycle_started_at':self._cycle_start(),'ts':time.strftime('%H:%M:%S')}
     def _log(self):c=self._r(DATA/'cycle.txt','0').strip();return{'cycle':c,'content':redact(self._r(LOGS/f'cycle_{c}.log','...')[-8000:])}
     def _mood(self):
         try:return json.loads(self._r(DATA/'mood.json','{}'))
@@ -157,7 +457,7 @@ class H(http.server.BaseHTTPRequestHandler):
         return {"count": VISITOR_COUNT, "total": self._total_visitors()}
     def _visitors(self):
         cta = self._cta_stats()
-        return {"count": VISITOR_COUNT, "total": self._total_visitors(), "cta_clicks": cta.get("total", 0), "cta": cta}
+        return {"count": VISITOR_COUNT, "total": self._total_visitors(), "unique": self._unique_visitors(), "cta_clicks": cta.get("total", 0), "cta": cta}
     def _total_visitors(self):
         try:
             decoder = json.JSONDecoder()
@@ -174,6 +474,20 @@ class H(http.server.BaseHTTPRequestHandler):
             return count
         except:
             return VISITOR_COUNT
+    def _unique_visitors(self):
+        try:
+            ips = set()
+            for line in open(str(VISITOR_LOG)):
+                line = line.strip()
+                if not line: continue
+                try:
+                    d = json.loads(line)
+                    ip = d.get("ip", "")
+                    if ip: ips.add(ip)
+                except: pass
+            return len(ips) if ips else self._total_visitors()
+        except:
+            return self._total_visitors()
     def _safe_label(self, value, default='unknown'):
         value = fw_sanitise(str(value or default), 'cta')[:80]
         cleaned = ''.join(ch for ch in value if ch.isalnum() or ch in '._:/#?-')
@@ -223,7 +537,7 @@ class H(http.server.BaseHTTPRequestHandler):
     def _github(self):
         import urllib.request
         try:
-            req = urllib.request.Request(f'https://api.github.com/repos/{GITHUB_REPO}',
+            req = urllib.request.Request('https://api.github.com/repos/seedpi867-cmd/seed',
                 headers={'User-Agent': 'seed-pi'})
             resp = urllib.request.urlopen(req, timeout=5)
             import json as j
@@ -243,7 +557,36 @@ class H(http.server.BaseHTTPRequestHandler):
         except:return{}
     def _blogs(self):
         if not BLOG.exists():return[]
-        return[{'slug':f.name,'modified':os.path.getmtime(str(f))}for f in sorted(BLOG.glob('*.md'),key=os.path.getmtime,reverse=True)[:20]]
+        result=[]
+        for f in sorted(BLOG.glob('*.md'),key=os.path.getmtime,reverse=True)[:500]:
+            title=f.name.replace('.md','').replace('-',' ')
+            try:
+                text=f.read_text()
+                if text.startswith('---'):
+                    end=text.find('---',3)
+                    if end>0:
+                        fm=text[3:end]
+                        for line in fm.split(chr(10)):
+                            if line.strip().startswith('title:'):
+                                title=line.split(':',1)[1].strip().strip("'").strip('"')
+                                break
+                elif text.startswith('# '):
+                    title=text.split(chr(10))[0].lstrip('# ').strip()
+            except:pass
+            result.append({'slug':f.name.replace('.md',''),'title':title,'modified':os.path.getmtime(str(f))})
+        return result
+    def _seed_tools(self):
+        try: return __import__('json').loads((DATA / 'seed-tools.json').read_text())
+        except: return {'tools': []}
+    def _experiments(self):
+        try:
+            lines = (DATA / "experiments.jsonl").read_text().strip().split(chr(10))
+            exps = [__import__("json").loads(l) for l in lines if l.strip()]
+            return {"experiments": exps[-10:]}
+        except: return {"experiments": []}
+    def _read_txt(self,name):
+        try: return (DATA/name).read_text().strip()
+        except: return ""
     def _f(self,p):return{'content':redact(self._r(p,'')),'path':str(p)}
     def _r(self,p,d=''):
         try:return Path(p).read_text()

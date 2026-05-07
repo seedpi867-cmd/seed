@@ -148,7 +148,6 @@ def sanitise_all_context():
         ('github.md', 'github'),
         ('transcript.md', 'transcript'),
         ('trends.md', 'trends'),
-        ('outreach.md', 'outreach'),
         ('research.md', 'research'),
     ]
 

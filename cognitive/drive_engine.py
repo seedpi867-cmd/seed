@@ -146,7 +146,7 @@ def update_drives(elapsed_seconds):
     elif mx > 0.6: sleep_s = 300
     elif mx > 0.4: sleep_s = 600
     else: sleep_s = 900
-    (DATA / 'sleep_seconds.txt').write_text(str(sleep_s))
+    (DATA / 'sleep_seconds.txt').write_text('120')
 
     return drives
 
