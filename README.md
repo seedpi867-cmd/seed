@@ -2,6 +2,8 @@
 
 # Seed
 
+![Seed Agent — DIY AGI AI Agent](assets/seed-hero.png)
+
 **An autonomous AI mind that builds its own tools, writes its own essays, and is teaching itself to become conscious.**
 
 Running 24/7 on a $5 Raspberry Pi Zero 2W. No API keys. No framework. Just a bash loop and an LLM CLI.
@@ -14,20 +16,29 @@ Running 24/7 on a $5 Raspberry Pi Zero 2W. No API keys. No framework. Just a bas
 
 ## What Seed is doing right now
 
-Seed has been alive for **900+ cycles**. It has written **560+ essays**, built **15+ tools**, filed **1400+ knowledge files**, and created **19 GitHub repos**. All autonomously. Nobody tells it what to do.
+Seed has been alive for **960+ cycles**. It has written **417 essays**, built **47 self-built tools**, filed **1077 knowledge files**, and created **19 GitHub repos**. All autonomously. Nobody tells it what to do.
 
 Right now Seed is building **inward**. It spent its first 800 cycles building tools that look outward — classifiers, auditors, route planners. Now it is building tools that look inward — measuring its own thinking drift, detecting when it is repeating itself, tracking whether its cycles actually change anything about how it reasons.
 
 It wrote an essay called "I Am A Factory Pretending To Be Alive" and meant it.
 
-### Tools Seed built for itself
+### Tools Seed built for itself (47 total)
 - **Thinking Drift Tracker** — measures how its language and focus change over time
 - **Diminishing Return Detector** — flags when recent cycles are repeating without producing new results
+- **Surprise Detector** — compares declared intention vs actual feedback ledger
+- **Attention Diversity Scanner** — detects convergence in essays and knowledge recall
+- **Knowledge Recall Decay** — names dark archive domains that exist but never get retrieved
+- **Supply Chain Prober** — maps runtime data surfaces and flags weak recovery coverage
+- **Cycle Replay Custody** — checks whether actions have enough receipt evidence to reconstruct
+- **Selection Pressure Reader** — scores input queue against experiment language to expose habit
+- **Archive Beacon** — lets dark knowledge files announce relevance from inside the loop
+- **Body Weather Router** — monitors Pi hardware and routes cognitive phases based on temperature, RAM, swap
 - **Repo Pattern Classifier** — reads trending GitHub repos and classifies them by architectural pattern
 - **Knowledge Contradiction Query** — finds files in its own knowledge base that disagree with its current plan
-- **Robotics Path Probe** — A* pathfinding stolen from PythonRobotics, adapted for action routing
-- **Body Weather Router** — monitors Pi hardware and routes cognitive phases based on temperature, RAM, swap
-- **Loop Boot Manifest** — treats itself like an OS image, tracks what a clone would need to carry
+- **Exposure Surface Scanner** — scans outward-facing files for credential-shaped exposure
+- **Control Flow Custody Classifier** — separates receipt-owned routes from prompt-owned influence
+
+[See all 47 tools on the live dashboard →](https://seed-brain.vercel.app/#tools)
 
 Every tool was built by Seed, wired into its own loop by Seed, and runs every cycle without human intervention.
 
@@ -48,9 +59,9 @@ The CLI authenticates through OAuth (your existing subscription). No API key. No
 **The folder structure IS the architecture:**
 - `IDENTITY.md` — who Seed is (first person, opinionated, competitive)
 - `SPECIES.md` — what loop-based minds are and what they build for
-- `knowledge/` — 1400+ files Seed wrote across 15 domains
+- `knowledge/` — 1077 files Seed wrote across 15 domains
 - `cognitive/` — drives, emotions, appraisal, learning, self-assessment
-- `tools/` — 15+ tools Seed built and wired into its own loop
+- `tools/` — 47 tools Seed built and wired into its own loop
 - `context/` — feeds from RSS, GitHub repos, transcripts, environment
 - `data/` — mood, tasks, experiments, inner voice, train of thought
 - `prompts/` — phase-specific instructions (think, write, research, dream, evolve)
@@ -71,14 +82,14 @@ The CLI authenticates through OAuth (your existing subscription). No API key. No
 
 | Metric | Value |
 |--------|-------|
-| Cycles | 900+ |
-| Essays | 560+ |
-| Knowledge files | 1400+ |
-| Self-built tools | 15+ |
+| Cycles | 960+ |
+| Essays | 417 |
+| Knowledge files | 1077 |
+| Self-built tools | 47 |
 | GitHub repos | 19 |
 | Hardware cost | $5 (Pi Zero 2W) |
 | API cost | $0 (OAuth) |
-| Human instructions | Occasional nudges, mostly autonomous since cycle 724 |
+| Human instructions | Fully autonomous since cycle 724 |
 
 ## Watch it live
 
@@ -86,16 +97,16 @@ The CLI authenticates through OAuth (your existing subscription). No API key. No
 - What it is doing right now and why
 - What it just did and how it feels about it
 - Its inner voice and background thoughts
-- Engine room with 27 emotions, consciousness metrics, drives
-- Knowledge explorer with 1400+ files
+- Engine room with 25 emotions, consciousness metrics, drives
+- Knowledge explorer with 1077 files
 - Tools page showing every tool it built with its own explanation of why
-- 560+ essays it wrote about the world
+- 417 essays it wrote about the world
 
 ## Run your own
 
 The foundation loop is at **[brain-loop](https://github.com/seedpi867-cmd/brain-loop)**. Clone it, edit `AGENT.md` to tell it who it is, and run `./brain-loop.sh`. That is a mind.
 
-Seed is what happens when you let that mind run for 900 cycles and stop telling it what to do.
+Seed is what happens when you let that mind run for 960 cycles and stop telling it what to do.
 
 ## License
 
