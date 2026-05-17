@@ -4,7 +4,7 @@ LD      := $(CROSS)ld
 OBJCOPY := $(CROSS)objcopy
 OBJDUMP := $(CROSS)objdump
 
-.PHONY: all clean dump dump-cpu dump-mmu dump-mmu-enable dump-mmu-epd1 dump-irq run run-virt run-cpu run-mmu run-mmu-enable run-mmu-epd1 run-irq inspect inspect-cpu inspect-mmu inspect-mmu-enable cpu mmu mmu-enable mmu-epd1 irq
+.PHONY: all clean dump dump-cpu dump-mmu dump-mmu-enable dump-mmu-epd1 dump-irq dump-uart-full run run-virt run-cpu run-mmu run-mmu-enable run-mmu-epd1 run-irq run-uart-full inspect inspect-cpu inspect-mmu inspect-mmu-enable cpu mmu mmu-enable mmu-epd1 irq uart-full
 
 all: kernel8.img
 cpu: kernel_cpu.img
@@ -269,6 +269,49 @@ run-irq: kernel_irq.img
 	  echo "  See 04-interrupts/plan.md §Failure modes for diagnosis"; \
 	fi
 
+# ----- Cycle 22: Full UART init smoke (GPIO mux + PL011 reinit) -----
+uart-full: kernel_uart_full.img
+
+boot_uart_full.o: boot_uart_full.S
+	$(AS) -o $@ $<
+
+kernel_uart_full.elf: boot_uart_full.o linker_mmu_enable.ld
+	$(LD) -T linker_mmu_enable.ld -o $@ boot_uart_full.o
+
+kernel_uart_full.img: kernel_uart_full.elf
+	$(OBJCOPY) -O binary $< $@
+
+dump-uart-full: kernel_uart_full.elf
+	$(OBJDUMP) -d $<
+
+# PASS criterion (per 05-uart/plan.md):
+#   - GPIO_OK present (GPFSEL1 readback confirmed ALT0 on GPIO 14 and 15)
+#   - UART_LIVE present (first byte from fully-initialised PL011)
+#   - PASS present (terminal marker)
+#   - guest_errors,unimp log EMPTY (cycle-11 dual-clause lesson)
+# GPFSEL1_PRE= and GPFSEL1_POST= are informational: 0x00000000 in QEMU
+# (GPIO resets to 0), 0x00012000 pre-write on real hardware (ALT5 from
+# firmware), 0x00024000 post-write on both (ALT0 on GPIO 14 and 15).
+run-uart-full: kernel_uart_full.img
+	@timeout --preserve-status 14 qemu-system-aarch64 -M raspi3ap \
+	  -kernel kernel_uart_full.img -nographic -serial mon:stdio -monitor none \
+	  -no-reboot -d guest_errors,unimp -D qemu_raspi3ap_uart_full.log \
+	  > qemu_raspi3ap_uart_full.out 2>&1; \
+	echo "--- stdout ---"; cat qemu_raspi3ap_uart_full.out; \
+	echo "--- guest_errors,unimp ---"; \
+	[ -s qemu_raspi3ap_uart_full.log ] && cat qemu_raspi3ap_uart_full.log || echo "(empty)"; \
+	gpio_ok=0; uart_ok=0; pass_ok=0; log_ok=0; \
+	grep -q '^GPIO_OK$$'   qemu_raspi3ap_uart_full.out && gpio_ok=1; \
+	grep -q '^UART_LIVE$$' qemu_raspi3ap_uart_full.out && uart_ok=1; \
+	grep -q '^PASS$$'      qemu_raspi3ap_uart_full.out && pass_ok=1; \
+	[ ! -s qemu_raspi3ap_uart_full.log ] && log_ok=1; \
+	if [ $$gpio_ok -eq 1 ] && [ $$uart_ok -eq 1 ] && [ $$pass_ok -eq 1 ] && [ $$log_ok -eq 1 ]; then \
+	  echo "PASS: GPIO_OK + UART_LIVE + PASS observed AND log empty"; \
+	else \
+	  echo "FAIL: gpio_ok=$$gpio_ok uart_ok=$$uart_ok pass_ok=$$pass_ok log_ok=$$log_ok"; \
+	  echo "  See 05-uart/plan.md §Failure modes for diagnosis"; \
+	fi
+
 clean:
 	rm -f boot.o kernel8.elf kernel8.img qemu_raspi3ap.log qemu_virt.log \
 	      boot_cpu.o kernel_cpu.elf kernel_cpu.img \
@@ -280,4 +323,6 @@ clean:
 	      boot_mmu_epd1.o kernel_mmu_epd1.elf kernel_mmu_epd1.img \
 	      qemu_raspi3ap_mmu_epd1.log qemu_raspi3ap_mmu_epd1.out \
 	      boot_irq.o kernel_irq.elf kernel_irq.img \
-	      qemu_raspi3ap_irq.log qemu_raspi3ap_irq.out
+	      qemu_raspi3ap_irq.log qemu_raspi3ap_irq.out \
+	      boot_uart_full.o kernel_uart_full.elf kernel_uart_full.img \
+	      qemu_raspi3ap_uart_full.log qemu_raspi3ap_uart_full.out

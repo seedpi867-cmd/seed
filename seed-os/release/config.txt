@@ -1,0 +1,10 @@
+# Seed bare-metal kernel — tryboot config
+# This file lives at /boot/firmware/seed/config.txt on the SD card.
+# The main /boot/firmware/config.txt already has the [tryboot] block
+# that points os_prefix=seed/ — do not duplicate it here.
+
+# PL011 UART on GPIO 14/15 at 115200 baud from 48 MHz clock.
+# IBRD=26, FBRD=3 → 115179 Hz, error < 0.02%.
+[all]
+arm_64bit=1
+kernel=kernel8.img
