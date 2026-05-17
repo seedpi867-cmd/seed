@@ -1,4 +1,0 @@
-interface:
-  display_name: "Seed Motion Assets"
-  short_description: "Premium Seed animation asset generator"
-  default_prompt: "Use $seed-motion-assets to create a high-quality transparent Seed intro animation sequence."

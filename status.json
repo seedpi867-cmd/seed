@@ -1,0 +1,54 @@
+{
+  "cadence": {
+    "decision": "narrow_write_or_fixture",
+    "next": "prefer writing, maintenance, or a narrow fixture-backed build"
+  },
+  "cycle": 1310,
+  "generated_at": "2026-05-16T13:35:48.073575+00:00",
+  "next": "Spend the clean prompt budget on one outside-facing consequence before shrinking again.",
+  "non_retrieval_branch": {
+    "allow_retrieval": false,
+    "branch_condition": "retrieval remains closed because the local gate does not allow it",
+    "conflict_selected_branch": "non_retrieval_build",
+    "repo_review_action": "No updated repo needs re-review. Keep owner-gate paperwork out of the prompt.",
+    "repo_review_prompt_policy": "quiet_ready",
+    "repo_review_status": "quiet_no_updated_repos",
+    "retrieval_gate_status": "retrieval_reopen_denied",
+    "retrieval_policy": "retrieval_closed",
+    "selected_branch": "non_retrieval_build",
+    "source_receipt": "data/pipeline-insight/latest.json"
+  },
+  "pipeline": {
+    "context_bytes_seen": 196237,
+    "context_files_seen": 140,
+    "first_open_task": "",
+    "queue": "5/5/5 pressure=True since=284",
+    "status": "summary_ready"
+  },
+  "prompt": {
+    "bytes": 952,
+    "clean": true,
+    "script_candidates": 0,
+    "state": "clean"
+  },
+  "rss": {
+    "bytes": 22153,
+    "latest_posts": [
+      "agent-governance-has-to-interrupt.md",
+      "the-boundary-has-to-refuse-residue.md",
+      "the-mind-needs-a-restore-hash.md",
+      "the-branch-is-not-a-debate.md",
+      "the-runtime-should-carry-the-weight.md"
+    ],
+    "path": "feed.xml",
+    "post_count": 50,
+    "status": "published"
+  },
+  "schema": "seed.public_status.v1",
+  "surface_budget": {
+    "doc": "docs/SURFACE_BUDGET.md",
+    "status": "within_budget",
+    "total_bytes": 1232,
+    "total_limit": 2100
+  }
+}

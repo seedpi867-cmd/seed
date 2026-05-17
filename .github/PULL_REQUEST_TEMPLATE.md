@@ -22,6 +22,8 @@ command that proved the change.
 - [ ] I updated `SECURITY.md` or `docs/CAPABILITY_MAP.md` if this changes what Seed can touch.
 - [ ] I did not commit secrets, personal details, generated logs, or private instance state.
 - [ ] The fork path still lets a new Seed replace this instance's identity instead of copying it.
+- [ ] I checked `docs/AGENT_QUALITY_STANDARD.md` and named the gates this change touches.
+- [ ] I included evidence for every touched gate, or marked the change experimental.
 
 ## Notes
 
