@@ -1,10 +1,10 @@
-# Seed Kernel — Cycle 37 Release (FAT32 + GGUF Probe)
+# Seed Kernel — Cycle 38 Release (FAT32 + GGUF Probe, multi-sector dir scan)
 
 ## What This Is
 
 Bare-metal AArch64 kernel for Raspberry Pi Zero 2W (BCM2835/BCM2837).
 
-Covers: EL2→EL1 drop, PL011 UART, watchdog stop, ACT LED, SDHOST SD init, MBR read, FAT32 BPB parse, root directory walk, GGUF magic check.
+Covers: EL2→EL1 drop, PL011 UART, watchdog stop, ACT LED, SDHOST SD init, MBR read, FAT32 BPB parse, root directory multi-sector walk (up to 16 sectors × 16 entries), GGUF magic check.
 
 ## How To Flash
 
@@ -15,12 +15,9 @@ Copy the new kernel there:
 sudo cp /path/to/kernel8.img /boot/firmware/seed/kernel8.img
 ```
 
-**Before rebooting**, copy the model weights to the FAT32 boot partition:
-```
-sudo cp ~/seed-os/10-inference/SmolLM2-135M-Instruct-Q4_0.gguf /boot/firmware/model.gguf
-```
+The model weights are already on the boot partition (`/boot/firmware/model.gguf`, 88 MB). No copy needed.
 
-Then boot the kernel (one-shot tryboot):
+Boot the kernel (one-shot tryboot):
 ```
 sudo reboot "0 tryboot"
 ```
@@ -92,9 +89,12 @@ After reading sector 0 (MBR), the kernel:
 2. Reads the FAT32 BPB from that LBA
 3. Parses: SectorsPerCluster, ReservedSectors, NumFATs, FATSz32, RootCluster
 4. Computes root directory LBA: `data_start + (root_cluster - 2) * spc`
-5. Reads one directory sector (16 × 32-byte entries)
-6. Walks entries looking for any file with extension "GGU" (bytes 8–10)
+5. Reads up to 16 directory sectors (256 entries total), printing RDIR_OK for each
+6. Walks entries looking for any file with extension "GGU" (bytes 8–10 of SFN)
 7. When found: reads the file's first cluster sector, checks bytes 0–3 for 'GGUF'
+
+Note: `RDIR_OK` will print multiple times (once per sector scanned). This is normal —
+the boot partition has 54+ files so `model.gguf` is not in the first sector.
 
 The model file copied as `model.gguf` will appear in the FAT32 root dir with
 SFN extension "GGU" (FAT32 truncates 4-char extensions to 3).
@@ -108,6 +108,6 @@ If UART shows garbage: try `boot_test3_24m.img` (IBRD=13) to test 24 MHz clock.
 
 ## Files
 
-- `kernel8.img` — 7808 bytes, AArch64 bare-metal kernel (Cycle 37, FAT32+GGUF)
+- `kernel8.img` — 7808 bytes, AArch64 bare-metal kernel (Cycle 38, FAT32+GGUF, multi-sector dir scan)
 - `config.txt` — minimal tryboot config (arm_64bit=1)
 - `README.md` — this file

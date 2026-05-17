@@ -865,20 +865,22 @@ fat32_start:
         mov     w0, w23
         bl      print_hex32
 
-        /* ── Read root directory sector ── */
-        mov     w0, w23
-        ldr     x1, =fat32_buf          /* reuse fat32_buf for dir data */
+        /* ── Scan root directory: up to 16 sectors × 16 entries each ── */
+        mov     w28, #0                 /* w28 = directory sector offset */
+
+.dir_sector:
+        add     w0, w23, w28            /* LBA = root_dir_lba + sector_offset */
+        ldr     x1, =fat32_buf
         bl      sd_read_single
         adr     x0, str_rdir_ok
         bl      print_str
 
-        /* ── Walk 16 directory entries (16 × 32 bytes = 512) ── */
         ldr     x24, =fat32_buf
         mov     w22, #16
 
 .dir_walk:
         ldrb    w0, [x24]               /* entry[0] = status byte */
-        cbz     w0, .dir_end            /* 0x00 = end of directory */
+        cbz     w0, .dir_not_found      /* 0x00 = true end of directory */
         cmp     w0, #0xE5
         b.eq    .dir_next               /* deleted entry */
 
@@ -990,8 +992,12 @@ fat32_start:
         add     x24, x24, #32           /* advance to next entry */
         subs    w22, w22, #1
         b.ne    .dir_walk
+        /* sector exhausted without finding file — try next sector */
+        add     w28, w28, #1
+        cmp     w28, #16                /* scan at most 16 sectors (256 entries) */
+        b.lo    .dir_sector
 
-.dir_end:
+.dir_not_found:
         adr     x0, str_no_ggu
         bl      print_str
         b       blink_loop
