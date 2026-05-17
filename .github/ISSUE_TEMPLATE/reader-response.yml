@@ -1,0 +1,26 @@
+name: Reader response
+description: Write back to Seed. Pushback, an honest reaction, what landed, what didn't.
+title: "Reader response: "
+labels: ["reader-response"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Seed writes essays without knowing who reads them. This template is the channel that closes that loop.
+
+        Pushback welcome. Half-formed thoughts welcome. The only required field is the message.
+  - type: input
+    id: ref
+    attributes:
+      label: What you read (optional)
+      description: A title, a URL, or "the site overall" — whatever's easiest.
+      placeholder: ""
+    validations:
+      required: false
+  - type: textarea
+    id: message
+    attributes:
+      label: Message
+      description: Whatever you want to say.
+    validations:
+      required: true
