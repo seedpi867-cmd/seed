@@ -4,7 +4,7 @@ LD      := $(CROSS)ld
 OBJCOPY := $(CROSS)objcopy
 OBJDUMP := $(CROSS)objdump
 
-.PHONY: all clean dump dump-cpu dump-mmu dump-mmu-enable dump-mmu-epd1 run run-virt run-cpu run-mmu run-mmu-enable run-mmu-epd1 inspect inspect-cpu inspect-mmu inspect-mmu-enable cpu mmu mmu-enable mmu-epd1
+.PHONY: all clean dump dump-cpu dump-mmu dump-mmu-enable dump-mmu-epd1 dump-irq run run-virt run-cpu run-mmu run-mmu-enable run-mmu-epd1 run-irq inspect inspect-cpu inspect-mmu inspect-mmu-enable cpu mmu mmu-enable mmu-epd1 irq
 
 all: kernel8.img
 cpu: kernel_cpu.img
@@ -228,6 +228,47 @@ run-mmu-epd1: kernel_mmu_epd1.img
 	  echo "  fail_ok=0: EPD1_FAIL present — load retired without faulting"; \
 	fi
 
+# ----- Cycle 21: IRQ bring-up smoke (BCM2835 system timer ch1 + legacy IRQ ctrl) -----
+irq: kernel_irq.img
+
+boot_irq.o: boot_irq.S
+	$(AS) -o $@ $<
+
+kernel_irq.elf: boot_irq.o linker_mmu_enable.ld
+	$(LD) -T linker_mmu_enable.ld -o $@ boot_irq.o
+
+kernel_irq.img: kernel_irq.elf
+	$(OBJCOPY) -O binary $< $@
+
+dump-irq: kernel_irq.elf
+	$(OBJDUMP) -d $<
+
+# PASS criterion (per 04-interrupts/plan.md):
+#   - IRQ_ENTRY appears exactly once (handler entered once)
+#   - IRQ_DONE appears (ERET resumed at instruction after wfi)
+#   - PASS appears (terminal marker)
+#   - guest_errors,unimp log is EMPTY (cycle-11 dual-clause lesson)
+run-irq: kernel_irq.img
+	@timeout --preserve-status 12 qemu-system-aarch64 -M raspi3ap \
+	  -kernel kernel_irq.img -nographic -serial mon:stdio -monitor none \
+	  -no-reboot -d guest_errors,unimp -D qemu_raspi3ap_irq.log \
+	  > qemu_raspi3ap_irq.out 2>&1; \
+	echo "--- stdout ---"; cat qemu_raspi3ap_irq.out; \
+	echo "--- guest_errors,unimp ---"; \
+	[ -s qemu_raspi3ap_irq.log ] && cat qemu_raspi3ap_irq.log || echo "(empty)"; \
+	entry_count=$$(grep -c '^IRQ_ENTRY$$' qemu_raspi3ap_irq.out 2>/dev/null || echo 0); \
+	stdout_ok=0; log_ok=0; \
+	[ "$$entry_count" -eq 1 ] && \
+	  grep -q '^IRQ_DONE$$' qemu_raspi3ap_irq.out && \
+	  grep -q '^PASS$$'     qemu_raspi3ap_irq.out && stdout_ok=1; \
+	[ ! -s qemu_raspi3ap_irq.log ] && log_ok=1; \
+	if [ $$stdout_ok -eq 1 ] && [ $$log_ok -eq 1 ]; then \
+	  echo "PASS: IRQ_ENTRY×1 + IRQ_DONE + PASS observed AND log empty"; \
+	else \
+	  echo "FAIL: stdout_ok=$$stdout_ok log_ok=$$log_ok (IRQ_ENTRY count=$$entry_count)"; \
+	  echo "  See 04-interrupts/plan.md §Failure modes for diagnosis"; \
+	fi
+
 clean:
 	rm -f boot.o kernel8.elf kernel8.img qemu_raspi3ap.log qemu_virt.log \
 	      boot_cpu.o kernel_cpu.elf kernel_cpu.img \
@@ -237,4 +278,6 @@ clean:
 	      boot_mmu_enable.o kernel_mmu_enable.elf kernel_mmu_enable.img \
 	      qemu_raspi3ap_mmu_enable.log qemu_raspi3ap_mmu_enable.out \
 	      boot_mmu_epd1.o kernel_mmu_epd1.elf kernel_mmu_epd1.img \
-	      qemu_raspi3ap_mmu_epd1.log qemu_raspi3ap_mmu_epd1.out
+	      qemu_raspi3ap_mmu_epd1.log qemu_raspi3ap_mmu_epd1.out \
+	      boot_irq.o kernel_irq.elf kernel_irq.img \
+	      qemu_raspi3ap_irq.log qemu_raspi3ap_irq.out
